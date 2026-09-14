@@ -19,9 +19,14 @@ Turn a note into a keyboard-first mindmap, and read the same note as an outline.
 
 ## Getting started
 
-1. Install the plugin from **Settings → Community plugins → Browse** and turn it on.
-2. Create a map with the ribbon button or the command **Create a new map**. To use a note you already have, choose **Open as a map** from its file menu.
-3. Start typing. The starter map (command **Open the starter map**) walks through the basics.
+1. Install the plugin from **Settings → Community plugins → Browse** and turn it on. A welcome window offers the three ways in.
+2. **New map:** the ribbon button, a folder's **New map here**, or the command **Create a new map**.
+3. **A note you already have:** right-click it and choose **Open as a map**. Its heading becomes the centre and its lists become branches.
+4. **Take the tour:** a map where every node shows a feature by using it. It's in the ribbon menu, in Settings, and the command **Take the tour**. Press `?` in any map for every shortcut.
+
+![The welcome window, shown once when the plugin is turned on](docs/screenshots/07-welcome-dark.png)
+
+![The tour: each node shows the feature it describes](docs/screenshots/08-tour-dark.png)
 
 ### Keys to know
 
@@ -38,6 +43,7 @@ Turn a note into a keyboard-first mindmap, and read the same note as an outline.
 | ⌘F | Find in the map |
 | ⌘1 ⌘2 | Map · outline |
 | ⌥⌘= ⌥⌘- · ⇧⌘0 | Zoom in · zoom out · fit the map to the window |
+| ? | All shortcuts, with a filter |
 | ⌘/ | Document panel: theme and node style |
 | ⌘Z · ⇧⌘Z | Undo · redo |
 
