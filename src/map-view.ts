@@ -314,7 +314,7 @@ export class MapView extends TextFileView {
       resolveEmbed: (file: string): { url: string; kind: "image" | "audio" } | null => {
         const f = this.app.metadataCache.getFirstLinkpathDest(file, this.file?.path ?? "");
         if (!f) return null;
-        return { url: this.app.vault.adapter.getResourcePath(f.path), kind: embedKind(f.name) === "audio" ? "audio" : "image" };
+        return { url: this.app.vault.getResourcePath(f), kind: embedKind(f.name) === "audio" ? "audio" : "image" };
       },
       onSaveAttachment: (file: File) => this.saveAttachment(file),
       linksFromDrag: (dt: DataTransfer) => this.linksFromDrag(dt),

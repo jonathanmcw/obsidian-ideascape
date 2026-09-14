@@ -19,9 +19,20 @@ Turn a note into a keyboard-first mindmap, and read the same note as an outline.
 
 ![The same note as an outline](docs/screenshots/02-outline-dark.png)
 
+## Install
+
+Ideascape 0.9 is a beta. Until it's listed in Obsidian's community plugins, install it one of two ways:
+
+- **With BRAT:** install the [BRAT](https://github.com/TfTHacker/obsidian42-brat) plugin, choose **Add beta plugin**, and enter `jonathanmcw/obsidian-ideascape`.
+- **By hand:** download `main.js`, `manifest.json` and `styles.css` from the [latest release](https://github.com/jonathanmcw/obsidian-ideascape/releases/latest) into `<your vault>/.obsidian/plugins/ideascape/`, then turn on **Ideascape** in **Settings → Community plugins**.
+
+Once it's listed, find it in **Settings → Community plugins → Browse**.
+
+Found a bug, or have an idea? [Open an issue](https://github.com/jonathanmcw/obsidian-ideascape/issues).
+
 ## Getting started
 
-1. Install the plugin from **Settings → Community plugins → Browse** and turn it on. A welcome window offers the three ways in.
+1. Turn Ideascape on. A welcome window offers the three ways in.
 2. **New map:** the ribbon button, a folder's **New map here**, or the command **Create a new map**.
 3. **A note you already have:** right-click it and choose **Open as a map**. Its heading becomes the centre and its lists become branches.
 4. **Take the tour:** a map where every node shows a feature by using it. It's in the ribbon menu, in Settings, and the command **Take the tour**. Press `?` in any map for every shortcut.
@@ -79,9 +90,10 @@ ideascape: root
 ```
 
 - The heading is the centre of the map, and the nested list is the tree.
-- Any other text in the note (paragraphs, code, callouts) stays where you wrote it.
-- Positions, folds and the map's own look are kept in the `%%` comment at the end, which Obsidian doesn't show in reading view. Delete it and the map simply lays itself out again.
+- Any other text in the note (paragraphs, code, callouts) is kept. Text between list items belongs to the item above it: it moves with that item, and goes to the end of the list if the item is deleted.
+- Positions, folds and the map's own look are kept in the `%%` comment at the end, which Obsidian doesn't show in reading view. Delete it and the map lays itself out again, with its folds and its own look back to the defaults.
 - Turning a note you already have into a map only adds the property, block ids and that comment. If more would change, the plugin asks first and offers to work on a copy.
+- Without Ideascape, a map is still an ordinary note: a heading and a nested list, with a short block id at the end of each item and the `%%` comment hidden in reading view.
 
 ![The shortcuts sheet, opened with ? in any map](docs/screenshots/05-shortcuts-dark.png)
 
@@ -100,7 +112,7 @@ The plugin works entirely offline. It makes no network requests, collects no dat
 
 ## Compatibility
 
-Obsidian 1.7.2 or later, on desktop and mobile.
+Obsidian 1.7.2 or later. Made for desktop and mobile; this beta has been tested on desktop (macOS) so far, so reports from Windows, Linux and mobile are especially welcome.
 
 ## Development
 
@@ -117,7 +129,7 @@ Releases are built by GitHub Actions when a version tag (for example `0.9.0`) is
 
 ## Support
 
-Ideascape is free. If it helps you think, you can buy me a coffee.
+Ideascape is free. Bug reports and ideas go to [GitHub Issues](https://github.com/jonathanmcw/obsidian-ideascape/issues). If it helps you think, you can buy me a coffee.
 
 <a href="https://buymeacoffee.com/jonathanmcw"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy me a coffee" height="40"></a>
 
