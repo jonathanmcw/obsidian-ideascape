@@ -2,7 +2,7 @@
 
 Turn a note into a keyboard-first mindmap, and read the same note as an outline. The map stays a plain Markdown list, so the note still works everywhere else in Obsidian.
 
-![A podcast plan as a mind map in Obsidian's dark theme](docs/screenshots/01-map-dark.png)
+![Building a map from the keyboard, folding a branch, switching to the outline and back, and focusing one branch](docs/showcase.gif)
 
 ## What it does
 
@@ -14,6 +14,8 @@ Turn a note into a keyboard-first mindmap, and read the same note as an outline.
 - **Themes that fit your vault.** Follow your Obsidian theme in light or dark mode, pick Paper, Slate, Graphite or Midnight, or make your own. Each map can keep its own theme and node style.
 - **Focus on one branch.** Hide everything else while you work on it.
 - **Bring things in, send things out.** Paste a Markdown list, drop in a `.canvas` or OPML file, or drag notes from the file explorer. Export as PNG, Markdown, OPML or JSON Canvas.
+
+![A podcast plan as a mind map in Obsidian's dark theme](docs/screenshots/01-map-dark.png)
 
 ![The same note as an outline](docs/screenshots/02-outline-dark.png)
 
