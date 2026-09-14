@@ -1,4 +1,4 @@
-import { Menu, Notice, Scope, TFile, TextFileView, normalizePath, type WorkspaceLeaf } from "obsidian";
+import { Menu, Notice, Platform, Scope, TFile, TextFileView, normalizePath, type WorkspaceLeaf } from "obsidian";
 import { createElement } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import MapApp, { type MapCommands } from "./organiser/MapApp";
@@ -288,6 +288,8 @@ export class MapView extends TextFileView {
     this.root.render(createElement(MapApp, {
       doc: this.doc,
       onDoc: this.docSink(),
+      onTour: () => void this.plugin.openTour(),
+      mac: Platform.isMacOS || Platform.isIosApp,
       prefs: this.prefs(),
       onPrefs: (patch: Partial<Prefs>) => {
         const { theme, ...rest } = patch;

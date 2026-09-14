@@ -1,4 +1,4 @@
-import { PluginSettingTab, Setting, type App } from "obsidian";
+import { Platform, PluginSettingTab, Setting, type App } from "obsidian";
 import type MapPlugin from "./main.ts";
 import { CUSTOM_THEME_ID, THEMES, defaultCustomTheme, type CustomThemeDef } from "./organiser/theme";
 import { DEFAULT_PREFS, type NodeStyle, type OutlineWidth, type Prefs } from "./organiser/model/store";
@@ -6,6 +6,7 @@ import { LAYOUT_LABEL, MAP_LAYOUTS, ORG_CHART, type MapLayout } from "./organise
 import { shownLayout } from "./organiser/layout/arrange";
 import { PLUGIN_NAME } from "./brand.ts";
 import { MARKER } from "./organiser/model/markdown";
+import { chord } from "./tour.ts";
 
 export interface MapSettings {
   mapsFolder: string;
@@ -19,6 +20,8 @@ export interface MapSettings {
   showRibbon: boolean;
   /** Marked notes wear a MAP tag in the file explorer. */
   explorerBadges: boolean;
+  /** The welcome window has been shown. */
+  welcomed: boolean;
 }
 
 export const DEFAULT_SETTINGS: MapSettings = {
@@ -28,6 +31,7 @@ export const DEFAULT_SETTINGS: MapSettings = {
   autoOpenMaps: true,
   showRibbon: true,
   explorerBadges: true,
+  welcomed: false,
   mapPrefs: { shape: DEFAULT_PREFS.shape, nodeStyle: DEFAULT_PREFS.nodeStyle, inspectorOpen: false, reduceMotion: false, outlineWidth: "column", mapLayout: "auto", discardEmptyOnEsc: true },
 };
 
@@ -36,12 +40,17 @@ export class MapSettingTab extends PluginSettingTab {
 
   display(): void {
     const { containerEl } = this;
+    const key = (keys: string) => chord(keys, Platform.isMacOS || Platform.isIosApp);
     const s = this.plugin.settings;
     const save = () => this.plugin.saveSettings();
     containerEl.empty();
 
+    new Setting(containerEl).setName("Tour")
+      .setDesc("A map where every node shows a feature by using it. Opens the one in your maps folder, or writes it there.")
+      .addButton(b => b.setButtonText("Take the tour").onClick(() => void this.plugin.openTour()));
+
     new Setting(containerEl).setName("Maps folder")
-      .setDesc(`Where new maps are created. Maps are Markdown files with a ${MARKER} frontmatter key; the tree is a nested list with block ids.`)
+      .setDesc(`Where new maps and the tour are created. A map is a Markdown note with the ${MARKER} property; its list is the tree.`)
       .addText(t => t.setValue(s.mapsFolder).onChange(async v => { s.mapsFolder = v.trim() || DEFAULT_SETTINGS.mapsFolder; await save(); }));
 
     // A map can pin its own theme, node style and layout in its Document panel (⌘/); these
@@ -49,7 +58,7 @@ export class MapSettingTab extends PluginSettingTab {
     new Setting(containerEl).setName("Defaults for new maps").setHeading();
 
     new Setting(containerEl).setName("Theme")
-      .setDesc("Obsidian uses the app's own colours and follows its light or dark mode. A map can pin its own theme in its document panel (⌘/).")
+      .setDesc(`Obsidian uses the app's own colours and follows its light or dark mode. A map can pin its own theme in its document panel (${key("⌘/")}).`)
       .addDropdown(d => {
         d.addOption("auto", "Obsidian");
         for (const t of THEMES) d.addOption(t.id, t.name);
@@ -63,7 +72,7 @@ export class MapSettingTab extends PluginSettingTab {
         .onChange(async v => { s.mapPrefs.nodeStyle = v as NodeStyle; await save(); }));
 
     new Setting(containerEl).setName("Layout")
-      .setDesc(`Where nodes go, for maps that have not chosen: a mind map, ${ORG_CHART ? "an org chart, " : ""}or the positions you give them. ⌘3 in a map pins its choice.`)
+      .setDesc(`Where nodes go, for maps that have not chosen: a mind map, ${ORG_CHART ? "an org chart, " : ""}or the positions you give them. ${key("⌘3")} in a map pins its choice.`)
       .addDropdown(d => d.addOptions(Object.fromEntries(MAP_LAYOUTS.map(l => [l, LAYOUT_LABEL[l]]))).setValue(shownLayout(s.mapPrefs.mapLayout ?? "auto"))
         .onChange(async v => { s.mapPrefs.mapLayout = v as MapLayout; await save(); }));
 
@@ -79,7 +88,7 @@ export class MapSettingTab extends PluginSettingTab {
       .addToggle(t => t.setValue(s.mapPrefs.discardEmptyOnEsc ?? true).onChange(async v => { s.mapPrefs.discardEmptyOnEsc = v; await save(); }));
 
     new Setting(containerEl).setName("Open marked notes as maps")
-      .setDesc(`A note with the ${MARKER} property opens in the map view; that property is the marker — leave it in place. Off: the note opens in the editor, and its file menu still opens it as a map.`)
+      .setDesc(`Notes with the ${MARKER} property open in the map view. Turn off to open them in the editor; the file menu still has Open as a map.`)
       .addToggle(t => t.setValue(s.autoOpenMaps).onChange(async v => { s.autoOpenMaps = v; await save(); }));
 
     new Setting(containerEl).setName("Reduce motion")
@@ -87,11 +96,11 @@ export class MapSettingTab extends PluginSettingTab {
       .addToggle(t => t.setValue(s.mapPrefs.reduceMotion).onChange(async v => { s.mapPrefs.reduceMotion = v; await save(); }));
 
     new Setting(containerEl).setName("Ribbon icon")
-      .setDesc(`Show the ${PLUGIN_NAME} button in the left ribbon: a new map, and the note in front of you as a map. The command palette has both either way.`)
+      .setDesc(`Show the ${PLUGIN_NAME} button in the left ribbon: a new map, the note in front of you as a map, and the tour. The command palette has them all either way.`)
       .addToggle(t => t.setValue(s.showRibbon).onChange(async v => { s.showRibbon = v; await save(); this.plugin.applyRibbon(); }));
 
     new Setting(containerEl).setName("Mark maps in the file explorer")
-      .setDesc(`A note carrying the ${MARKER} key wears a small map tag beside its name.`)
+      .setDesc(`Notes with the ${MARKER} property show a small map tag beside their name.`)
       .addToggle(t => t.setValue(s.explorerBadges).onChange(async v => { s.explorerBadges = v; await save(); this.plugin.decorateExplorer(); }));
   }
 }

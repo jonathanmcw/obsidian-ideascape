@@ -1,7 +1,7 @@
 // obsidian: the vault owns documents (one Markdown note each) and the plugin settings own prefs.
 // What remains here is the shape of the prefs and the helpers other modules import.
 import type { IODoc, MapLayout, NodeId, Shape } from './types.ts'
-import { addChild, bakePositions, emptyDoc, makeNode, uid, walk } from './doc.ts'
+import { bakePositions, emptyDoc, walk } from './doc.ts'
 import { arrangedPositions, freeArrangement } from '../layout/arrange.ts'
 import { DEFAULT_THEME } from '../theme.ts'
 
@@ -70,33 +70,6 @@ export function seedCanvasPositions(doc: IODoc): IODoc {
   const d = bakePositions(doc, pos)
   delete d.unplaced
   return d
-}
-
-function build(name: string, rootText: string, tree: [string, string[]][]): IODoc {
-  let doc: IODoc = { id: uid(), name, rootId: '', nodes: {}, links: [], createdAt: Date.now(), updatedAt: Date.now() }
-  const root = makeNode({ text: rootText })
-  doc.rootId = root.id
-  doc.nodes[root.id] = root
-  for (const [branch, children] of tree) {
-    const [next, bid] = addChild(doc, doc.rootId, branch)
-    doc = next
-    for (const child of children) {
-      const [d2] = addChild(doc, bid, child)
-      doc = d2
-    }
-  }
-  return seedCanvasPositions(doc)
-}
-
-/** The starter map teaches the basics by being a map. */
-export function starterDoc(): IODoc {
-  return build('Start here', 'Welcome to your first map', [
-    ['Tab adds a child', ['select a node, press Tab, start typing']],
-    ['Enter adds a sibling', ['like this one']],
-    ['⌘1 Map · ⌘2 Outline', ['the same ideas, two ways to see them']],
-    ['⌘/ opens the document panel', ['theme, node style and layout for this map']],
-    ['Press ? for every shortcut', ['underneath, the map is a plain Markdown list']],
-  ])
 }
 
 export function newDoc(name = 'Untitled'): IODoc {

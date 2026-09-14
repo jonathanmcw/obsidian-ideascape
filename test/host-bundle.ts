@@ -42,6 +42,8 @@ export class TextFileView extends FileView {
   load(text) { this.lastSavedData = text; this.data = text; this.setViewData(text, true); }
 }
 export const setIcon = () => {};
+export const Platform = { isMacOS: true, isIosApp: false, isMobile: false };
+export class SuggestModal extends Modal {}
 export class Plugin extends Component {
   constructor(app, manifest) { super(); this.app = app; this.manifest = manifest; }
   async loadData() { return null; } async saveData() {}

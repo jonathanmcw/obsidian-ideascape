@@ -6,3 +6,21 @@
 @media (prefers-reduced-motion: reduce) {
   .io-root .node, .io-root .nodes.morphing .node, .io-root .edges, .io-root .world, .io-root .seg-thumb { transition-duration: 1ms !important; transition-delay: 0ms !important; animation: none !important; }
 }
+
+/* The welcome window: three large choices, each teaching where that action lives. */
+.io-welcome { width: min(460px, calc(100vw - 32px)); }
+.io-welcome .io-welcome-lede { margin: 0 0 14px; color: var(--text-muted); }
+.io-welcome .io-welcome-choices { display: flex; flex-direction: column; gap: 8px; }
+.io-welcome .io-welcome-choice {
+  display: flex; align-items: center; justify-content: flex-start; gap: 12px; width: 100%; height: auto; padding: 10px 12px;
+  text-align: start; white-space: normal; border-radius: var(--radius-m); box-shadow: none;
+  background: var(--background-secondary); border: 1px solid var(--background-modifier-border);
+}
+.io-welcome .io-welcome-choice:hover { background: var(--background-modifier-hover); border-color: var(--background-modifier-border-hover); }
+.io-welcome .io-welcome-choice:first-child { border-color: var(--interactive-accent); }
+.io-welcome .io-welcome-icon { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: var(--radius-s); color: var(--interactive-accent); background: var(--background-primary); }
+.io-welcome .io-welcome-words { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; text-align: start; }
+.io-welcome .io-welcome-title { font-weight: var(--font-semibold); color: var(--text-normal); }
+.io-welcome .io-welcome-hint { font-size: var(--font-ui-small); color: var(--text-muted); }
+.io-welcome .modal-button-container { margin-top: 14px; }
+.io-welcome-path { color: var(--text-faint); }

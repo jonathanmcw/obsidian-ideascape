@@ -1,6 +1,8 @@
-import { Menu, Modal, Notice, Plugin, TFile, TFolder, type App, type WorkspaceLeaf } from "obsidian";
+import { Menu, Modal, Notice, Platform, Plugin, TFile, TFolder, normalizePath, type App, type WorkspaceLeaf } from "obsidian";
 import { MapView, MAP_VIEW_TYPE } from "./map-view.ts";
-import { newDoc, seedCanvasPositions, starterDoc } from "./organiser/model/store";
+import { newDoc, seedCanvasPositions } from "./organiser/model/store";
+import { TOUR_NAME, tourMarkdown } from "./tour.ts";
+import { WelcomeModal } from "./welcome.ts";
 import { ORG_CHART } from "./organiser/model/types";
 import { fromMarkdownMap, hasMapKey, isMarkdownMap, toMarkdownMap } from "./organiser/model/markdown";
 import { writeUnique } from "./vault.ts";
@@ -25,12 +27,14 @@ export default class MapPlugin extends Plugin {
     const menu = new Menu();
     menu.addItem(i => i.setTitle("New map").setIcon("git-branch").onClick(() => void this.newMap()));
     const f = this.noteToConvert();
-    if (f) menu.addItem(i => i.setTitle(`Open “${f.basename}” as a map`).setIcon("git-branch").onClick(() => void this.openMap(f)));
+    if (f) menu.addItem(i => i.setTitle(`Open “${f.basename}” as a map`).setIcon("file-symlink").onClick(() => void this.openMap(f)));
+    menu.addSeparator();
+    menu.addItem(i => i.setTitle("Take the tour").setIcon("sparkles").onClick(() => void this.openTour()));
     menu.showAtMouseEvent(evt);
   }
 
   /** The Markdown note in front of the person, if it is not already showing as a map. */
-  private noteToConvert(): TFile | null {
+  noteToConvert(): TFile | null {
     const leaf = this.app.workspace.getMostRecentLeaf();
     if (!leaf || leaf.getViewState().type !== "markdown") return null;
     const p = leafFilePath(leaf);
@@ -84,7 +88,14 @@ export default class MapPlugin extends Plugin {
     this.applyRibbon();
 
     this.addCommand({ id: "new-map", name: "Create a new map", callback: () => void this.newMap() });
-    this.addCommand({ id: "starter-map", name: "Open the starter map", callback: () => void this.newMap("Start here", undefined, starterDoc()) });
+    // The first time the plugin is on: how to make a map, turn a note into one, and where the tour is. Once only.
+    this.app.workspace.onLayoutReady(() => {
+      if (this.settings.welcomed) return;
+      this.settings.welcomed = true;
+      void this.saveSettings();
+      new WelcomeModal(this.app, this).open();
+    });
+    this.addCommand({ id: "starter-map", name: "Take the tour", callback: () => void this.openTour() });
     this.addCommand({ id: "map-export", name: "Export map…", checkCallback: c => this.withMap(c, a => a.export()) });
     this.addCommand({ id: "map-focus", name: "Focus on the selected branch", checkCallback: c => this.withMap(c, a => a.toggleFocus()) });
     this.addCommand({ id: "map-fit", name: "Fit map to window", checkCallback: c => this.withMap(c, a => a.fit()) });
@@ -184,6 +195,17 @@ export default class MapPlugin extends Plugin {
     let file: TFile;
     try { file = await writeUnique(this.app, folder, `${name}.md`, toMarkdownMap(doc)); }
     catch (e) { new Notice(`Could not create the map: ${e instanceof Error ? e.message : String(e)}`); return; }
+    await this.showMap(file);
+  }
+
+  /** The tour map: opened if it is already in the maps folder, written there first if not, so it never piles up copies. */
+  async openTour(): Promise<void> {
+    const existing = this.app.vault.getAbstractFileByPath(normalizePath(`${this.settings.mapsFolder}/${TOUR_NAME}.md`));
+    if (existing instanceof TFile) return this.showMap(existing);
+    let file: TFile;
+    // An iPad with a keyboard uses ⌘ too.
+    try { file = await writeUnique(this.app, this.settings.mapsFolder, `${TOUR_NAME}.md`, tourMarkdown(Platform.isMacOS || Platform.isIosApp)); }
+    catch (e) { new Notice(`Could not create the tour: ${e instanceof Error ? e.message : String(e)}`); return; }
     await this.showMap(file);
   }
 
