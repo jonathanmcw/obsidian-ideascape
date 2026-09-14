@@ -1,0 +1,37 @@
+{
+  "nodes": [
+    {"id":"root","type":"text","x":0,"y":0,"width":260,"height":80,"text":"# Thinking, Fast and Slow 📖\nDaniel Kahneman — core summary"},
+    {"id":"s1","type":"text","x":320,"y":-200,"width":240,"height":70,"text":"Part 1: Two Systems 系统一与系统二"},
+    {"id":"s1a","type":"text","x":620,"y":-260,"width":240,"height":90,"text":"System 1: fast, automatic, emotional. Runs the show more than we think, and is the secret author of many choices."},
+    {"id":"s1b","type":"text","x":620,"y":-150,"width":240,"height":70,"text":"System 2: slow, deliberate, effortful ⚙️"},
+    {"id":"s1b1","type":"text","x":900,"y":-150,"width":220,"height":70,"text":"Lazy controller 懶惰的控制者"},
+    {"id":"s1b1a","type":"text","x":1160,"y":-150,"width":220,"height":70,"text":"Ego depletion"},
+    {"id":"s1b1a1","type":"text","x":1420,"y":-150,"width":220,"height":70,"text":"Glucose & self-control experiments"},
+    {"id":"s1b1a1a","type":"text","x":1680,"y":-150,"width":220,"height":80,"text":"判断疲劳 (judgment fatigue): parole boards rule more harshly before lunch"},
+    {"id":"s2","type":"text","x":320,"y":0,"width":240,"height":70,"text":"Part 2: Heuristics & Biases"},
+    {"id":"s2a","type":"text","x":620,"y":-40,"width":240,"height":70,"text":"Anchoring ⚓ アンカリング効果"},
+    {"id":"s2b","type":"text","x":620,"y":60,"width":240,"height":70,"text":"Availability heuristic"},
+    {"id":"s3","type":"text","x":320,"y":200,"width":240,"height":70,"text":"Part 3: Overconfidence"},
+    {"id":"s3a","type":"text","x":620,"y":200,"width":240,"height":90,"text":"The illusion of validity — we build coherent stories from little data and trust them far too much."},
+    {"id":"empty1","type":"text","x":620,"y":320,"width":180,"height":50,"text":"   "},
+    {"id":"s4","type":"text","x":320,"y":420,"width":240,"height":70,"text":"Part 4: Choices 選擇"},
+    {"id":"s4a","type":"text","x":620,"y":420,"width":240,"height":70,"text":"Prospect theory 損失回避"}
+  ],
+  "edges": [
+    {"id":"e1","fromNode":"root","toNode":"s1"},
+    {"id":"e2","fromNode":"s1","toNode":"s1a"},
+    {"id":"e3","fromNode":"s1","toNode":"s1b"},
+    {"id":"e4","fromNode":"s1b","toNode":"s1b1"},
+    {"id":"e5","fromNode":"s1b1","toNode":"s1b1a"},
+    {"id":"e6","fromNode":"s1b1a","toNode":"s1b1a1"},
+    {"id":"e7","fromNode":"s1b1a1","toNode":"s1b1a1a"},
+    {"id":"e8","fromNode":"root","toNode":"s2"},
+    {"id":"e9","fromNode":"s2","toNode":"s2a"},
+    {"id":"e10","fromNode":"s2","toNode":"s2b"},
+    {"id":"e11","fromNode":"root","toNode":"s3"},
+    {"id":"e12","fromNode":"s3","toNode":"s3a"},
+    {"id":"e13","fromNode":"root","toNode":"s4"},
+    {"id":"e14","fromNode":"s4","toNode":"s4a"},
+    {"id":"e15","fromNode":"s2a","toNode":"s3a","label":"feeds overconfidence","fromSide":"right","toSide":"left"}
+  ]
+}

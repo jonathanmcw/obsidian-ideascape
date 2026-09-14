@@ -1,0 +1,33 @@
+{
+  "name": "obsidian-ideascape",
+  "version": "0.9.0",
+  "description": "An Obsidian plugin that turns a note into a keyboard-first mindmap with an outline view, stored as a plain Markdown list.",
+  "main": "main.js",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production && node scripts/build-css.mjs",
+    "dev": "node scripts/build-css.mjs && node esbuild.config.mjs",
+    "css": "node scripts/build-css.mjs",
+    "test": "node --test test/*.test.ts",
+    "lint": "eslint src manifest.json package.json",
+    "install:vault": "node scripts/install.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.39.5",
+    "eslint-plugin-obsidianmd": "^0.4.2",
+    "obsidian": "^1.13.1",
+    "tslib": "^2.8.0",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.70.0"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}

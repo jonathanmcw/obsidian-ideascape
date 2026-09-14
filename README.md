@@ -1,0 +1,112 @@
+# Ideascape
+
+Turn a note into a keyboard-first mindmap, and read the same note as an outline. The map stays a plain Markdown list, so the note still works everywhere else in Obsidian.
+
+![A podcast plan as a mind map in Obsidian's dark theme](docs/screenshots/01-map-dark.png)
+
+## What it does
+
+- **One note, two views.** Press ⌘1 for the map and ⌘2 for the outline. Both edit the same note.
+- **Built for the keyboard.** Tab adds a child, Enter adds a sibling, the arrow keys move around, and typing replaces the selected node's text. Press `?` in a map to see every shortcut.
+- **Plain Markdown underneath.** The title is the note's heading and each node is a list item with a block id, so you can link to any node (`[[Plan#^a1b2c3]]`), search it, and read it on mobile or in git.
+- **Mind map or free layout.** Branches spread either side of the centre, or you place nodes yourself. Tidy puts a free layout back in order.
+- **Formatting while you type.** Bold, italic, underline, strikethrough, highlight, code, links, headings, alignment, checkboxes and numbered items, from the keyboard or the bar above the node.
+- **Themes that fit your vault.** Follow your Obsidian theme in light or dark mode, pick Paper, Slate, Graphite or Midnight, or make your own. Each map can keep its own theme and node style.
+- **Focus on one branch.** Hide everything else while you work on it.
+- **Bring things in, send things out.** Paste a Markdown list, drop in a `.canvas` or OPML file, or drag notes from the file explorer. Export as PNG, Markdown, OPML or JSON Canvas.
+
+![The same note as an outline](docs/screenshots/02-outline-dark.png)
+
+## Getting started
+
+1. Install the plugin from **Settings → Community plugins → Browse** and turn it on.
+2. Create a map with the ribbon button or the command **Create a new map**. To use a note you already have, choose **Open as a map** from its file menu.
+3. Start typing. The starter map (command **Open the starter map**) walks through the basics.
+
+### Keys to know
+
+| Keys | What they do |
+|---|---|
+| Tab · Enter | Add a child · add a sibling |
+| ⇧Tab | Move a node out a level |
+| ↑ ↓ ← → | Move the selection (hold ⇧ to add to it) |
+| ⌘E or double-click | Edit the node's text |
+| ⌘B ⌘I ⌘U | Bold · italic · underline |
+| ⌘↑ ⌘↓ | Reorder among siblings |
+| ⌘. | Fold or unfold a branch |
+| ⌥⌘F | Focus on the selected branch |
+| ⌘F | Find in the map |
+| ⌘1 ⌘2 | Map · outline |
+| ⌥⌘= ⌥⌘- · ⇧⌘0 | Zoom in · zoom out · fit the map to the window |
+| ⌘/ | Document panel: theme and node style |
+| ⌘Z · ⇧⌘Z | Undo · redo |
+
+On Windows and Linux, use Ctrl for ⌘.
+
+![A trip plan in the Paper theme, with the document panel open](docs/screenshots/04-themes-light.png)
+
+## How a map is saved
+
+A map is an ordinary Markdown note with one property that marks it.
+
+![The same note as Markdown beside its map](docs/screenshots/06-markdown-and-map.png)
+
+Opened as text, it looks like this:
+
+```markdown
+---
+ideascape: root
+---
+# Weekend in Kyoto
+
+- Friday ^v31gjg
+  - Arrive by train ^wckm2y
+  - Gion at dusk ^xtrtau
+- Saturday ^or3x1k
+  - Fushimi Inari ^kooah6
+
+%%ideascape
+{"v":1,"pos":{"root":[0,0],"v31gjg":[-177,-92]}}
+%%
+```
+
+- The heading is the centre of the map, and the nested list is the tree.
+- Any other text in the note (paragraphs, code, callouts) stays where you wrote it.
+- Positions, folds and the map's own look are kept in the `%%` comment at the end, which Obsidian doesn't show in reading view. Delete it and the map simply lays itself out again.
+- Turning a note you already have into a map only adds the property, block ids and that comment. If more would change, the plugin asks first and offers to work on a copy.
+
+![The shortcuts sheet, opened with ? in any map](docs/screenshots/05-shortcuts-dark.png)
+
+## Settings
+
+- **Maps folder:** where new maps are created.
+- **Defaults for new maps:** theme, node style and layout. A map's document panel can override each one.
+- **Outline width:** a centred column or the full window.
+- **Esc removes an empty node:** leaving a node you haven't typed in takes it back out.
+- **Open marked notes as maps:** turn off to open map notes in the editor, with **Open as a map** in the file menu.
+- **Reduce motion**, **Ribbon icon** and **Mark maps in the file explorer**.
+
+## Privacy
+
+The plugin works entirely offline. It makes no network requests, collects no data, and only writes to the maps you edit, new maps you create and files you export.
+
+## Compatibility
+
+Obsidian 1.7.2 or later, on desktop and mobile.
+
+## Development
+
+```bash
+npm install
+npm run build          # type-check, bundle main.js, write styles.css
+npm run dev            # rebuild main.js on change
+npm test               # node --test
+npm run lint           # eslint-plugin-obsidianmd
+npm run install:vault -- /path/to/vault [--enable]   # or set OBSIDIAN_VAULT
+```
+
+Releases are built by GitHub Actions when a version tag (for example `0.9.0`) is pushed: the workflow builds, attests `main.js`, `manifest.json` and `styles.css`, and drafts the release.
+
+## License
+
+[MIT](LICENSE) © Jonathan Wong
