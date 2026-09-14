@@ -1,11 +1,11 @@
-import { Menu, Modal, Notice, Platform, Plugin, TFile, TFolder, normalizePath, type App, type WorkspaceLeaf } from "obsidian";
+import { Menu, Modal, Notice, Platform, Plugin, TFile, TFolder, type App, type WorkspaceLeaf } from "obsidian";
 import { MapView, MAP_VIEW_TYPE } from "./map-view.ts";
 import { newDoc, seedCanvasPositions } from "./organiser/model/store";
 import { TOUR_NAME, tourMarkdown } from "./tour.ts";
 import { WelcomeModal } from "./welcome.ts";
 import { ORG_CHART } from "./organiser/model/types";
 import { fromMarkdownMap, hasMapKey, isMarkdownMap, toMarkdownMap } from "./organiser/model/markdown";
-import { writeUnique } from "./vault.ts";
+import { findPath, writeUnique } from "./vault.ts";
 import { conversionChange, frontmatterHead } from "./host-logic.ts";
 import { DEFAULT_SETTINGS, MapSettingTab, type MapSettings } from "./settings.ts";
 import { PLUGIN_NAME } from "./brand.ts";
@@ -200,7 +200,7 @@ export default class MapPlugin extends Plugin {
 
   /** The tour map: opened if it is already in the maps folder, written there first if not, so it never piles up copies. */
   async openTour(): Promise<void> {
-    const existing = this.app.vault.getAbstractFileByPath(normalizePath(`${this.settings.mapsFolder}/${TOUR_NAME}.md`));
+    const existing = findPath(this.app, `${this.settings.mapsFolder}/${TOUR_NAME}.md`);
     if (existing instanceof TFile) return this.showMap(existing);
     let file: TFile;
     // An iPad with a keyboard uses ⌘ too.

@@ -297,6 +297,67 @@ test("new files: a name that differs only in case, or is taken between the look 
   await assert.rejects(m.writeUnique(app, "maps", "Idea.md", "x"), /EACCES/);
 });
 
+/** A vault over a real folder tree. Paths are looked up by exact case, as Obsidian's are; `caseBlind` is a macOS or
+ *  Windows disk, where create and createFolder refuse a name that differs from one on disk only in case. */
+const treeVault = (m: Stub, entries: string[], caseBlind = true) => {
+  type Node = { path: string; name: string; children?: Node[] };
+  const root = new m.TFolder("/", []) as Node;
+  const byPath = new Map<string, Node>();
+  const made: string[] = [];
+  const clash = (p: string) => (caseBlind ? [...byPath.keys()].some(k => k.toLowerCase() === p.toLowerCase()) : byPath.has(p));
+  const add = (p: string, folder: boolean): Node => {
+    const cut = p.lastIndexOf("/");
+    const parent = cut < 0 ? root : byPath.get(p.slice(0, cut)) ?? add(p.slice(0, cut), true);
+    const node = (folder ? new m.TFolder(p, []) : new m.TFile(p)) as Node;
+    parent.children!.push(node);
+    byPath.set(p, node);
+    return node;
+  };
+  for (const e of entries) add(e.replace(/\/$/, ""), e.endsWith("/"));
+  const vault = {
+    getAbstractFileByPath: (p: string) => byPath.get(p) ?? null,
+    getRoot: () => root,
+    createFolder: async (p: string) => { if (clash(p)) throw new Error("Folder already exists."); made.push(`${p}/`); return add(p, true); },
+    create: async (p: string) => { if (clash(p)) throw new Error("File already exists."); made.push(p); return add(p, false); },
+  };
+  return { vault, made };
+};
+
+test("new files: the maps folder is found whatever its case, so `maps` writes into an existing `Maps`", async () => {
+  const m = await loadHost<Stub & { writeUnique: (app: object, folder: string, name: string, content: string) => Promise<{ path: string }> }>("../src/vault.ts");
+  // The demo vault, and many others, spell it `Maps`; the setting's default is `maps`.
+  const { vault, made } = treeVault(m, ["Maps/", "Maps/Idea.md", "Maps/Trips/"]);
+  const app = { vault };
+  assert.equal((await m.writeUnique(app, "maps", "Trip.md", "x")).path, "Maps/Trip.md");
+  assert.equal((await m.writeUnique(app, "maps", "idea.md", "x")).path, "Maps/idea-2.md", "the names beside it are the real folder's");
+  assert.equal((await m.writeUnique(app, "MAPS/trips", "Lisbon.md", "x")).path, "Maps/Trips/Lisbon.md", "every segment is matched");
+  // A missing folder is made inside the one that is there, under the name asked for.
+  assert.equal((await m.writeUnique(app, "maps/trips/2026", "Porto.md", "x")).path, "Maps/Trips/2026/Porto.md");
+  assert.deepEqual(made, ["Maps/Trip.md", "Maps/idea-2.md", "Maps/Trips/Lisbon.md", "Maps/Trips/2026/", "Maps/Trips/2026/Porto.md"]);
+  // A file where the folder should be is reported, not written around.
+  const { vault: blocked } = treeVault(m, ["maps"]);
+  await assert.rejects(m.writeUnique({ vault: blocked }, "Maps", "Trip.md", "x"), /not a folder/);
+
+  // A disk that keeps case (Linux) can hold `Maps` and `maps` side by side: the exact name wins.
+  const { vault: linux } = treeVault(m, ["Maps/", "maps/"], false);
+  assert.equal((await m.writeUnique({ vault: linux }, "maps", "Trip.md", "x")).path, "maps/Trip.md");
+  assert.equal((await m.writeUnique({ vault: linux }, "Maps", "Trip.md", "x")).path, "Maps/Trip.md");
+});
+
+test("take the tour: a tour already in `Maps` is reopened when the setting says `maps`, not written again", async () => {
+  const m = await loadHost<Stub & { module: { default: new (app: object, manifest: object) => Record<string, any> } }>("../src/main.ts");
+  const { vault, made } = treeVault(m, ["Maps/", "Maps/Ideascape tour.md"]);
+  const opened: string[] = [];
+  const leaf = { setViewState: async (s: { state: { file: string } }) => { opened.push(s.state.file); } };
+  const app = { vault, workspace: { getLeaf: () => leaf, revealLeaf: async () => {} } };
+  const plugin = new m.module.default(app, {});
+  assert.equal(plugin.settings.mapsFolder, "maps");
+  await plugin.openTour();
+  assert.deepEqual(opened, ["Maps/Ideascape tour.md"]);
+  assert.deepEqual(made, [], "no second tour");
+  assert.deepEqual(m.notices, []);
+});
+
 /* ---------- quit and background saves ---------- */
 
 test("map view: an edit leaves `data` different from what was saved, which is what Obsidian's quit save checks", async () => {
