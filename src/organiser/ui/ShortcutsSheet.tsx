@@ -1,125 +1,164 @@
-import { useEffect, useRef } from 'react'
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { IconClose } from './Icons'
-import { ORG_CHART } from '../model/types'
+import { ESSENTIALS, GROUPS, SEARCHABLE, capLabel, filterGroups, isCap, platformCaps, type Shortcut } from './keys'
 
 interface Props {
   onClose: () => void
+  onTour?: () => void
+  mac?: boolean
 }
 
-type Group = { title: string; rows: [string, string][] }
+// Only a fallback: the view passes `mac` from Platform.isMacOS. The plugin's lint forbids navigator.platform and
+// userAgent, and the organiser imports nothing from Obsidian, so this reads the platform class Obsidian puts on <body>.
+function detectMac(): boolean {
+  const body = activeDocument.body.classList
+  return body.contains('mod-macos') || body.contains('is-ios')
+}
 
-// Two columns, balanced by hand: 18 rows under two headings against 17 under three. A row-major
-// grid paired the tallest section with the shortest and left a hole under Shapes.
-const COLUMNS: Group[][] = [
-  [
+/** A row's keys: one cap per key, alternatives joined by a muted "or", gestures and typed text as plain words. */
+function Keys({ row, mac }: { row: Shortcut; mac: boolean }) {
+  return (
+    <>
+      {row.keys.map((alt, i) => (
+        <Fragment key={i}>
+          {i > 0 && <span className="sk-or">or</span>}
+          {platformCaps(alt, mac).map((token, j) =>
+            isCap(token, row.mouse) ? (
+              <kbd className="sk-cap" key={j}>
+                {capLabel(token, mac)}
+              </kbd>
+            ) : (
+              <span className="sk-word" key={j}>
+                {token}
+              </span>
+            ),
+          )}
+        </Fragment>
+      ))}
+    </>
+  )
+}
 
-  {
-    title: 'Build the map',
-    rows: [
-      ['Tab', 'Add a child · in the Outline, move the row in under the one above'],
-      ['Enter', 'Add a sibling'],
-      ['any letter', 'Type straight into the selection — the new text replaces the old'],
-      ['⌘E', 'Edit the text in place, caret at the end · ⌘E or Esc leaves · F2 selects it all'],
-      ['Esc', 'Leave the node — if it is still empty, it goes away'],
-      ['⇧Enter', 'New line inside the same node'],
-      ['⇧Tab', 'Move the row out a level'],
-      ['⌘Enter', 'Checkbox: add one · tick it · untick it — the file gets - [ ] and - [x]'],
-      ['⇧⌘7', 'Numbered item — numbers follow the order, the file gets 1. 2. 3.'],
-      ['⌫', 'Delete the selection and everything under it'],
-      ['⌘Z / ⇧⌘Z', 'Undo · redo — while typing, the typing first'],
-    ],
-  },
-  {
-    title: 'With the mouse',
-    rows: [
-      ['double-click', 'Edit a node, all its text selected · on a node’s edge, go back to its natural width'],
-      ['while typing', 'The bar above the node: formatting, text size and branch colour'],
-      ['drag empty space', 'Select several nodes · ⇧-click adds one · Esc clears'],
-      ['scroll · ⌘-scroll', 'Pan · zoom the Map — or drag with ⌥, Space or the middle button · the Outline scrolls'],
-      ['drag the +', 'Pull a new idea out of a node — click it to fold the branch'],
-      ['drag a node', `${ORG_CHART ? 'Mind map and Org chart' : 'Mind map'}: drop it on another to re-parent, or between siblings to reorder · Free layout: move it, branch and all`],
-      ['⌥ drag', 'Free layout: move one node out of its branch'],
-    ],
-  },
-  ],
-  [
-  {
-    title: 'While typing',
-    rows: [
-      ['⌘B ⌘I ⌘U', 'Bold · italic · underline — the bar above the node has strike, highlight, code and [[link]]'],
-      ['#tag', 'Node text is Markdown, so the file reads the same in Obsidian · type #tag to tag a node, click a tag to search it'],
-      ['⇧⌘V', 'Paste as plain text — ⌘V keeps pasted [[links]] and **bold** as Markdown'],
-    ],
-  },
-  {
-    title: 'Move around',
-    rows: [
-      ['↑ ↓ ← →', 'Move the selection — ⇧ keeps what is selected and adds the next node'],
-      ['⌘F', 'Find in the map · Enter or ⌘G goes to the next match, with ⇧ the one before · Esc closes'],
-      ['⌘A', 'Select every node on show — in focus, the branch’s'],
-      ['⌘C ⌘X ⌘V', 'Copy, cut, paste branches — as a Markdown list, so they paste into notes too'],
-      ['⌘↑ / ⌘↓', 'Reorder among siblings — ⌥↑ ⌥↓ too, except in Free layout'],
-      ['⌥ arrows', 'Free layout: nudge the branch · with ⇧, further'],
-      ['⌘. ', 'Collapse or expand — children become a count, not a deletion'],
-      ['⌥⌘F', 'Focus the selected branch · Esc leaves'],
-      ['⇧⌘0 ⌥⌘= ⌥⌘-', 'Fit · zoom in · zoom out — the Outline stays at 100%'],
-    ],
-  },
-  {
-    title: 'Shapes',
-    rows: [
-      ['⌘1 ⌘2', 'Map · Outline'],
-      ['⌘3', ORG_CHART
-        ? 'Map layout: Mind map, Org chart, Free in turn — Free starts from the arrangement you came from, and Tidy puts it back in that order, or just the nodes you have selected'
-        : 'Map layout: Mind map or Free — Tidy puts Free back in mind-map order, or just the nodes you have selected'],
-      ['⌘/', 'Document panel — theme and node style, saved with the map'],
-      ['⇧⌘L E R', 'Align the node’s text left, centre, right'],
-      ['⌥⌘1 2 3', 'Heading 1, 2, 3 for the selection · ⌥⌘0 back to body text'],
-    ],
-  },
-  ],
-]
+export function ShortcutsSheet({ onClose, onTour, mac: macProp }: Props) {
+  const mac = macProp ?? detectMac()
+  const [query, setQuery] = useState('')
+  const filtering = query.trim() !== ''
+  const groups = useMemo(() => (filtering ? filterGroups(SEARCHABLE, query) : GROUPS), [filtering, query])
 
-export function ShortcutsSheet({ onClose }: Props) {
-  // Keys go to the sheet while it is open, not to the map behind the scrim.
+  // Keys go to the sheet while it is open, not to the map behind the scrim; the filter takes them first.
   const dialog = useRef<HTMLDivElement>(null)
+  const field = useRef<HTMLInputElement>(null)
   useEffect(() => {
-    dialog.current?.focus({ preventScroll: true })
+    field.current?.focus({ preventScroll: true })
   }, [])
+
+  // The sheet keeps its opening height while filtering: centred in the scrim, a sheet that shrank with every
+  // keystroke would move the field being typed into. min() lets a window made smaller still win.
+  const [openHeight, setOpenHeight] = useState<number>()
+  useLayoutEffect(() => {
+    setOpenHeight(dialog.current?.offsetHeight)
+  }, [])
+
+  // Esc clears the filter before it closes the sheet. MapApp closes sheets from a bubbling listener on the view
+  // root and ignores keys typed in a field, so this listens in capture, ahead of it: with text, Esc stops here;
+  // with an empty field it closes from here; from anywhere else in the sheet it carries on to MapApp.
+  useEffect(() => {
+    const el = dialog.current
+    if (!el) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.isComposing) return
+      const inField = e.target === field.current
+      if (!query && !inField) return
+      e.preventDefault()
+      e.stopPropagation()
+      if (query) {
+        setQuery('')
+        field.current?.focus({ preventScroll: true })
+      } else onClose()
+    }
+    el.addEventListener('keydown', onKey, true)
+    return () => el.removeEventListener('keydown', onKey, true)
+  }, [query, onClose])
+
   return (
     <div className="scrim" onMouseDown={onClose}>
-      <div ref={dialog} tabIndex={-1} style={{ outline: 'none' }} className="sheet wide" onMouseDown={(e) => e.stopPropagation()} role="dialog" aria-label="Keyboard shortcuts">
+      <div
+        ref={dialog}
+        tabIndex={-1}
+        style={{ outline: 'none', minHeight: openHeight ? `min(${openHeight}px, 100%)` : undefined }}
+        className={`sheet wide sk-sheet${mac ? ' is-mac' : ''}`}
+        onMouseDown={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-label="Keyboard shortcuts"
+      >
         <div className="sheet-head">
           <h2>Shortcuts</h2>
+          <input
+            ref={field}
+            className="sk-filter"
+            type="search"
+            placeholder="Filter shortcuts"
+            aria-label="Filter shortcuts"
+            spellCheck={false}
+            autoComplete="off"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
           <button className="icon-btn" onClick={onClose} title="Close" aria-label="Close">
             <IconClose />
           </button>
         </div>
 
-        <div className="keys">
-          {COLUMNS.map((col, i) => (
-            <div className="keys-col" key={i}>
-              {col.map((g) => (
+        {!filtering && (
+          <ul className="sk-essentials" aria-label="Essentials">
+            {ESSENTIALS.map((row) => (
+              <li key={row.label}>
+                <span className="sk-keys">
+                  <Keys row={row} mac={mac} />
+                </span>
+                {row.label}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className="sk-body">
+          {groups.length ? (
+            <div className="sk-cols">
+              {groups.map((g) => (
                 <section key={g.title}>
                   <h3>{g.title}</h3>
                   <dl>
-                    {g.rows.map(([key, what]) => (
-                      <div key={key}>
+                    {g.rows.map((row) => (
+                      <div key={row.label}>
                         <dt>
-                          <kbd>{key.trim()}</kbd>
+                          <Keys row={row} mac={mac} />
                         </dt>
-                        <dd>{what}</dd>
+                        <dd>{row.label}</dd>
                       </div>
                     ))}
                   </dl>
                 </section>
               ))}
             </div>
-          ))}
+          ) : (
+            <p className="sk-empty">No shortcut matches “{query.trim()}”</p>
+          )}
         </div>
 
-        <p className="sheet-note">
-          The map is meant to be built without touching the mouse. Tab and Enter alone will get you a long way.
+        <p className="sheet-note sk-note">
+          <span>Commands can be given your own keys in Settings › Hotkeys.</span>
+          {onTour && (
+            <button
+              className="sk-link"
+              onClick={() => {
+                onTour()
+                onClose()
+              }}
+            >
+              Take the tour
+            </button>
+          )}
         </p>
       </div>
     </div>

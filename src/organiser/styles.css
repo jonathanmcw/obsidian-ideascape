@@ -1206,53 +1206,191 @@
 }
 
 .io-root .sheet.wide {
-  width: min(680px, 100%);
+  width: min(960px, 100%);
 }
 
-.io-root .keys {
+/* ---------------------------- shortcuts sheet ---------------------------- */
+
+/* Sized to show whole, unscrolled, in a 1147×765 window: the view is about 1100×660, which leaves the sheet
+   588px inside the scrim. Head 49 + essentials 35 + the tallest column 446 (Build and Format: 16 rows at
+   20px with 3px between, two 22px headings, 14px under each group, 12px above) + note 38 + borders 2 = 570.
+   The body still scrolls when a window is smaller than that. */
+.io-root .sk-sheet {
+  /* The key column's floor. On a Mac it is the widest key of all (⇧⌘ L E R), so every group's labels start at the
+     same x. Ctrl and Shift are wider: past the floor a group's keys take the room they need from its labels. */
+  --sk-key-w: 131px;
+  container-type: inline-size;
+}
+.io-root .sk-sheet.is-mac {
+  --sk-key-w: 118px;
+}
+.io-root .sk-sheet .sheet-head {
+  padding: 10px 10px 10px 20px;
+}
+.io-root .sk-sheet .sheet-head .icon-btn {
+  width: 28px;
+  height: 28px;
+}
+.io-root .sk-filter {
+  flex: 0 1 240px;
+  min-width: 0;
+  height: 28px;
+  margin: 0;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: none;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.io-root .sk-filter::placeholder { color: var(--ink-3); }
+.io-root .sk-filter:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.io-root .sk-filter::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; margin-inline-start: 6px; cursor: pointer; background: currentColor; opacity: 0.6; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 2l8 8M10 2l-8 8' stroke='black' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 2l8 8M10 2l-8 8' stroke='black' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; }
+
+/* the six to learn first, in one row that wraps */
+.io-root .sk-essentials {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+  margin: 0;
+  padding: 7px 20px;
+  list-style: none;
+  font-size: 12.5px;
+  color: var(--ink);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+}
+.io-root .sk-essentials li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  white-space: nowrap;
+}
+.io-root .sk-keys {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* The multicol sits inside the scroller, not on it: columns given a fixed height overflow sideways into
+   extra columns instead of scrolling down. */
+.io-root .sk-body {
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 4px 28px;
-  padding: 12px 20px 16px;
+  padding: 12px 20px 0;
 }
-.io-root .keys-col {
-  min-width: 0;
+.io-root .sk-cols {
+  columns: 3;
+  column-gap: 24px;
 }
-.io-root .keys section + section {
-  margin-top: 10px;
+@container (max-width: 760px) {
+  .io-root .sk-cols { columns: 2; }
 }
-.io-root .keys h3 {
-  margin: 8px 0 8px;
+@container (max-width: 520px) {
+  .io-root .sk-cols { columns: 1; }
+}
+/* padding, not margin: margins next to a column break are dropped, which would throw out the sums above */
+.io-root .sk-cols section {
+  break-inside: avoid;
+  padding-bottom: 14px;
+}
+.io-root .sk-cols h3 {
+  margin: 0 0 6px;
   font-size: 11px;
   font-weight: 600;
+  line-height: 16px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--ink-3);
 }
-/* One grid per section, so its key column is exactly as wide as its widest key
-   — "drag empty space" and "⌘C ⌘X ⌘V" no longer run into their descriptions. */
-.io-root .keys dl {
+/* One grid per group; the key column's floor keeps labels in line with the groups above and below them,
+   and a wider key (⇧⌘ L E R) still gets its room. */
+.io-root .sk-cols dl {
   margin: 0;
   display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  gap: 7px 10px;
-  align-items: baseline;
+  grid-template-columns: minmax(var(--sk-key-w), max-content) minmax(0, 1fr);
+  gap: 3px 8px;
+  align-items: center;
 }
-.io-root .keys dl > div {
+.io-root .sk-cols dl > div {
   display: contents;
 }
-.io-root .keys dt {
+.io-root .sk-cols dt {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 3px;
+  min-height: 20px;
   margin: 0;
-  text-align: end;
 }
-.io-root .keys dd {
+.io-root .sk-cols dd {
   margin: 0;
   font-size: 12.5px;
-  line-height: 1.4;
+  line-height: 17px;
+  color: var(--ink);
+}
+
+/* A key cap in the system font, not the monospace of .io-root kbd, so ⌘ ⌥ ⇧ draw at their proper size. */
+.io-root .sk-cap {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  margin: 0;
+  padding: 0 5px;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1;
   color: var(--ink-2);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  box-shadow: none;
+  white-space: nowrap;
+}
+.io-root .sk-or {
+  margin: 0 2px;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+/* gestures and typed text are not keys */
+.io-root .sk-word {
+  font-size: 12px;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.io-root .sk-empty {
+  margin: 0;
+  padding: 28px 0 40px;
+  font-size: 13px;
+  text-align: center;
+  color: var(--ink-3);
+}
+.io-root .sheet-note.sk-note {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 20px 11px;
+}
+.io-root .sk-link {
+  margin-left: auto;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.io-root .sk-link:hover {
+  text-decoration: underline;
 }
 
 .io-root .sheet-head {

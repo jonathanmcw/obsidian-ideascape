@@ -96,6 +96,10 @@ export interface MapAppProps {
   fileKey?: string
   /** obsidian: [[wikilinks]] and URLs inside nodes are opened by the host. */
   onOpenLink?: (href: string, wiki: boolean) => void
+  /** obsidian: opens the tour map; the shortcuts sheet links to it. */
+  onTour?: () => void
+  /** obsidian: the keyboard uses ⌘ and ⌥ (a Mac, or an iPad), so shortcuts are shown that way; otherwise Ctrl and Alt. */
+  mac?: boolean
   /** obsidian: ![[embeds]] resolve to a URL the <img>/<audio> can load. */
   resolveEmbed?: (file: string) => { url: string; kind: 'image' | 'audio' } | null
   /** obsidian: save a pasted file into the vault; returns the link text to embed, or null. */
@@ -169,7 +173,7 @@ export interface MapCommands {
 }
 export type { Format }
 
-export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onApi, onOpenLink, resolveEmbed, onSaveAttachment, linksFromDrag, onHoverLink, onOpenTag, customTheme, onCustomTheme, fileName, fileKey, onRenameFile, onContextMenu }: MapAppProps) {
+export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onApi, onOpenLink, onTour, mac, resolveEmbed, onSaveAttachment, linksFromDrag, onHoverLink, onOpenTag, customTheme, onCustomTheme, fileName, fileKey, onRenameFile, onContextMenu }: MapAppProps) {
   // The custom theme is a registry entry: register before anything looks a theme up this render.
   const customThemeDef = useMemo(() => customTheme ?? defaultCustomTheme(), [customTheme])
   registerCustomTheme(customThemeDef)
@@ -1699,7 +1703,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
           palette={palette}
           onClose={closeSheet}
         />}
-      {showKeys && <ShortcutsSheet onClose={closeSheet} />}
+      {showKeys && <ShortcutsSheet onClose={closeSheet} onTour={onTour} mac={mac} />}
     </div>
   )
 }
