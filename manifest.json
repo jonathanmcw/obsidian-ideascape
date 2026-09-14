@@ -6,5 +6,6 @@
   "description": "Turn a note into a keyboard-first mindmap with an outline view. The map stays a plain Markdown list you can read and edit anywhere.",
   "author": "Jonathan Wong",
   "authorUrl": "https://github.com/jonathanmcw",
+  "fundingUrl": "https://buymeacoffee.com/jonathanmcw",
   "isDesktopOnly": false
 }

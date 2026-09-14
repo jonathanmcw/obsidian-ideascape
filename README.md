@@ -115,6 +115,12 @@ npm run install:vault -- /path/to/vault [--enable]   # or set OBSIDIAN_VAULT
 
 Releases are built by GitHub Actions when a version tag (for example `0.9.0`) is pushed: the workflow builds, attests `main.js`, `manifest.json` and `styles.css`, and drafts the release.
 
+## Support
+
+Ideascape is free. If it helps you think, you can buy me a coffee.
+
+<a href="https://buymeacoffee.com/jonathanmcw"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy me a coffee" height="40"></a>
+
 ## License
 
 [MIT](LICENSE) © Jonathan Wong
