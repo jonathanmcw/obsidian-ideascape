@@ -2,6 +2,7 @@ import type * as React from 'react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { Align } from '../model/types'
 import { FORMAT_LABEL, type Format } from './format'
+import { chord } from './keys'
 import { IconAlign, IconCheck, IconCheckbox, IconIndent, IconMore, IconNumbered, IconOutdent } from './Icons'
 import { ColourPicker } from './ColourPicker'
 import { hueOf as hueOfHex, sortByHue, toneOf, withHue } from '../colour'
@@ -305,7 +306,7 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
       {tip && (
         <div ref={tipRef} className="nt-tip" style={{ left: tip.left }} aria-hidden="true">
           <span>{tip.label}</span>
-          {tip.keys && <kbd>{tip.keys}</kbd>}
+          {tip.keys && <kbd>{chord(tip.keys)}</kbd>}
         </div>
       )}
       {/* The open menu sits on the far side of the bar from the node, so it never covers the text. */}
@@ -314,7 +315,7 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
           {SIZES.map(([z, , label, keys]) => (
             <button key={label} type="button" tabIndex={-1} role="menuitemradio" className={node.size === z ? 'is-on' : ''} aria-checked={node.size === z} onClick={() => { onSize(z); setMenu(null) }}>
               <span>{label}</span>
-              <span className="nt-hint">{keys}</span>
+              <span className="nt-hint">{chord(keys)}</span>
             </button>
           ))}
         </div>
@@ -406,7 +407,7 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
           <button key={f} type="button" tabIndex={-1} className={`fmt fmt-${f}`} onClick={() => onFormat(f)}>
             <FormatIcon f={f} />
             <Name tip={FORMAT_LABEL[f].title} keys={FORMAT_LABEL[f].keys}>
-              {FORMAT_LABEL[f].keys ? `${FORMAT_LABEL[f].title} — ${FORMAT_LABEL[f].keys}` : FORMAT_LABEL[f].title}
+              {FORMAT_LABEL[f].keys ? `${FORMAT_LABEL[f].title} — ${chord(FORMAT_LABEL[f].keys)}` : FORMAT_LABEL[f].title}
             </Name>
           </button>
         ))}
@@ -421,7 +422,7 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
         {ALIGNS.map(([a, label, keys]) => (
           <button key={a} type="button" tabIndex={-1} className={node.align === a ? 'is-on' : ''} aria-pressed={node.align === a} onClick={() => onAlign(a)}>
             <IconAlign align={a} />
-            <Name tip={label} keys={keys}>{`${label} — ${keys}`}</Name>
+            <Name tip={label} keys={keys}>{`${label} — ${chord(keys)}`}</Name>
           </button>
         ))}
         {!node.isRoot && (
@@ -430,11 +431,11 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
             {/* The two list kinds a node can be. */}
             <button type="button" tabIndex={-1} className={node.ordered ? 'is-on' : ''} aria-pressed={node.ordered} onClick={onOrdered}>
               <IconNumbered />
-              <Name tip="Numbered item" keys="⇧⌘7">Numbered item — ⇧⌘7</Name>
+              <Name tip="Numbered item" keys="⇧⌘7">{`Numbered item — ${chord('⇧⌘7')}`}</Name>
             </button>
             <button type="button" tabIndex={-1} className={node.task ? 'is-on' : ''} aria-pressed={node.task} onClick={onTask}>
               <IconCheckbox />
-              <Name tip="Checkbox" keys="⌘Enter">Checkbox — ⌘Enter ticks it</Name>
+              <Name tip="Checkbox" keys="⌘Enter">{`Checkbox — ${chord('⌘Enter')} ticks it`}</Name>
             </button>
           </>
         )}

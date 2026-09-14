@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactElement } from 'react'
 import type { Arrangement, MapLayout, Shape } from '../model/types'
 import { LAYOUT_LABEL, MAP_LAYOUTS, SHAPES, SHAPE_LABEL } from '../model/types'
 import type { OutlineWidth } from '../model/store'
+import { chord } from './keys'
 import { IconAuto, IconColumn, IconExport, IconFocus, IconFree, IconFull, IconMore, IconOrg, IconSliders, IconTidy } from './Icons'
 
 interface Props {
@@ -80,7 +81,7 @@ export function Toolbar({
       <div className="seg seg-shape" style={{ ['--seg-index' as string]: index, ['--seg-count' as string]: SHAPES.length }}>
         <span className="seg-thumb" />
         {SHAPES.map((s, i) => (
-          <button key={s} className={`seg-btn${s === shape ? ' is-on' : ''}`} onClick={() => onShape(s)} aria-label={`${SHAPE_LABEL[s]} — ⌘${i + 1}`}>
+          <button key={s} className={`seg-btn${s === shape ? ' is-on' : ''}`} onClick={() => onShape(s)} aria-label={`${SHAPE_LABEL[s]} — ${chord(`⌘${i + 1}`)}`}>
             {SHAPE_LABEL[s]}
           </button>
         ))}
@@ -94,9 +95,9 @@ export function Toolbar({
             value={mapLayout}
             options={(
               [
-                ['auto', `${LAYOUT_LABEL.auto} — branches either side of the root · ⌘3`, IconAuto],
-                ['org', `${LAYOUT_LABEL.org} — the root at the top, a row for each level · ⌘3`, IconOrg],
-                ['free', `${LAYOUT_LABEL.free} — the positions you give nodes · ⌘3`, IconFree],
+                ['auto', `${LAYOUT_LABEL.auto} — branches either side of the root · ${chord('⌘3')}`, IconAuto],
+                ['org', `${LAYOUT_LABEL.org} — the root at the top, a row for each level · ${chord('⌘3')}`, IconOrg],
+                ['free', `${LAYOUT_LABEL.free} — the positions you give nodes · ${chord('⌘3')}`, IconFree],
               ] as [MapLayout, string, Icon][]
             ).filter(([l]) => MAP_LAYOUTS.includes(l))}
             onChange={onMapLayout}
@@ -120,7 +121,7 @@ export function Toolbar({
             className={`icon-btn${focusActive ? ' is-on' : ''}`}
             onClick={onToggleFocus}
             disabled={!canFocus && !focusActive}
-            aria-label="Focus on the selected branch — ⌥⌘F"
+            aria-label={`Focus on the selected branch — ${chord('⌥⌘F')}`}
           >
             <IconFocus />
           </button>
@@ -145,7 +146,7 @@ export function Toolbar({
       {/* Right: the actions, at the far edge. The centre's cell is fixed by the grid, so nothing here can move it. */}
       <div className="toolbar-side">
         <div className="toolbar-right">
-          <button className={`icon-btn only-wide${inspectorOpen ? ' is-on' : ''}`} onClick={onToggleInspector} aria-label="Document — ⌘/">
+          <button className={`icon-btn only-wide${inspectorOpen ? ' is-on' : ''}`} onClick={onToggleInspector} aria-label={`Document — ${chord('⌘/')}`}>
             <IconSliders />
           </button>
           <button className="icon-btn only-wide" onClick={onExport} aria-label="Export">

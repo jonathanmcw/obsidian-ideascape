@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { IconClose } from './Icons'
-import { ESSENTIALS, GROUPS, SEARCHABLE, capLabel, filterGroups, isCap, platformCaps, type Shortcut } from './keys'
+import { ESSENTIALS, GROUPS, SEARCHABLE, capLabel, filterGroups, isCap, macKeys, platformCaps, type Shortcut } from './keys'
 
 interface Props {
   onClose: () => void
@@ -10,11 +10,6 @@ interface Props {
 
 // Only a fallback: the view passes `mac` from Platform.isMacOS. The plugin's lint forbids navigator.platform and
 // userAgent, and the organiser imports nothing from Obsidian, so this reads the platform class Obsidian puts on <body>.
-function detectMac(): boolean {
-  const body = activeDocument.body.classList
-  return body.contains('mod-macos') || body.contains('is-ios')
-}
-
 /** A row's keys: one cap per key, alternatives joined by a muted "or", gestures and typed text as plain words. */
 function Keys({ row, mac }: { row: Shortcut; mac: boolean }) {
   return (
@@ -40,7 +35,7 @@ function Keys({ row, mac }: { row: Shortcut; mac: boolean }) {
 }
 
 export function ShortcutsSheet({ onClose, onTour, mac: macProp }: Props) {
-  const mac = macProp ?? detectMac()
+  const mac = macProp ?? macKeys()
   const [query, setQuery] = useState('')
   const filtering = query.trim() !== ''
   const groups = useMemo(() => (filtering ? filterGroups(SEARCHABLE, query) : GROUPS), [filtering, query])

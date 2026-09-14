@@ -5,6 +5,7 @@ import { toneOf, withHue } from '../colour'
 import { ColourPopover } from './ColourPopover'
 import { PLUGIN_NAME } from '../../brand'
 import { IconClose } from './Icons'
+import { chord } from './keys'
 
 interface Props {
   /** The theme in effect: the map's own, or the plugin's default. */
@@ -108,7 +109,7 @@ export function Inspector({ themeId, themePinned, defaultThemeId, nodeStyle, sha
             <IconBack />
           </button>
           <span className="inspector-title">Custom theme</span>
-          <button className="icon-btn sm" onClick={onClose} aria-label="Close — ⌘/">
+          <button className="icon-btn sm" onClick={onClose} aria-label={`Close — ${chord('⌘/')}`}>
             <IconClose size={14} />
           </button>
         </div>
@@ -121,7 +122,7 @@ export function Inspector({ themeId, themePinned, defaultThemeId, nodeStyle, sha
     <aside className="inspector">
       <div className="inspector-head">
         <span className="inspector-title">Document</span>
-        <button className="icon-btn sm" onClick={onClose} aria-label="Close — ⌘/">
+        <button className="icon-btn sm" onClick={onClose} aria-label={`Close — ${chord('⌘/')}`}>
           <IconClose size={14} />
         </button>
       </div>

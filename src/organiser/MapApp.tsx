@@ -39,6 +39,7 @@ import { arrangementKind, arrangementOf, nextLayout, shownLayout, tidied, withLa
 import { activeLabel, applyFormat, type Format } from './ui/format'
 import { renderInto } from './ui/wysiwyg'
 import { IconChevron, IconClose, IconRedo, IconUndo } from './ui/Icons'
+import { chord } from './ui/keys'
 import { embedKind, embedsOf, plainText, stripEmbeds, withEmbeds, type Embed } from './model/inline'
 import { MAX_ROW_TEXT_W, ROW_LEAD, setOutlineWidths } from './layout/measure'
 import { applyTheme, defaultCustomTheme, registerCustomTheme, type CustomThemeDef } from './theme'
@@ -271,7 +272,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       flash('The node you were typing into was deleted on disk')
     } else if (was === 'changed') {
       settle(read)
-      flash('This node changed on disk while you were typing — ⌘Z brings back that version')
+      flash(`This node changed on disk while you were typing — ${chord('⌘Z')} brings back that version`)
     } else if (was === 'reopened') showDraft(true, false)
     // Deliberately not every value read here is a dependency.
   }, [epoch])
@@ -639,7 +640,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       setMorphing(true)
       setEdgesHidden(true)
       setPrefs({ shape })
-      setHud({ key: `⌘${SHAPES.indexOf(shape) + 1}`, label: SHAPE_LABEL[shape] })
+      setHud({ key: chord(`⌘${SHAPES.indexOf(shape) + 1}`), label: SHAPE_LABEL[shape] })
       timers.current.push(
         window.setTimeout(() => setEdgesHidden(false), reduced ? REDUCED_MS : EDGE_HIDE_MS),
         window.setTimeout(() => setMorphing(false), reduced ? REDUCED_MS + 40 : MORPH_MS + MORPH_TAIL),
@@ -1291,7 +1292,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
   const toggleLayout = useCallback(() => {
     const next = nextLayout(mapLayout)
     setLayout(next)
-    setHud({ key: '⌘3', label: LAYOUT_LABEL[next] })
+    setHud({ key: chord('⌘3'), label: LAYOUT_LABEL[next] })
     timers.current.push(window.setTimeout(() => setHud(null), 900))
   }, [mapLayout, setLayout])
 
@@ -1303,7 +1304,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
     const pos: Record<NodeId, { x: number; y: number }> = {}
     if (multi.size < 2) {
       commit(tidied(withEdit(doc), arrangement))
-      flash(`Tidied as ${arrangement === 'org' ? 'an org chart' : 'a mind map'} — ⌘Z puts it back`)
+      flash(`Tidied as ${arrangement === 'org' ? 'an org chart' : 'a mind map'} — ${chord('⌘Z')} puts it back`)
       return
     }
     const cur: Record<NodeId, { x: number; y: number }> = {}
@@ -1330,7 +1331,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       return
     }
     commit(bakePositions(withEdit(doc), pos))
-    flash(`Tidied ${moved} ${moved === 1 ? 'node' : 'nodes'} — ⌘Z puts it back`)
+    flash(`Tidied ${moved} ${moved === 1 ? 'node' : 'nodes'} — ${chord('⌘Z')} puts it back`)
   }, [arrangement, commit, doc, flash, multi, withEdit])
 
   /** Heading level for the selection (every selected node when several are). */
@@ -1620,7 +1621,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
                 ))}
               </div>
               <button type="button" className="esc" onClick={() => setFocusId(null)} aria-label="Exit focus — Esc">
-                <kbd>Esc</kbd> to exit · <kbd>⌥⌘F</kbd>
+                <kbd>Esc</kbd> to exit · <kbd>{chord('⌥⌘F')}</kbd>
               </button>
             </>
           )}
@@ -1631,13 +1632,13 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
             {/* The Outline stays at 100%, so it has nothing to zoom. */}
             {prefs.shape === 'map' && (
               <div className="zoom">
-                <button onClick={() => animateCamera({ ...camera, z: Math.max(0.2, camera.z / 1.2) }, 180)} title="Zoom out — ⌥⌘-">
+                <button onClick={() => animateCamera({ ...camera, z: Math.max(0.2, camera.z / 1.2) }, 180)} title={`Zoom out — ${chord('⌥⌘-')}`}>
                   −
                 </button>
-                <button className="zoom-val" onClick={() => fitCamera(frame, prefs.shape, true, focusSubtree)} title="Fit — ⇧⌘0">
+                <button className="zoom-val" onClick={() => fitCamera(frame, prefs.shape, true, focusSubtree)} title={`Fit — ${chord('⇧⌘0')}`}>
                   {Math.round(camera.z * 100)}%
                 </button>
-                <button onClick={() => animateCamera({ ...camera, z: Math.min(2.5, camera.z * 1.2) }, 180)} title="Zoom in — ⌥⌘=">
+                <button onClick={() => animateCamera({ ...camera, z: Math.min(2.5, camera.z * 1.2) }, 180)} title={`Zoom in — ${chord('⌥⌘=')}`}>
                   +
                 </button>
               </div>
@@ -1646,10 +1647,10 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
                 typed into — on a touch screen, taking back an empty node Enter just made — and the undo would then take back
                 the change before it. */}
             <div className="history" role="group" aria-label="History" onPointerDown={(e) => e.preventDefault()} onMouseDown={(e) => e.preventDefault()}>
-              <button onClick={undo} disabled={!(s.history.past.length > 0 && historyTick >= 0)} aria-label="Undo — ⌘Z">
+              <button onClick={undo} disabled={!(s.history.past.length > 0 && historyTick >= 0)} aria-label={`Undo — ${chord('⌘Z')}`}>
                 <IconUndo size={15} />
               </button>
-              <button onClick={redo} disabled={!(s.history.future.length > 0 && historyTick >= 0)} aria-label="Redo — ⇧⌘Z">
+              <button onClick={redo} disabled={!(s.history.future.length > 0 && historyTick >= 0)} aria-label={`Redo — ${chord('⇧⌘Z')}`}>
                 <IconRedo size={15} />
               </button>
             </div>

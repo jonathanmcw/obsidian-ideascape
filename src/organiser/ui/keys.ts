@@ -159,3 +159,25 @@ export function filterGroups(groups: ShortcutGroup[], query: string): ShortcutGr
   }
   return groups.map((g) => ({ title: g.title, rows: g.rows.filter((r) => matches(g, r)) })).filter((g) => g.rows.length > 0)
 }
+
+/** Whether shortcuts read with ⌘ and ⌥. obsidian: the page body carries mod-macos on a Mac and is-ios on an iPad or
+ *  iPhone, whose keyboards use ⌘ too. Without a page (tests), the Mac spelling. */
+export function macKeys(): boolean {
+  const body = typeof activeDocument === 'undefined' ? null : activeDocument.body?.classList
+  return !body || body.contains('mod-macos') || body.contains('is-ios')
+}
+
+/** A chord written the Mac way, as the keyboard in use spells it: `⇧⌘L` on a Mac, `Ctrl+Shift+L` elsewhere. Chords
+ *  separated by spaces are spelled one by one; what is not a glyph (Enter, 0–3, a letter, an arrow) stays as it is. */
+export function chord(keys: string, mac = macKeys()): string {
+  if (mac) return keys
+  return keys
+    .split(' ')
+    .map((part) => {
+      const chars = [...part]
+      const mods = MODIFIERS.filter((m) => chars.includes(m)).map((m) => OTHER_PLATFORMS[m])
+      const rest = chars.filter((c) => !MODIFIERS.includes(c)).join('')
+      return [...mods, OTHER_PLATFORMS[rest] ?? rest].filter(Boolean).join('+')
+    })
+    .join(' ')
+}

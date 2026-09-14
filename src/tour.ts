@@ -2,22 +2,11 @@
 // checkbox, the folded node is folded. It is written as the Markdown a map is saved as, so the tour is also the
 // file format's first example. No Obsidian import: tests read it directly.
 import { MAP_FORMATS } from "./organiser/model/markdown.ts";
+import { chord } from "./organiser/ui/keys.ts";
 
 export const TOUR_NAME = "Ideascape tour";
 
-const MOD: Record<string, string> = { "⌘": "Ctrl", "⌥": "Alt", "⇧": "Shift" };
-const KEY: Record<string, string> = { "⌫": "Backspace" };
-
-/** A key chord as the person's keyboard spells it: `⇧⌘0` on a Mac, `Ctrl+Shift+0` elsewhere. */
-export function chord(keys: string, mac: boolean): string {
-  if (mac) return keys;
-  return keys.split(" ").map(part => {
-    const mods = [...part].filter(c => c in MOD);
-    const rest = [...part].filter(c => !(c in MOD)).join("");
-    const names = ["⌘", "⌥", "⇧"].filter(m => mods.includes(m)).map(m => MOD[m]);
-    return [...names, KEY[rest] ?? rest].filter(Boolean).join("+");
-  }).join(" ");
-}
+export { chord };
 
 /** The tour as a map note. Branches after the first two open folded, so it fits one screen and folding teaches itself. */
 export function tourMarkdown(mac: boolean): string {

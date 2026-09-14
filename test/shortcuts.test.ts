@@ -44,3 +44,14 @@ test("shortcuts: no row appears twice across the groups", () => {
   assert.equal(new Set(rows.map(r => r.label)).size, rows.length, "labels");
   assert.equal(new Set(keys).size, keys.length, "keys");
 });
+
+test("chord: tooltips and hints read Ctrl, Alt and Shift off a Mac, in that order", async () => {
+  const { chord, macKeys } = await import("../src/organiser/ui/keys.ts");
+  assert.equal(macKeys(), true, "without a page, the Mac spelling");
+  assert.equal(chord("⇧⌘L", true), "⇧⌘L");
+  assert.equal(chord("⇧⌘L", false), "Ctrl+Shift+L");
+  assert.equal(chord("⌥⌘0–3", false), "Ctrl+Alt+0–3");
+  assert.equal(chord("⌘Enter", false), "Ctrl+Enter");
+  assert.equal(chord("⌥⌘=", false), "Ctrl+Alt+=");
+  assert.equal(chord("⌫", false), "Backspace");
+});
