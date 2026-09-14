@@ -32,12 +32,12 @@ Found a bug, or have an idea? [Open an issue](https://github.com/jonathanmcw/obs
 
 ## Getting started
 
-1. Turn Ideascape on. A welcome window offers the three ways in.
+1. Turn Ideascape on. A short welcome shows what a map is, the two views, how a note becomes a map, and ends on the tour.
 2. **New map:** the ribbon button, a folder's **New map here**, or the command **Create a new map**.
 3. **A note you already have:** right-click it and choose **Open as a map**. Its heading becomes the centre and its lists become branches.
 4. **Take the tour:** a map where every node shows a feature by using it. It's in the ribbon menu, in Settings, and the command **Take the tour**. Press `?` in any map for every shortcut.
 
-![The welcome window, shown once when the plugin is turned on](docs/screenshots/07-welcome-dark.png)
+![The welcome, shown once when the plugin is turned on](docs/screenshots/07-welcome-dark.png)
 
 ![The tour: each node shows the feature it describes](docs/screenshots/08-tour-dark.png)
 

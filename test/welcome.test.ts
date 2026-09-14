@@ -1,0 +1,27 @@
+// The welcome slides: their words, their keys on each platform, and the screenshots the build inlines.
+import assert from "node:assert/strict";
+import { test } from "node:test";
+import { loadHost } from "./host-bundle.ts";
+import type { Slide } from "../src/welcome.ts";
+
+type Welcome = { slides: (mac?: boolean) => Slide[] };
+
+test("welcome: four slides, each with words, an alt text and both theme screenshots inlined", async () => {
+  const { slides } = await loadHost<Welcome>("../src/welcome.ts");
+  const all = slides(true);
+  assert.equal(all.length, 4);
+  for (const s of all) {
+    assert.ok(s.title.length > 0 && s.body.length > 0 && s.alt.length > 0, s.title);
+    assert.match(s.image.dark, /^data:image\/webp;base64,/, `${s.title} dark`);
+    assert.match(s.image.light, /^data:image\/webp;base64,/, `${s.title} light`);
+    assert.notEqual(s.image.dark, s.image.light, `${s.title} has two themes`);
+  }
+  assert.equal(all.at(-1)!.title, "Start with the tour", "the last slide is the one with the button");
+});
+
+test("welcome: the view keys read ⌘ on a Mac and Ctrl elsewhere", async () => {
+  const { slides } = await loadHost<Welcome>("../src/welcome.ts");
+  assert.match(slides(true)[1]!.body, /⌘1 shows the map and ⌘2 the outline/);
+  assert.match(slides(false)[1]!.body, /Ctrl\+1 shows the map and Ctrl\+2 the outline/);
+  assert.match(slides(true)[2]!.body, /Notes with the ideascape property/);
+});

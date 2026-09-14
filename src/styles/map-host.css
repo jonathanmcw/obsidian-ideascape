@@ -7,20 +7,28 @@
   .io-root .node, .io-root .nodes.morphing .node, .io-root .edges, .io-root .world, .io-root .seg-thumb { transition-duration: 1ms !important; transition-delay: 0ms !important; animation: none !important; }
 }
 
-/* The welcome window: three large choices, each teaching where that action lives. */
-.io-welcome { width: min(460px, calc(100vw - 32px)); }
-.io-welcome .io-welcome-lede { margin: 0 0 14px; color: var(--text-muted); }
-.io-welcome .io-welcome-choices { display: flex; flex-direction: column; gap: 8px; }
-.io-welcome .io-welcome-choice {
-  display: flex; align-items: center; justify-content: flex-start; gap: 12px; width: 100%; height: auto; padding: 10px 12px;
-  text-align: start; white-space: normal; border-radius: var(--radius-m); box-shadow: none;
-  background: var(--background-secondary); border: 1px solid var(--background-modifier-border);
+/* The welcome window: four slides from the demo vault, ending on the tour. Screenshot on top, words under it,
+   dots and Back/Next in a row, everything left-aligned. */
+/* Wide enough to read the screenshot, but never taller than the dialog may be: the third term keeps the figure,
+   the words and the buttons inside the height Obsidian allows a modal. */
+.io-welcome { width: min(640px, calc(100vw - 32px), calc((var(--dialog-max-height, 85vh) - 250px) * 1.606)); }
+.io-welcome .io-welcome-figure {
+  margin: 0; overflow: hidden; aspect-ratio: 1200 / 747; border-radius: var(--radius-m);
+  border: 1px solid var(--background-modifier-border); background: var(--background-secondary);
 }
-.io-welcome .io-welcome-choice:hover { background: var(--background-modifier-hover); border-color: var(--background-modifier-border-hover); }
-.io-welcome .io-welcome-choice:first-child { border-color: var(--interactive-accent); }
-.io-welcome .io-welcome-icon { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: var(--radius-s); color: var(--interactive-accent); background: var(--background-primary); }
-.io-welcome .io-welcome-words { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; text-align: start; }
-.io-welcome .io-welcome-title { font-weight: var(--font-semibold); color: var(--text-normal); }
-.io-welcome .io-welcome-hint { font-size: var(--font-ui-small); color: var(--text-muted); }
-.io-welcome .modal-button-container { margin-top: 14px; }
-.io-welcome-path { color: var(--text-faint); }
+.io-welcome .io-welcome-shot { display: block; width: 100%; height: 100%; object-fit: cover; transition: opacity 160ms ease; }
+.io-welcome.is-switching .io-welcome-shot { opacity: 0; }
+.io-welcome .io-welcome-words { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin: 16px 0 0; text-align: start; }
+.io-welcome .io-welcome-title { margin: 0; font-size: var(--h3-size); font-weight: var(--h3-weight); line-height: var(--line-height-tight); }
+/* Three lines are reserved, so a longer slide does not make the window jump. */
+.io-welcome .io-welcome-body { margin: 0; min-height: 3lh; max-width: 62ch; color: var(--text-muted); }
+.io-welcome .io-welcome-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; }
+.io-welcome .io-welcome-dots { display: flex; align-items: center; gap: 8px; }
+.io-welcome .io-welcome-dot {
+  width: 8px; height: 8px; min-height: 0; padding: 0; border: 0; border-radius: 50%; box-shadow: none;
+  background: var(--background-modifier-border-hover); cursor: pointer;
+}
+.io-welcome .io-welcome-dot:hover { background: var(--text-faint); }
+.io-welcome .io-welcome-dot[aria-selected="true"] { background: var(--interactive-accent); }
+.io-welcome .io-welcome-actions { display: flex; gap: 8px; }
+@media (prefers-reduced-motion: reduce) { .io-welcome .io-welcome-shot { transition: none; } }

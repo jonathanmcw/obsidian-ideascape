@@ -60,7 +60,7 @@ export async function loadHost<T = Record<string, unknown>>(entry: string, stubs
   const file = new URL(entry, import.meta.url).pathname;
   const out = await build({
     stdin: { contents: `export * from ${JSON.stringify(file)}; import * as module from ${JSON.stringify(file)}; export { module }; export { notices, TFile, TFolder } from "obsidian";`, resolveDir: new URL(".", import.meta.url).pathname, loader: "ts" },
-    bundle: true, write: false, format: "esm", platform: "node", jsx: "automatic", logLevel: "silent",
+    bundle: true, write: false, format: "esm", platform: "node", jsx: "automatic", logLevel: "silent", loader: { ".webp": "dataurl" },
     define: { "process.env.NODE_ENV": '"production"' },
     plugins: [{ name: "obsidian-stub", setup(b) {
       b.onResolve({ filter: /.*/ }, a => (Object.hasOwn(modules, a.path) ? { path: a.path, namespace: "stub" } : undefined));

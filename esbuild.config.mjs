@@ -16,6 +16,7 @@ const ctx = await esbuild.context({
   logLevel: "info",
   sourcemap: prod ? false : "inline",
   treeShaking: true,
+  loader: { ".webp": "dataurl" },
   outfile: "main.js",
 });
 
