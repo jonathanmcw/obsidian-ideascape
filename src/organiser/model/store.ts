@@ -15,8 +15,6 @@ export interface Prefs {
   /** How a node wears its branch colour. */
   nodeStyle: NodeStyle
   inspectorOpen: boolean
-  /** Shortcut chips fade for good after the shortcuts have been used. */
-  usedShortcuts: string[]
   reduceMotion: boolean
   /** obsidian: the outline reads as a centred column, or stretches to the window. */
   outlineWidth: OutlineWidth
@@ -33,7 +31,6 @@ export const DEFAULT_PREFS: Prefs = {
   theme: DEFAULT_THEME,
   nodeStyle: 'outline',
   inspectorOpen: false,
-  usedShortcuts: [],
   reduceMotion: false,
   outlineWidth: 'column',
   mapLayout: 'auto',

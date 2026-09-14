@@ -28,7 +28,7 @@ export const DEFAULT_SETTINGS: MapSettings = {
   autoOpenMaps: true,
   showRibbon: true,
   explorerBadges: true,
-  mapPrefs: { shape: DEFAULT_PREFS.shape, nodeStyle: DEFAULT_PREFS.nodeStyle, inspectorOpen: false, usedShortcuts: [], reduceMotion: false, outlineWidth: "column", mapLayout: "auto", discardEmptyOnEsc: true },
+  mapPrefs: { shape: DEFAULT_PREFS.shape, nodeStyle: DEFAULT_PREFS.nodeStyle, inspectorOpen: false, reduceMotion: false, outlineWidth: "column", mapLayout: "auto", discardEmptyOnEsc: true },
 };
 
 export class MapSettingTab extends PluginSettingTab {

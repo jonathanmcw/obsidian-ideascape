@@ -391,13 +391,6 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
 
   const setPrefs = useCallback((patch: Partial<Prefs>) => onPrefs(patch), [onPrefs])
 
-  const markShortcut = useCallback(
-    (key: string) => {
-      if (!prefs.usedShortcuts.includes(key)) onPrefs({ usedShortcuts: [...prefs.usedShortcuts, key] })
-    },
-    [onPrefs, prefs.usedShortcuts],
-  )
-
   /* -------------------- layout -------------------- */
 
   // obsidian: the document as the view shows it — with the branches Find opened — before the draft and width preview.
@@ -643,14 +636,13 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       setEdgesHidden(true)
       setPrefs({ shape })
       setHud({ key: `⌘${SHAPES.indexOf(shape) + 1}`, label: SHAPE_LABEL[shape] })
-      markShortcut('shift')
       timers.current.push(
         window.setTimeout(() => setEdgesHidden(false), reduced ? REDUCED_MS : EDGE_HIDE_MS),
         window.setTimeout(() => setMorphing(false), reduced ? REDUCED_MS + 40 : MORPH_MS + MORPH_TAIL),
         window.setTimeout(() => setHud(null), 900),
       )
     },
-    [markShortcut, prefs.reduceMotion, prefs.shape, setPrefs],
+    [prefs.reduceMotion, prefs.shape, setPrefs],
   )
 
   /* -------------------- commands -------------------- */
@@ -674,9 +666,8 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       selectOne(id)
       setEdit({ id, seed: '', selectAll: false, created: true })
       setDraftText('')
-      markShortcut('tab')
     },
-    [markShortcut, s, selectOne, setDraftText, setEdit, settle],
+    [s, selectOne, setDraftText, setEdit, settle],
   )
 
   const createSibling = useCallback(
@@ -688,9 +679,8 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       selectOne(newId)
       setEdit({ id: newId, seed: '', selectAll: false, created: true })
       setDraftText('')
-      markShortcut('enter')
     },
-    [markShortcut, s, selectOne, setDraftText, setEdit, settle],
+    [s, selectOne, setDraftText, setEdit, settle],
   )
 
   /** Tab and ⇧Tab in the Outline, and the bar's buttons for them: a row moves a level, typing or not. */
@@ -1505,7 +1495,6 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
   /* -------------------- render -------------------- */
 
   const crumbs = focusId ? [...ancestors(doc, focusId), focusId] : []
-  const chipsDone = ['enter', 'tab', 'shift'].every((k) => prefs.usedShortcuts.includes(k))
 
   return (
     <div
@@ -1635,52 +1624,34 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
           {/* View and history controls share the bottom-left corner: where the hand
               rests on a trackpad, and where a thumb reaches on a phone. */}
           <div className="corner-left">
-            <div className="corner-controls">
-              {/* The Outline stays at 100%, so it has nothing to zoom. */}
-              {prefs.shape === 'map' && (
-                <div className="zoom">
-                  <button onClick={() => animateCamera({ ...camera, z: Math.max(0.2, camera.z / 1.2) }, 180)} title="Zoom out — ⌥⌘-">
-                    −
-                  </button>
-                  <button className="zoom-val" onClick={() => fitCamera(frame, prefs.shape, true, focusSubtree)} title="Fit — ⇧⌘0">
-                    {Math.round(camera.z * 100)}%
-                  </button>
-                  <button onClick={() => animateCamera({ ...camera, z: Math.min(2.5, camera.z * 1.2) }, 180)} title="Zoom in — ⌥⌘=">
-                    +
-                  </button>
-                </div>
-              )}
-              {/* Pressing Undo or Redo leaves the focus where it is. Taken from the label, it would first leave the node being
-                  typed into — on a touch screen, taking back an empty node Enter just made — and the undo would then take back
-                  the change before it. */}
-              <div className="history" role="group" aria-label="History" onPointerDown={(e) => e.preventDefault()} onMouseDown={(e) => e.preventDefault()}>
-                <button onClick={undo} disabled={!(s.history.past.length > 0 && historyTick >= 0)} aria-label="Undo — ⌘Z">
-                  <IconUndo size={15} />
+            {/* The Outline stays at 100%, so it has nothing to zoom. */}
+            {prefs.shape === 'map' && (
+              <div className="zoom">
+                <button onClick={() => animateCamera({ ...camera, z: Math.max(0.2, camera.z / 1.2) }, 180)} title="Zoom out — ⌥⌘-">
+                  −
                 </button>
-                <button onClick={redo} disabled={!(s.history.future.length > 0 && historyTick >= 0)} aria-label="Redo — ⇧⌘Z">
-                  <IconRedo size={15} />
+                <button className="zoom-val" onClick={() => fitCamera(frame, prefs.shape, true, focusSubtree)} title="Fit — ⇧⌘0">
+                  {Math.round(camera.z * 100)}%
                 </button>
-              </div>
-              <button className="help" onClick={() => setShowKeys(true)} title="Shortcuts — ?">
-                ?
-              </button>
-            </div>
-
-            {/* The first-run hints ride on the same row, and move up a row where the pane is too narrow for both. In the Outline
-                they would sit on the list's own text, and typing there is already what a list does. */}
-            {!chipsDone && prefs.shape === 'map' && (
-              <div className="chips">
-                <span className={prefs.usedShortcuts.includes('enter') ? 'used' : ''}>
-                  <kbd>Enter</kbd> sibling
-                </span>
-                <span className={prefs.usedShortcuts.includes('tab') ? 'used' : ''}>
-                  <kbd>Tab</kbd> child
-                </span>
-                <span className={prefs.usedShortcuts.includes('shift') ? 'used' : ''}>
-                  <kbd>⌘1–3</kbd> shift
-                </span>
+                <button onClick={() => animateCamera({ ...camera, z: Math.min(2.5, camera.z * 1.2) }, 180)} title="Zoom in — ⌥⌘=">
+                  +
+                </button>
               </div>
             )}
+            {/* Pressing Undo or Redo leaves the focus where it is. Taken from the label, it would first leave the node being
+                typed into — on a touch screen, taking back an empty node Enter just made — and the undo would then take back
+                the change before it. */}
+            <div className="history" role="group" aria-label="History" onPointerDown={(e) => e.preventDefault()} onMouseDown={(e) => e.preventDefault()}>
+              <button onClick={undo} disabled={!(s.history.past.length > 0 && historyTick >= 0)} aria-label="Undo — ⌘Z">
+                <IconUndo size={15} />
+              </button>
+              <button onClick={redo} disabled={!(s.history.future.length > 0 && historyTick >= 0)} aria-label="Redo — ⇧⌘Z">
+                <IconRedo size={15} />
+              </button>
+            </div>
+            <button className="help" onClick={() => setShowKeys(true)} title="Shortcuts — ?">
+              ?
+            </button>
           </div>
 
           {hud && (

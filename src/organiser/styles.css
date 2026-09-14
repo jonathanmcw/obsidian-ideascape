@@ -1058,15 +1058,6 @@
   bottom: 14px;
   z-index: 4;
   display: flex;
-  /* the controls keep the bottom row; the hints join it, or wrap to the row above when the pane is narrow.
-     obsidian: the room kept on the right is the app's status bar, which sits over the bottom-right corner. */
-  flex-wrap: wrap-reverse;
-  align-items: center;
-  gap: 8px 12px;
-  max-width: max(240px, 100% - 420px);
-}
-.io-root .corner-controls {
-  display: flex;
   align-items: center;
   gap: 8px;
 }
@@ -1140,27 +1131,6 @@
   box-shadow: var(--shadow-2);
 }
 
-.io-root .chips {
-  display: flex;
-  gap: 6px;
-}
-.io-root .chips span {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 10px 4px 6px;
-  font-size: 11.5px;
-  color: var(--ink-2);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  box-shadow: var(--shadow-1);
-  transition: opacity 400ms ease, transform 400ms var(--morph-ease);
-}
-.io-root .chips span.used {
-  opacity: 0.32;
-  transform: scale(0.94);
-}
 
 .io-root .hud {
   position: absolute;
@@ -1658,9 +1628,6 @@
   }
   .io-root .trust .link {
     margin-left: 0;
-  }
-  .io-root .chips {
-    display: none;
   }
 }
 
