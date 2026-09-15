@@ -78,7 +78,7 @@ export class WelcomeModal extends Modal {
     this.modalEl.setAttribute("aria-label", `${PLUGIN_NAME} welcome`);
 
     const figure = this.contentEl.createEl("figure", { cls: "io-welcome-figure" });
-    this.shot = figure.createEl("img", { cls: "io-welcome-shot", attr: { width: 1200, height: 747, decoding: "async" } });
+    this.shot = figure.createEl("img", { cls: "io-welcome-shot", attr: { width: 1200, height: 747 } });
     const words = this.contentEl.createDiv("io-welcome-words");
     this.heading = words.createEl("h2", { cls: "io-welcome-title" });
     this.body = words.createEl("p", { cls: "io-welcome-body" });
@@ -110,11 +110,10 @@ export class WelcomeModal extends Modal {
     if (i < 0 || i >= this.slides.length) return;
     const moved = i !== this.index;
     this.index = i;
-    if (moved) {
-      this.modalEl.addClass("is-switching");
-      // One frame with the old slide faded, then the new one fades in: the CSS transition does the rest.
-      window.requestAnimationFrame(() => { this.paint(); this.modalEl.removeClass("is-switching"); });
-    } else this.paint();
+    this.paint();
+    // The new picture is in place at once; a short fade only softens the change. Nothing here waits for an
+    // animation frame, so a window that is not being drawn still shows the slide when it is.
+    if (moved && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) this.shot.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: "ease" });
     this.next.focus();
   }
 
