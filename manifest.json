@@ -3,7 +3,7 @@
   "name": "Ideascape",
   "version": "0.9.0",
   "minAppVersion": "1.7.2",
-  "description": "Turn a note into a keyboard-first mindmap with an outline view. The map stays a plain Markdown list you can read and edit anywhere.",
+  "description": "Turn a note into a keyboard-first mind map with an outline view. The map stays a plain Markdown list you can read and edit anywhere.",
   "author": "Jonathan Wong",
   "authorUrl": "https://github.com/jonathanmcw",
   "fundingUrl": "https://buymeacoffee.com/jonathanmcw",

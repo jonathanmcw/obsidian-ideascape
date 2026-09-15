@@ -1,6 +1,6 @@
 # Ideascape
 
-Turn a note into a keyboard-first mindmap, and read the same note as an outline. The map stays a plain Markdown list, so the note still works everywhere else in Obsidian.
+Turn a note into a keyboard-first mind map, and read the same note as an outline. The map stays a plain Markdown list, so the note still works everywhere else in Obsidian.
 
 ![A Lisbon weekend built from the keyboard: Tab and Enter add nodes, ⌘B and ⌘I style them, ⌘↵ adds checkboxes, ⇧⌘7 numbers a list, ⌘. folds a branch, ⌥⌘F focuses on it, and ⌘2 and ⌘1 switch between outline and map. Each key shows in the corner as it is pressed.](docs/showcase.gif)
 
