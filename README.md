@@ -15,9 +15,20 @@ Turn a note into a keyboard-first mind map, and read the same note as an outline
 - **Focus on one branch.** Hide everything else while you work on it.
 - **Bring things in, send things out.** Paste a Markdown list, drop in a `.canvas` or OPML file, or drag notes from the file explorer. Export as PNG, Markdown, OPML or JSON Canvas.
 
-![A podcast plan as a mind map in Obsidian's dark theme](docs/screenshots/01-map-dark.png)
-
-![The same note as an outline](docs/screenshots/02-outline-dark.png)
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/07-welcome-dark.png" alt="The welcome window on its first slide, a Kyoto weekend as a mind map"><br><b>First run.</b> Four slides: what a map is, the two views, how a note becomes one, and where the tour lives.</td>
+    <td width="50%"><img src="docs/screenshots/08-tour-dark.png" alt="The tour map, each node showing the feature it names"><br><b>The tour.</b> A map where every node is the feature it describes: the bold node is bold, the folded one is folded.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/02-outline-dark.png" alt="A podcast plan as an outline"><br><b>Outline.</b> The same note as a list, one key away. Fold, focus and find work here too.</td>
+    <td><img src="docs/screenshots/04-themes-light.png" alt="A trip plan in the Paper theme with the document panel open"><br><b>Themes.</b> Follow your vault in light or dark, or pin Paper, Slate, Graphite or Midnight to one map from the document panel.</td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/06-markdown-and-map.png" alt="A map beside its Markdown source"><br><b>Plain Markdown underneath.</b> A heading, a nested list, a block id per node. The note reads anywhere.</td>
+    <td><img src="docs/screenshots/05-shortcuts-dark.png" alt="The shortcuts sheet with a filter field"><br><b>Every shortcut.</b> Press <code>?</code> in a map for the sheet, with a filter and the six keys to learn first.</td>
+  </tr>
+</table>
 
 ## Install
 
@@ -36,10 +47,6 @@ Found a bug, or have an idea? [Open an issue](https://github.com/jonathanmcw/obs
 2. **New map:** the ribbon button, a folder's **New map here**, or the command **Create a new map**.
 3. **A note you already have:** right-click it and choose **Open as a map**. Its heading becomes the centre and its lists become branches.
 4. **Take the tour:** a map where every node shows a feature by using it. It's in the ribbon menu, in Settings, and the command **Take the tour**. Press `?` in any map for every shortcut.
-
-![The welcome, shown once when the plugin is turned on](docs/screenshots/07-welcome-dark.png)
-
-![The tour: each node shows the feature it describes](docs/screenshots/08-tour-dark.png)
 
 ### Keys to know
 
@@ -62,13 +69,9 @@ Found a bug, or have an idea? [Open an issue](https://github.com/jonathanmcw/obs
 
 On Windows and Linux, use Ctrl for ⌘.
 
-![A trip plan in the Paper theme, with the document panel open](docs/screenshots/04-themes-light.png)
-
 ## How a map is saved
 
 A map is an ordinary Markdown note with one property that marks it.
-
-![The same note as Markdown beside its map](docs/screenshots/06-markdown-and-map.png)
 
 Opened as text, it looks like this:
 
@@ -94,8 +97,6 @@ ideascape: root
 - Positions, folds and the map's own look are kept in the `%%` comment at the end, which Obsidian doesn't show in reading view. Delete it and the map lays itself out again, with its folds and its own look back to the defaults.
 - Turning a note you already have into a map only adds the property, block ids and that comment. If more would change, the plugin asks first and offers to work on a copy.
 - Without Ideascape, a map is still an ordinary note: a heading and a nested list, with a short block id at the end of each item and the `%%` comment hidden in reading view.
-
-![The shortcuts sheet, opened with ? in any map](docs/screenshots/05-shortcuts-dark.png)
 
 ## Settings
 
