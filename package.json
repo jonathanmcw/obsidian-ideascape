@@ -12,7 +12,8 @@
     "test": "node --test test/*.test.ts",
     "lint": "eslint src manifest.json package.json",
     "install:vault": "node scripts/install.mjs",
-    "welcome:again": "node scripts/welcome-again.mjs"
+    "welcome:again": "node scripts/welcome-again.mjs",
+    "fresh:start": "node scripts/fresh-start.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
