@@ -6,17 +6,18 @@ import type { Slide } from "../src/welcome.ts";
 
 type Welcome = { slides: (mac?: boolean) => Slide[] };
 
-test("welcome: four slides, each with words, an alt text and both theme screenshots inlined", async () => {
+test("welcome: three slides, each with words, an alt text and both theme screenshots inlined", async () => {
   const { slides } = await loadHost<Welcome>("../src/welcome.ts");
   const all = slides(true);
-  assert.equal(all.length, 4);
+  assert.equal(all.length, 3);
   for (const s of all) {
     assert.ok(s.title.length > 0 && s.body.length > 0 && s.alt.length > 0, s.title);
     assert.match(s.image.dark, /^data:image\/webp;base64,/, `${s.title} dark`);
     assert.match(s.image.light, /^data:image\/webp;base64,/, `${s.title} light`);
     assert.notEqual(s.image.dark, s.image.light, `${s.title} has two themes`);
   }
-  assert.equal(all.at(-1)!.title, "Start with the tour", "the last slide is the one with the button");
+  assert.equal(all.at(-1)!.title, "Turn a note into a map", "the last slide is the one whose button is Start");
+  assert.match(all[0]!.body, /ribbon button/, "the ribbon button is taught on the first slide");
 });
 
 test("welcome: the view keys read ⌘ on a Mac and Ctrl elsewhere", async () => {

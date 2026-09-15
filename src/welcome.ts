@@ -8,8 +8,6 @@ import mapDark from "./welcome/map-dark.webp";
 import mapLight from "./welcome/map-light.webp";
 import outlineDark from "./welcome/outline-dark.webp";
 import outlineLight from "./welcome/outline-light.webp";
-import ribbonDark from "./welcome/ribbon-dark.webp";
-import ribbonLight from "./welcome/ribbon-light.webp";
 
 /** What the welcome window can do: the tour is the one action it ends on. */
 export interface WelcomeActions {
@@ -24,13 +22,13 @@ export interface Slide {
   alt: string;
 }
 
-/** Four slides: what a map is, the two views, how a note becomes a map, and where new maps and the tour live. */
+/** Three slides: what a map is, the two views, and how a note becomes a map. Start, on the last, opens the tour. */
 export function slides(mac = macKeys()): Slide[] {
   const k = (keys: string) => chord(keys, mac);
   return [
     {
       title: "Your notes, as mind maps",
-      body: "A map is an ordinary Markdown note: its heading is the centre and its nested list is the tree. Read and edit it anywhere, map it here.",
+      body: "A map is an ordinary Markdown note: its heading is the centre and its nested list is the tree. Read and edit it anywhere, map it here. The ribbon button starts a new one.",
       image: { dark: mapDark, light: mapLight },
       alt: "A weekend in Kyoto as a mind map: Friday, Saturday, Sunday, Pack and Budget branch off the centre",
     },
@@ -46,17 +44,11 @@ export function slides(mac = macKeys()): Slide[] {
       image: { dark: convertDark, light: convertLight },
       alt: "The file menu on a note in the file explorer, with Open as a map among its items and the Kyoto map behind",
     },
-    {
-      title: "Start with the tour",
-      body: "The ribbon button makes a new map in your maps folder. The tour is a map where every node shows a feature by using it, so it is the quickest way in.",
-      image: { dark: ribbonDark, light: ribbonLight },
-      alt: "The ribbon menu beside the file explorer, offering New map and Take the tour",
-    },
   ];
 }
 
-/** Shown once, the first time the plugin is turned on. Arrow keys and the dots move between slides; the last slide
- *  opens the tour. It writes nothing until that button is pressed. */
+/** Shown once, the first time the plugin is turned on. Arrow keys and the dots move between slides; Start, on the
+ *  last slide, opens the tour. It writes nothing until that button is pressed. */
 export class WelcomeModal extends Modal {
   private readonly slides = slides();
   private index = 0;
@@ -127,7 +119,7 @@ export class WelcomeModal extends Modal {
     this.dots.forEach((d, k) => d.setAttribute("aria-selected", String(k === this.index)));
     const last = this.index === this.slides.length - 1;
     this.back.toggleVisibility(this.index > 0);
-    this.next.setText(last ? "Open the tour" : "Next");
+    this.next.setText(last ? "Start" : "Next");
   }
 
   onClose(): void {

@@ -1,4 +1,4 @@
-import { Menu, Modal, Notice, Platform, Plugin, TFile, TFolder, type App, type WorkspaceLeaf } from "obsidian";
+import { Modal, Notice, Platform, Plugin, TFile, TFolder, type App, type WorkspaceLeaf } from "obsidian";
 import { MapView, MAP_VIEW_TYPE } from "./map-view.ts";
 import { newDoc, seedCanvasPositions } from "./organiser/model/store";
 import { TOUR_NAME, tourMarkdown } from "./tour.ts";
@@ -16,22 +16,13 @@ export default class MapPlugin extends Plugin {
   readonly markdownOverride = new Set<string>();
   private ribbonEl: HTMLElement | null = null;
 
-  /** The ribbon button follows the setting, without a reload. It opens a short menu: a new map, and the
-   *  note in front of you as a map. */
+  /** The ribbon button follows the setting, without a reload. One click, one new map: the tour lives in the
+   *  shortcut sheet and in Settings, and a note becomes a map from its own menu. */
   applyRibbon(): void {
-    if (this.settings.showRibbon && !this.ribbonEl) this.ribbonEl = this.addRibbonIcon("lightbulb", PLUGIN_NAME, evt => this.showRibbonMenu(evt));
+    if (this.settings.showRibbon && !this.ribbonEl) this.ribbonEl = this.addRibbonIcon("lightbulb", "New map", () => void this.newMap());
     else if (!this.settings.showRibbon && this.ribbonEl) { this.ribbonEl.remove(); this.ribbonEl = null; }
   }
 
-  private showRibbonMenu(evt: MouseEvent): void {
-    const menu = new Menu();
-    menu.addItem(i => i.setTitle("New map").setIcon("git-branch").onClick(() => void this.newMap()));
-    const f = this.noteToConvert();
-    if (f) menu.addItem(i => i.setTitle(`Open “${f.basename}” as a map`).setIcon("file-symlink").onClick(() => void this.openMap(f)));
-    menu.addSeparator();
-    menu.addItem(i => i.setTitle("Take the tour").setIcon("sparkles").onClick(() => void this.openTour()));
-    menu.showAtMouseEvent(evt);
-  }
 
   /** The Markdown note in front of the person, if it is not already showing as a map. */
   noteToConvert(): TFile | null {

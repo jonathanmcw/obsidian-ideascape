@@ -89,7 +89,7 @@ export class MapSettingTab extends PluginSettingTab {
           { name: "Esc removes an empty node", desc: "Leaving a node that is still empty with the escape key takes it back out, and the selection returns to where it came from.", toggle: "mapPrefs.discardEmptyOnEsc" },
           { name: "Open marked notes as maps", desc: `Notes with the ${MARKER} property open in the map view. Turn off to open them in the editor; the file menu still has Open as a map.`, toggle: "autoOpenMaps" },
           { name: "Reduce motion", desc: "Switching between map and outline becomes a 200 ms crossfade.", aliases: ["animation"], toggle: "mapPrefs.reduceMotion" },
-          { name: "Ribbon icon", desc: `Show the ${PLUGIN_NAME} button in the left ribbon: a new map, the note in front of you as a map, and the tour. The command palette has them all either way.`, toggle: "showRibbon" },
+          { name: "Ribbon icon", desc: `Show the ${PLUGIN_NAME} button in the left ribbon. One click makes a new map. The command palette has them all either way.`, toggle: "showRibbon" },
           { name: "Mark maps in the file explorer", desc: `Notes with the ${MARKER} property show a small map tag beside their name.`, aliases: ["badge", "tag"], toggle: "explorerBadges" },
         ],
       },

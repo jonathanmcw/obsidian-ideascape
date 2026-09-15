@@ -17,7 +17,7 @@ Turn a note into a keyboard-first mind map, and read the same note as an outline
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/screenshots/07-welcome-dark.png" alt="The welcome window on its first slide, a Kyoto weekend as a mind map"><br><b>First run.</b> Four slides: what a map is, the two views, how a note becomes one, and where the tour lives.</td>
+    <td width="50%"><img src="docs/screenshots/07-welcome-dark.png" alt="The welcome window on its first slide, a Kyoto weekend as a mind map"><br><b>First run.</b> Three slides: what a map is, the two views, how a note becomes one. Start opens the tour.</td>
     <td width="50%"><img src="docs/screenshots/08-tour-dark.png" alt="The tour map, each node showing the feature it names"><br><b>The tour.</b> A map where every node is the feature it describes: the bold node is bold, the folded one is folded.</td>
   </tr>
   <tr>
@@ -43,10 +43,10 @@ Found a bug, or have an idea? [Open an issue](https://github.com/jonathanmcw/obs
 
 ## Getting started
 
-1. Turn Ideascape on. A short welcome shows what a map is, the two views, how a note becomes a map, and ends on the tour.
+1. Turn Ideascape on. A short welcome shows what a map is, the two views, and how a note becomes a map; Start opens the tour.
 2. **New map:** the ribbon button, a folder's **New map here**, or the command **Create a new map**.
 3. **A note you already have:** right-click it and choose **Open as a map**. Its heading becomes the centre and its lists become branches.
-4. **Take the tour:** a map where every node shows a feature by using it. It's in the ribbon menu, in Settings, and the command **Take the tour**. Press `?` in any map for every shortcut.
+4. **Take the tour:** a map where every node shows a feature by using it. It's in Settings, in the shortcut sheet, and the command **Take the tour**. Press `?` in any map for every shortcut.
 
 ### Keys to know
 

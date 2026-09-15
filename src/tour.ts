@@ -19,7 +19,7 @@ export function tourMarkdown(mac: boolean): string {
     `# ${TOUR_NAME} ^tour`,
     "",
     "- Make your own map ^make",
-    "  - [ ] New map: ribbon icon › New map ^make-new",
+    "  - [ ] New map: the ribbon button ^make-new",
     "  - [ ] Any note: right-click › Open as a map ^make-convert",
     `  - Notes with \`${key}:\` open as maps ^make-key`,
     "  - [x] Open the tour ^make-tour",
