@@ -185,6 +185,10 @@
 .io-root .inspector {
   grid-column: 3;
 }
+/* On a phone the panel is a sheet over the whole width; its close button brings the map back. */
+.io-root .app.is-narrow {
+  --inspector-w: 100%;
+}
 
 /* Both tracks are named explicitly. The rail unmounts when it is collapsed, and
    without this the main column would be auto-placed into the first (0-width)
@@ -1034,7 +1038,7 @@
 .io-root .esc {
   position: absolute;
   left: 50%;
-  bottom: 14px;
+  bottom: calc(14px + var(--io-bottom-inset, 0px));
   transform: translateX(-50%);
   z-index: 4;
   cursor: pointer;
@@ -1055,7 +1059,7 @@
 .io-root .corner-left {
   position: absolute;
   left: 14px;
-  bottom: 14px;
+  bottom: calc(14px + var(--io-bottom-inset, 0px));
   z-index: 4;
   display: flex;
   align-items: center;
@@ -1717,7 +1721,7 @@
   .io-root .toolbar > .seg-shape {
     position: fixed;
     left: 50%;
-    bottom: calc(12px + env(safe-area-inset-bottom));
+    bottom: calc(12px + max(env(safe-area-inset-bottom), var(--io-bottom-inset, 0px)));
     transform: translateX(-50%);
     margin: 0;
     z-index: 6;
@@ -1739,10 +1743,10 @@
      control keeps only the readout (pinch zooms), and everything at the bottom
      edge clears the home indicator. */
   .io-root .esc {
-    bottom: calc(64px + env(safe-area-inset-bottom));
+    bottom: calc(64px + max(env(safe-area-inset-bottom), var(--io-bottom-inset, 0px)));
   }
   .io-root .corner-left {
-    bottom: calc(14px + env(safe-area-inset-bottom));
+    bottom: calc(14px + max(env(safe-area-inset-bottom), var(--io-bottom-inset, 0px)));
     left: max(14px, env(safe-area-inset-left));
   }
   .io-root .toolbar .only-wide { display: none; }
@@ -1756,8 +1760,8 @@
     height: 30px;
   }
   .io-root .rail,
-.io-root .inspector {
-    padding-bottom: env(safe-area-inset-bottom);
+  .io-root .inspector {
+    padding-bottom: max(env(safe-area-inset-bottom), var(--io-bottom-inset, 0px));
   }
   .io-root .trust {
     font-size: 12px;

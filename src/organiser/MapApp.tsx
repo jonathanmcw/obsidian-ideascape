@@ -174,6 +174,22 @@ export interface MapCommands {
 }
 export type { Format }
 
+/** How far Obsidian's own bars reach up into the stage: the mobile navigation bar, and on the desktop the status bar
+ *  once a narrow window wraps it across the bottom-left corner where the controls sit. Both are fixed elements
+ *  outside the view, so they are measured rather than assumed. */
+function bottomInsetFor(stage: HTMLElement): number {
+  const box = stage.getBoundingClientRect()
+  let inset = 0
+  for (const bar of stage.ownerDocument.querySelectorAll<HTMLElement>('.mobile-navbar, .status-bar')) {
+    const r = bar.getBoundingClientRect()
+    if (r.height === 0 || r.top >= box.bottom || r.bottom <= box.top) continue
+    // The controls live in the left 260px of the stage; a status bar that keeps to the right of them is no trouble.
+    if (r.left > box.left + 260) continue
+    inset = Math.max(inset, box.bottom - r.top)
+  }
+  return Math.round(inset)
+}
+
 export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onApi, onOpenLink, onTour, mac, resolveEmbed, onSaveAttachment, linksFromDrag, onHoverLink, onOpenTag, customTheme, onCustomTheme, fileName, fileKey, onRenameFile, onContextMenu }: MapAppProps) {
   // The custom theme is a registry entry: register before anything looks a theme up this render.
   const customThemeDef = useMemo(() => customTheme ?? defaultCustomTheme(), [customTheme])
@@ -227,6 +243,9 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
   const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, z: 1 })
   // obsidian: the outline column needs the stage width at layout time, so it is state, not only a ref.
   const [stageW, setStageW] = useState(0)
+  const [bottomInset, setBottomInset] = useState(0)
+  /** A phone, or a pane that narrow: the outline hugs the edges and the document panel takes the whole width. */
+  const narrow = stageW > 0 && stageW < 600
   const [morphing, setMorphing] = useState(false)
   const [edgesHidden, setEdgesHidden] = useState(false)
   const [cameraAnimated, setCameraAnimated] = useState(false)
@@ -410,12 +429,14 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
     return d
   }, [openDoc, edit, draftText, widthPreview])
 
-  // Outline geometry: a column wraps at MAX_ROW_TEXT_W; full width wraps at the window.
-  const OUTLINE_MARGIN = 48
+  // Outline geometry: a column wraps at MAX_ROW_TEXT_W; full width wraps at the window. Neither is wider than the
+  // stage allows, so a phone or a narrow pane wraps the rows instead of clipping them.
+  const outlineMargin = narrow ? 16 : 48
   /** Where the first row sits below the toolbar — and the last row above the bottom edge. */
   const OUTLINE_TOP = 64
   const columnW = ROW_LEAD + MAX_ROW_TEXT_W + 40
-  const outlineW = prefs.outlineWidth === 'full' && stageW ? Math.max(columnW, stageW - OUTLINE_MARGIN * 2) : columnW
+  const fitW = stageW ? Math.max(220, stageW - outlineMargin * 2) : columnW
+  const outlineW = prefs.outlineWidth === 'full' && stageW ? fitW : Math.min(columnW, fitW)
   const kind: LayoutKind = kindFor(prefs.shape, mapLayout)
   const lastFrame = useRef<Frame | null>(null)
   const frame: Frame = useMemo(() => {
@@ -445,8 +466,8 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
   )
   /** Where the outline column sits: centred, or at the left margin when full width. */
   const outlineX = useCallback(
-    (width: number) => (prefs.outlineWidth === 'full' ? OUTLINE_MARGIN : Math.max(OUTLINE_MARGIN, (width - outlineW) / 2)),
-    [outlineW, prefs.outlineWidth],
+    (width: number) => (prefs.outlineWidth === 'full' ? outlineMargin : Math.max(outlineMargin, (width - outlineW) / 2)),
+    [outlineW, outlineMargin, prefs.outlineWidth],
   )
   /** obsidian: the outline scrolls like a document — it stops with the first row at the
    *  top margin and the last row at the bottom one, and a short outline does not scroll at all. */
@@ -580,6 +601,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
     let { width, height } = el.getBoundingClientRect()
     stageSize.current = { width, height }
     setStageW(width)
+    setBottomInset(bottomInsetFor(el))
     const ro = new ResizeObserver((entries) => {
       const box = entries[0]?.contentRect
       if (!box) return
@@ -590,6 +612,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       height = box.height
       stageSize.current = { width, height }
       setStageW(width)
+      setBottomInset(bottomInsetFor(el))
       setCamera((c) => ({ ...c, x: c.x + dx / 2, y: c.y + dy / 2 }))
     })
     ro.observe(el)
@@ -1503,7 +1526,8 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
 
   return (
     <div
-      className={`app${prefs.inspectorOpen ? ' inspector-open' : ''}`}
+      className={`app${prefs.inspectorOpen ? ' inspector-open' : ''}${narrow ? ' is-narrow' : ''}`}
+      style={{ '--io-bottom-inset': `${bottomInset}px` } as React.CSSProperties}
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => {
         const f = e.dataTransfer.files[0]
