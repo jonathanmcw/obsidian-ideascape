@@ -410,7 +410,10 @@
 }
 .io-root .seg {
   position: relative;
-  display: flex;
+  /* Equal cells, whatever the labels' lengths: the thumb is a fraction of the width, so cells must match it. */
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   flex: none;
   margin: 0;
   padding: 3px;
@@ -1702,9 +1705,8 @@
 }
 
 @media (max-width: 600px) {
-  /* A phone. The toolbar cannot hold the name, the switcher and five buttons
-     side by side, so the shape switcher becomes a pill at the bottom —
-     where a thumb is — and the toolbar keeps the rest. */
+  /* A phone, or a window that narrow. The switcher keeps the toolbar's left, where it always is; the shape's own
+     toggle, Focus and Tidy move to a pill at the bottom right, where a thumb is, above Obsidian's own bars. */
   .io-root .toolbar {
     gap: 5px;
     padding: 0 8px;
@@ -1718,22 +1720,26 @@
   .io-root .toolbar-right {
     margin-left: auto;
   }
-  .io-root .toolbar > .seg-shape {
+  .io-root .toolbar-centre {
     position: fixed;
-    left: 50%;
+    right: max(14px, env(safe-area-inset-right));
     bottom: calc(12px + max(env(safe-area-inset-bottom), var(--io-bottom-inset, 0px)));
-    transform: translateX(-50%);
-    margin: 0;
     z-index: 6;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 6px;
+    background: var(--surface);
+    border: 1px solid var(--line);
     border-radius: 999px;
     box-shadow: var(--shadow-2);
   }
-  .io-root .toolbar > .seg-shape .seg-thumb {
-    border-radius: 999px;
+  .io-root .toolbar-centre-side {
+    justify-self: auto;
   }
   .io-root .seg-btn {
     min-width: 0;
-    padding: 8px 14px;
+    padding: 6px 12px;
     font-size: 13px;
   }
   .io-root .seg.seg-mini .seg-btn {
@@ -1743,7 +1749,7 @@
      control keeps only the readout (pinch zooms), and everything at the bottom
      edge clears the home indicator. */
   .io-root .esc {
-    bottom: calc(64px + max(env(safe-area-inset-bottom), var(--io-bottom-inset, 0px)));
+    bottom: calc(60px + max(env(safe-area-inset-bottom), var(--io-bottom-inset, 0px)));
   }
   .io-root .corner-left {
     bottom: calc(14px + max(env(safe-area-inset-bottom), var(--io-bottom-inset, 0px)));
