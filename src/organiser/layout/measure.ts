@@ -10,7 +10,7 @@ function measurer(): CanvasRenderingContext2D {
     // obsidian: activeDocument follows a popped-out window. The canvas is only measured with, never attached;
     // outside Obsidian (the tests) there is only `document`.
     const doc = typeof activeDocument === 'undefined' ? document : activeDocument
-    const c = doc.createElement('canvas')
+    const c = doc.win.createEl('canvas')
     ctx = c.getContext('2d')!
   }
   return ctx

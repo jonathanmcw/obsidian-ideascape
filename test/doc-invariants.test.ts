@@ -14,7 +14,7 @@ import type { IODoc, NodeId } from "../src/organiser/model/types.ts";
 const globals = globalThis as unknown as { document?: unknown };
 if (!globals.document) {
   globals.document = {
-    createElement: () => ({ getContext: () => ({ font: "", measureText: (t: string) => ({ width: (t || " ").length * 7 }) }) }),
+    win: { createEl: () => ({ getContext: () => ({ font: "", measureText: (t: string) => ({ width: (t || " ").length * 7 }) }) }) },
   };
 }
 

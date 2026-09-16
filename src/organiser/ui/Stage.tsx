@@ -1172,7 +1172,7 @@ const NodeView = memo(function NodeView({
         height: box.h,
         paddingLeft: padLeft,
         paddingRight: m.media.length && !outline ? padX : undefined,
-        borderRadius: radius,
+        ['--node-radius' as string]: `${radius}px`,
         ['--i' as string]: stagger,
         ['--branch' as string]: branchColor(themeId, n.branch, palette),
         ['--align' as string]: align,

@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 // A fake canvas that counts what it is asked to measure.
 let calls = 0;
 (globalThis as { document?: unknown }).document = {
-  createElement: () => ({ getContext: () => ({ font: "", measureText: (t: string) => { calls++; return { width: t.length * 7 }; } }) }),
+  win: { createEl: () => ({ getContext: () => ({ font: "", measureText: (t: string) => { calls++; return { width: t.length * 7 }; } }) }) },
 };
 const { wrapLines, textWidth, CACHE_GENERATION } = await import("../src/organiser/layout/measure.ts");
 

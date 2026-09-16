@@ -1,5 +1,7 @@
 /* Map view host: the view content is the organiser's root. */
-.io-host { padding: 0 !important; overflow: hidden; }
+/* Obsidian pads every view's content (.workspace-leaf-content .view-content); the map runs edge to edge. */
+.workspace-leaf-content .view-content.io-host { padding: 0; }
+.io-host { overflow: hidden; }
 .io-root { height: 100%; outline: none; position: relative; }
 .io-root:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--interactive-accent); }
 

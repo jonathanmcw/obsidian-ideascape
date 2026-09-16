@@ -13,7 +13,7 @@ function read(doc: Document): HostColours {
   const base = themeById(dark ? "graphite" : "paper");
   const win = doc.defaultView;
   const style = win?.getComputedStyle(doc.body);
-  const canvas = doc.createElement("canvas");
+  const canvas = doc.win.createEl("canvas");
   canvas.width = canvas.height = 1;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
   const probe = doc.body.createSpan({ attr: { "aria-hidden": "true" } });
