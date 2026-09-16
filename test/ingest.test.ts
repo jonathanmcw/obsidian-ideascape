@@ -6,7 +6,7 @@ import { clipboardFragment, droppedLinks, isMapFile, linkName, mapFileFragment, 
 import type { IODoc } from "../src/organiser/model/types.ts";
 
 // Layout measures text on a canvas (a read OPML map is laid out); a fixed-width stand-in is enough here.
-(globalThis as { document?: unknown }).document = { createElement: () => ({ getContext: () => ({ font: "", measureText: (t: string) => ({ width: t.length * 7 }) }) }) };
+(globalThis as { document?: unknown }).document = { win: { createEl: () => ({ getContext: () => ({ font: "", measureText: (t: string) => ({ width: t.length * 7 }) }) }) } };
 // OPML is read with the browser's DOMParser; Node has none. This one reads the plain nested outlines the tests write.
 type El = { tagName: string; attrs: Record<string, string>; children: El[]; textContent: string };
 (globalThis as { DOMParser?: unknown }).DOMParser = class {

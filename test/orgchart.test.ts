@@ -12,7 +12,7 @@ import { columnUnder, dropTargetFor, hitTest } from "../src/organiser/layout/dro
 import type { IODoc, NodeId } from "../src/organiser/model/types.ts";
 
 // Layout measures text on a canvas; a fixed-width stand-in is enough here.
-(globalThis as { document?: unknown }).document = { createElement: () => ({ getContext: () => ({ font: "", measureText: (t: string) => ({ width: t.length * 7 }) }) }) };
+(globalThis as { document?: unknown }).document = { win: { createEl: () => ({ getContext: () => ({ font: "", measureText: (t: string) => ({ width: t.length * 7 }) }) }) } };
 
 // Design and Build spread along a row; Ship's four leaves stack under it.
 const TEAM = "---\nidea-map: r\n---\n# Team\n\n- Design ^a\n  - Ana ^a1\n  - Ben ^a2\n- Build ^b\n  - Cy ^b1\n- Ship ^c\n  - Dee ^c1\n  - Eve ^c2\n  - Fay ^c3\n  - Gus ^c4\n";

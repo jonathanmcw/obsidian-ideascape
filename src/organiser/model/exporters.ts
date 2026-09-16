@@ -155,8 +155,8 @@ export async function toPNG(
   const w = Math.max(320, maxX - minX + pad * 2)
   const h = Math.max(240, maxY - minY + pad * 2)
 
-  // obsidian: activeDocument, the window the export was asked for in (a popped-out one included).
-  const canvas = activeDocument.createElement('canvas')
+  // obsidian: activeWindow, the window the export was asked for in (a popped-out one included).
+  const canvas = activeWindow.createEl('canvas')
   canvas.width = Math.round(w * scale)
   canvas.height = Math.round(h * scale)
   const c = canvas.getContext('2d')!

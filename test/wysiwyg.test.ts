@@ -40,6 +40,8 @@ class FakeDocument {
   createTextNode(d: string) { return new FakeText(this, d); }
   createElement(t: string) { return new FakeElement(this, t); }
   createDocumentFragment() { const f = new FakeNode(this); f.nodeType = 11; return f; }
+  // Obsidian builds through the window the document belongs to.
+  win = { createEl: (t: string) => this.createElement(t), createFragment: () => this.createDocumentFragment() };
 }
 const doc = new FakeDocument();
 // The code before this fix read the globals; keeping them lets this file run against it too.

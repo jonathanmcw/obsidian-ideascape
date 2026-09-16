@@ -9,7 +9,7 @@ import { columnUnder, dropTargetFor, hitTest } from "../src/organiser/layout/dro
 import type { IODoc, LayoutKind } from "../src/organiser/model/types.ts";
 
 // Layout measures text on a canvas; a fixed-width stand-in is enough here.
-(globalThis as { document?: unknown }).document = { createElement: () => ({ getContext: () => ({ font: "", measureText: (t: string) => ({ width: t.length * 7 }) }) }) };
+(globalThis as { document?: unknown }).document = { win: { createEl: () => ({ getContext: () => ({ font: "", measureText: (t: string) => ({ width: t.length * 7 }) }) }) } };
 
 // Tidy map: Lisbon and Porto fan left of the root, Madrid and Seville right.
 const TRIP = "---\nidea-map: r\n---\n# Trip\n\n- Lisbon ^a\n  - Alfama ^a1\n  - Belem ^a2\n- Porto ^b\n  - Ribeira ^b1\n- Madrid ^c\n  - Prado ^c1\n  - Retiro ^c2\n- Seville ^d\n";

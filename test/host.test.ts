@@ -58,7 +58,7 @@ const tripPulled = lines("---", "idea-map: r1", "---", "# Trip", "", "- Where ^a
 test("map view: opening a note asks for no save, and closing an unedited map writes nothing", async (t) => {
   // The note has no layout yet, so opening it measures text: a stand-in canvas, for this test only.
   const g = globalThis as { document?: unknown; activeDocument?: object };
-  const measuring = { createElement: () => ({ getContext: () => ({ font: "", measureText: (s: string) => ({ width: s.length * 7 }) }) }) };
+  const measuring = { win: { createEl: () => ({ getContext: () => ({ font: "", measureText: (s: string) => ({ width: s.length * 7 }) }) }) } };
   g.document = measuring;
   t.after(() => { delete g.document; });
   const { v } = await mapView("Lisbon trip.md");

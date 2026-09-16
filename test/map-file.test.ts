@@ -9,7 +9,7 @@ import { seedCanvasPositions } from "../src/organiser/model/store.ts";
 import type { IODoc } from "../src/organiser/model/types.ts";
 
 // Layout measures text on a canvas; a fixed-width stand-in is enough here.
-(globalThis as { document?: unknown }).document = { createElement: () => ({ getContext: () => ({ font: "", measureText: (t: string) => ({ width: t.length * 7 }) }) }) };
+(globalThis as { document?: unknown }).document = { win: { createEl: () => ({ getContext: () => ({ font: "", measureText: (t: string) => ({ width: t.length * 7 }) }) }) } };
 
 const tree = (d: IODoc) => walk(d, d.rootId).map(({ id, depth }) => `${depth}:${id}:${d.nodes[id]!.text}:${d.nodes[id]!.collapsed ? "c" : ""}`);
 const links = (d: IODoc) => d.links.map((l) => `${l.from}>${l.to}`).sort();

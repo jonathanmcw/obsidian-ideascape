@@ -18,7 +18,7 @@ export function renderInto(el: HTMLElement, text: string): void {
 
 /** Parsed text as label nodes — what a label is filled with, and what pasted Markdown becomes. */
 export function fragmentFor(doc: Document, rich: Rich): DocumentFragment {
-  const frag = doc.createDocumentFragment()
+  const frag = doc.win.createFragment()
   for (const run of rich.runs) {
     const t = rich.plain.slice(run.start, run.end)
     if (t) frag.appendChild(nodeFor(doc, t, run))
@@ -29,7 +29,7 @@ export function fragmentFor(doc: Document, rich: Rich): DocumentFragment {
 function nodeFor(doc: Document, t: string, run: Run): Node {
   let node: Node = doc.createTextNode(t)
   const wrap = (tag: string, data?: Record<string, string | undefined>) => {
-    const e = doc.createElement(tag)
+    const e = doc.win.createEl(tag as keyof HTMLElementTagNameMap)
     for (const [k, v] of Object.entries(data ?? {})) if (v) e.dataset[k] = v
     e.appendChild(node)
     node = e
@@ -43,7 +43,7 @@ function nodeFor(doc: Document, t: string, run: Run): Node {
   if (run.s) wrap('s')
   if (run.mark) wrap('mark')
   if (run.href != null) {
-    const a = doc.createElement('a')
+    const a = doc.win.createEl('a')
     // An empty address (`[[|alias]]`) goes nowhere: it looks like text, as on the map, but reads back as the link it was.
     if (run.href) a.className = 'node-link'
     a.dataset.href = run.href
@@ -456,7 +456,7 @@ export function toggleInline(label: HTMLElement, tag: 'mark' | 'code' | 'a', att
     inputOn(label)
     return
   }
-  const el = doc.createElement(tag)
+  const el = doc.win.createEl(tag)
   for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v)
   if (range.collapsed) {
     el.textContent = tag === 'a' ? 'Note' : ' '
