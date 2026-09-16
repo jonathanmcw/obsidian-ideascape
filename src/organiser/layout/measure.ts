@@ -41,15 +41,47 @@ function remember(key: string, w: number): number {
   }
   return w
 }
+/** Set when a measurement could not be trusted, so the width is used once and not cached. */
+let unsure = false
+/**
+ * obsidian: the canvas can stop measuring while Obsidian runs: Chromium drops a 2D context under GPU or memory
+ * pressure, and a canvas made in a popped-out window dies with that window. A dead one reports every width as 0,
+ * which drew pills too narrow for their text. Visible text is never 0 wide, so a 0 means a fresh canvas, the widths
+ * already cached are forgotten (they may be zeros from the same canvas), and if the new one fails too the width is
+ * estimated for now and asked for again next time.
+ */
 function measured(font: string, text: string): number {
-  const m = measurer()
-  m.font = font
-  return m.measureText(text || ' ').width
+  const s = text || ' '
+  const attempt = () => {
+    const m = measurer()
+    if (m.isContextLost?.()) return 0
+    m.font = font
+    return m.measureText(s).width
+  }
+  const w = attempt()
+  if (w > 0 || !/\S/.test(s)) return w
+  ctx = null
+  young = new Map()
+  old = new Map()
+  youngSize = 0
+  const again = attempt()
+  if (again > 0) return again
+  unsure = true
+  return s.length * (parseFloat(font.split(' ')[1]) || 14) * 0.55
+}
+/** A width measured now, kept only if the canvas could be trusted. */
+function measureAndRemember(key: string, font: string, text: string): number {
+  unsure = false
+  const w = measured(font, text)
+  return unsure ? w : remember(key, w)
 }
 
 export function textWidth(text: string, weight: number, size: number): number {
   const key = `${weight}|${size}|${text}`
-  return young.get(key) ?? remember(key, old.get(key) ?? measured(`${weight} ${size}px ${FONT_STACK}`, text))
+  const kept = young.get(key)
+  if (kept !== undefined) return kept
+  const carried = old.get(key)
+  return carried !== undefined ? remember(key, carried) : measureAndRemember(key, `${weight} ${size}px ${FONT_STACK}`, text)
 }
 
 /** Content width at which a node's text starts to wrap. A pill wider than this
@@ -165,7 +197,10 @@ function fitCount(measure: MeasureFn, from: number, to: number, maxW: number): n
 const MONO = `ui-monospace, SFMono-Regular, Menlo, monospace`
 export function monoWidth(text: string, size: number): number {
   const key = `mono|${size}|${text}`
-  return young.get(key) ?? remember(key, old.get(key) ?? measured(`500 ${size}px ${MONO}`, text))
+  const kept = young.get(key)
+  if (kept !== undefined) return kept
+  const carried = old.get(key)
+  return carried !== undefined ? remember(key, carried) : measureAndRemember(key, `500 ${size}px ${MONO}`, text)
 }
 
 /** Width of one laid-out line: found back in the plain text so styled runs measure at their real width. */

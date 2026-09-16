@@ -3,8 +3,16 @@ import assert from "node:assert/strict";
 
 // A fake canvas that counts what it is asked to measure.
 let calls = 0;
+/** While set, every canvas measures everything as 0, as a lost context does. */
+let canvasDead = false;
+let canvasesMade = 0;
 (globalThis as { document?: unknown }).document = {
-  win: { createEl: () => ({ getContext: () => ({ font: "", measureText: (t: string) => { calls++; return { width: t.length * 7 }; } }) }) },
+  win: {
+    createEl: () => {
+      canvasesMade++;
+      return { getContext: () => ({ font: "", measureText: (t: string) => { calls++; return { width: canvasDead ? 0 : t.length * 7 }; } }) };
+    },
+  },
 };
 const { wrapLines, textWidth, CACHE_GENERATION } = await import("../src/organiser/layout/measure.ts");
 
@@ -84,4 +92,19 @@ test("measuring: a 5,000-node map lays out again without measuring anything it m
     layoutFor(typed, "map");
     assert.ok(calls <= 3, `${count} nodes: a keystroke measures only the text that changed (${calls})`);
   }
+});
+
+test("measuring: a canvas that stops measuring is replaced, and its zero widths are never kept", () => {
+  textWidth("before", 400, 14);
+  canvasDead = true;
+  const made = canvasesMade;
+  const fresh = "a node typed after the canvas died";
+  assert.equal(textWidth(fresh, 400, 14), fresh.length * 14 * 0.55, "an estimate stands in, never 0");
+  assert.equal(canvasesMade, made + 1, "a new canvas was tried");
+  canvasDead = false;
+  calls = 0;
+  assert.equal(textWidth(fresh, 400, 14), fresh.length * 7, "measured properly once a canvas works again");
+  assert.equal(calls, 1, "the estimate was not cached");
+  assert.equal(textWidth("before", 400, 14), 42, "widths from before are measured again, in case they were zeros");
+  assert.equal(textWidth("   ", 400, 14), 21, "whitespace measures as it is");
 });
