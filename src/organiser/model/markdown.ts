@@ -615,38 +615,46 @@ export function fromMarkdownMap(src: string, fallbackName = 'Untitled'): IODoc &
  * line without trailing space, `body` what sits between the two lines, and `after` the text after the closing line.
  */
 /** The character offsets a fenced code block covers, so text quoting the format is not mistaken for it. */
-/** Where fenced code sits. `closed` are blocks a fence closes; `terminal` is a fence nothing closes, which a
- *  reader takes to the end of the note. They are kept apart because the map's own block may follow a fence
- *  somebody forgot to close, and that block is still the map's. */
-function fencedRanges(text: string): { closed: [number, number][]; terminal: [number, number] | null } {
+/** Where text that only looks like a layout block can sit: fenced code, an HTML comment, a display-maths block.
+ *  `closed` are regions something closes; `terminal` is one left open, which a reader takes to the end of the
+ *  note. They are kept apart because the map's own block may follow a fence somebody forgot to close, and that
+ *  block is still the map's. */
+function hiddenRanges(text: string): { closed: [number, number][]; terminal: [number, number] | null } {
   const closed: [number, number][] = []
   let at = 0
-  let fence: { mark: string; from: number } | null = null
+  let open: { kind: 'fence' | 'html' | 'math'; mark: string; from: number } | null = null
   let inComment = false
-  // One walk, in the order a reader takes the note: inside fenced code only a closing fence counts, inside an
-  // Obsidian comment only a %% line counts, and a comment opened and closed on one line changes nothing.
+  // One walk, in the order a reader takes the note. Inside a region only the thing that ends it counts; inside an
+  // Obsidian comment only a %% line does, so a <!-- or a $$ written in a comment opens nothing. A region opened
+  // and closed on one line changes nothing.
   for (const line of text.split('\n')) {
     const end = at + line.length
-    if (fence) {
-      if (closesFence(fence.mark, line)) {
-        closed.push([fence.from, end])
-        fence = null
+    if (open) {
+      const done =
+        open.kind === 'fence' ? closesFence(open.mark, line) : open.kind === 'html' ? line.includes('-->') : line.includes('$$')
+      if (done) {
+        closed.push([open.from, end])
+        open = null
       }
     } else if (inComment) {
       if (/^%%/.test(line)) inComment = false
     } else {
-      const m = FENCE_RE.exec(line)
-      if (m) fence = { mark: m[1], from: at }
+      const fence = FENCE_RE.exec(line)
+      const html = line.indexOf('<!--')
+      const math = line.indexOf('$$')
+      if (fence) open = { kind: 'fence', mark: fence[1], from: at }
+      else if (html >= 0 && !line.slice(html + 4).includes('-->')) open = { kind: 'html', mark: '', from: at }
+      else if (math >= 0 && !line.slice(math + 2).includes('$$')) open = { kind: 'math', mark: '', from: at }
       else if (/^%%/.test(line) && !line.slice(2).includes('%%')) inComment = true
     }
     at = end + 1
   }
-  return { closed, terminal: fence ? [fence.from, text.length] : null }
+  return { closed, terminal: open ? [open.from, text.length] : null }
 }
 
 function findGeometry(text: string): { start: number; open: string; body: string; after: string } | null {
   // The newline ahead of the line is matched, not looked behind for: older iOS has no lookbehind.
-  const fenced = fencedRanges(text)
+  const fenced = hiddenRanges(text)
   const inClosedCode = (i: number) => fenced.closed.some(([from, to]) => i >= from && i < to)
   const inTerminalCode = (i: number) => !!fenced.terminal && i >= fenced.terminal[0]
   const all = [...text.matchAll(new RegExp(`(?:^|\\n)((?:${BLOCK_ALT})[ \\t]*)(?=\\n)`, 'g'))]
@@ -654,9 +662,9 @@ function findGeometry(text: string): { start: number; open: string; body: string
   // A note that documents the format must not have its own layout read out of the example. Where every candidate
   // sits in code — a note whose fence is never closed, with the map's own block after it — the block is still the
   // map's, and losing every position to a stray fence would be the worse answer.
-  // A block inside a closed fence is somebody's example and never the map's, whatever else the note holds. A
-  // block after a fence nobody closed is a different matter: the note has no other, and dropping it would lose
-  // every position and write a second block on the next save.
+  // A block inside a region something closes is somebody's example and never the map's, whatever else the note
+  // holds. A block after a region nobody closed is a different matter: the note has no other, and dropping it
+  // would lose every position and write a second block on the next save.
   const usable = all.filter((o) => !inClosedCode(o.index))
   const loose = usable.filter((o) => !inTerminalCode(o.index))
   const strict = loose.length > 0

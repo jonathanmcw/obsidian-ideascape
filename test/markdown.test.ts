@@ -403,3 +403,21 @@ test("markdown: a note whose only layout block is a fenced example keeps its own
   const out = toMarkdownMap(d);
   assert.match(out, /```markdown\n%%ideascape\n\{"v":1,"pos":\{"n1":\[999,999\]\}\}\n%%\n```/, "the example survives the round trip untouched");
 });
+
+test("markdown: a layout block quoted in an HTML comment or a maths block is not the map's", () => {
+  // Both come after the map's own block, where "the last one wins" would otherwise take them.
+  const real = '{"v":1,"pos":{"n1":[4,5]}}';
+  for (const [open, close, x] of [["<!--", "-->", 999], ["$$", "$$", 888]] as const) {
+    const note = ["# R", "", "- one ^n1", "", "%%ideascape", real, "%%", "", open, "%%ideascape", `{"v":1,"pos":{"n1":[${x},${x}]}}`, "%%", close, ""].join("\n");
+    const d = fromMarkdownMap(note, "x");
+    assert.equal(d.nodes["n1"]!.x, 4, `the map keeps its own positions beside a ${open} example`);
+    assert.match(toMarkdownMap(d), new RegExp(`${x},${x}`), "the quoted example is left as it was");
+  }
+});
+
+test("markdown: a note whose only layout block is inside a maths block keeps its hands off it", () => {
+  const note = ["# R", "", "- one ^n1", "", "$$", "%%ideascape", '{"v":1,"pos":{"n1":[888,888]}}', "%%", "$$", ""].join("\n");
+  const d = fromMarkdownMap(note, "x");
+  assert.notEqual(d.nodes["n1"]!.x, 888, "the example's coordinates are not adopted");
+  assert.match(toMarkdownMap(d), /888,888/, "and the block it sits in survives");
+});
