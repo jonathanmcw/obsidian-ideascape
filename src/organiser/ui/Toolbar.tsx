@@ -164,6 +164,29 @@ export function Toolbar({
                 <button role="menuitem" onClick={() => { onExport(); setMore(false) }}>
                   Export…
                 </button>
+                {/* On a phone the centre of the toolbar folds in here: the shape's toggle, then Focus and Tidy. */}
+                <div className="toolbar-menu-sep" role="separator" />
+                {shape === 'map' &&
+                  MAP_LAYOUTS.map((l) => (
+                    <button key={l} role="menuitemradio" aria-checked={mapLayout === l} className={mapLayout === l ? 'is-on' : ''} onClick={() => { onMapLayout(l); setMore(false) }}>
+                      {LAYOUT_LABEL[l]}
+                    </button>
+                  ))}
+                {shape === 'outline' &&
+                  (['column', 'full'] as OutlineWidth[]).map((w) => (
+                    <button key={w} role="menuitemradio" aria-checked={outlineWidth === w} className={outlineWidth === w ? 'is-on' : ''} onClick={() => { onOutlineWidth(w); setMore(false) }}>
+                      {w === 'column' ? 'Centred column' : 'Full width'}
+                    </button>
+                  ))}
+                <div className="toolbar-menu-sep" role="separator" />
+                <button role="menuitemcheckbox" aria-checked={focusActive} className={focusActive ? 'is-on' : ''} disabled={!canFocus && !focusActive} onClick={() => { onToggleFocus(); setMore(false) }}>
+                  {focusActive ? 'Show the whole map' : 'Focus on the selected branch'}
+                </button>
+                {shape === 'map' && (
+                  <button role="menuitem" disabled={mapLayout !== 'free'} onClick={() => { onTidy(); setMore(false) }}>
+                    {mapLayout !== 'free' ? 'Tidy (Free layout only)' : 'Tidy'}
+                  </button>
+                )}
               </div>
             )}
           </div>
