@@ -615,18 +615,21 @@ export function fromMarkdownMap(src: string, fallbackName = 'Untitled'): IODoc &
  * line without trailing space, `body` what sits between the two lines, and `after` the text after the closing line.
  */
 /** The character offsets a fenced code block covers, so text quoting the format is not mistaken for it. */
-function fencedRanges(text: string): [number, number][] {
-  const ranges: [number, number][] = []
+/** Where fenced code sits. `closed` are blocks a fence closes; `terminal` is a fence nothing closes, which a
+ *  reader takes to the end of the note. They are kept apart because the map's own block may follow a fence
+ *  somebody forgot to close, and that block is still the map's. */
+function fencedRanges(text: string): { closed: [number, number][]; terminal: [number, number] | null } {
+  const closed: [number, number][] = []
   let at = 0
   let fence: { mark: string; from: number } | null = null
   let inComment = false
   // One walk, in the order a reader takes the note: inside fenced code only a closing fence counts, inside an
-  // Obsidian comment only a %% line counts, and a comment that opens and closes on one line changes nothing.
+  // Obsidian comment only a %% line counts, and a comment opened and closed on one line changes nothing.
   for (const line of text.split('\n')) {
     const end = at + line.length
     if (fence) {
       if (closesFence(fence.mark, line)) {
-        ranges.push([fence.from, end])
+        closed.push([fence.from, end])
         fence = null
       }
     } else if (inComment) {
@@ -638,31 +641,33 @@ function fencedRanges(text: string): [number, number][] {
     }
     at = end + 1
   }
-  // A fence nothing closes runs to the end of the note, the way a reader sees it.
-  if (fence) ranges.push([fence.from, text.length])
-  return ranges
+  return { closed, terminal: fence ? [fence.from, text.length] : null }
 }
 
 function findGeometry(text: string): { start: number; open: string; body: string; after: string } | null {
   // The newline ahead of the line is matched, not looked behind for: older iOS has no lookbehind.
   const fenced = fencedRanges(text)
-  const inCode = (i: number) => fenced.some(([from, to]) => i >= from && i < to)
+  const inClosedCode = (i: number) => fenced.closed.some(([from, to]) => i >= from && i < to)
+  const inTerminalCode = (i: number) => !!fenced.terminal && i >= fenced.terminal[0]
   const all = [...text.matchAll(new RegExp(`(?:^|\\n)((?:${BLOCK_ALT})[ \\t]*)(?=\\n)`, 'g'))]
     .map((m) => ({ index: m.index + m[0].length - m[1].length, line: m[1] }))
   // A note that documents the format must not have its own layout read out of the example. Where every candidate
   // sits in code — a note whose fence is never closed, with the map's own block after it — the block is still the
   // map's, and losing every position to a stray fence would be the worse answer.
-  const loose = all.filter((o) => !inCode(o.index))
-  // When nothing is loose, code stops counting for this note: the block and the %% that closes it both sit in it.
+  // A block inside a closed fence is somebody's example and never the map's, whatever else the note holds. A
+  // block after a fence nobody closed is a different matter: the note has no other, and dropping it would lose
+  // every position and write a second block on the next save.
+  const usable = all.filter((o) => !inClosedCode(o.index))
+  const loose = usable.filter((o) => !inTerminalCode(o.index))
   const strict = loose.length > 0
-  const opens = strict ? loose : all
+  const opens = strict ? loose : usable
   for (let k = opens.length - 1; k >= 0; k--) {
     const o = opens[k]
     const bodyStart = o.index + o.line.length + 1
     const close = /^%%[ \t]*$/gm
     close.lastIndex = bodyStart
     let c = close.exec(text)
-    while (c && strict && inCode(c.index)) c = close.exec(text)
+    while (c && (inClosedCode(c.index) || (strict && inTerminalCode(c.index)))) c = close.exec(text)
     if (!c) continue
     return {
       start: Math.max(0, o.index - 1),

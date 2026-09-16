@@ -43,7 +43,10 @@ export function ShortcutsSheet({ onClose, onTour, mac: macProp }: Props) {
   // Keys go to the sheet while it is open, not to the map behind the scrim; the filter takes them first.
   const dialog = useRef<HTMLDivElement>(null)
   const field = useRef<HTMLInputElement>(null)
+  /** Whatever held the keyboard when the sheet opened, read before the filter takes it. */
+  const opener = useRef<Element | null>(null)
   useEffect(() => {
+    opener.current = dialog.current?.ownerDocument.activeElement ?? null
     field.current?.focus({ preventScroll: true })
   }, [])
 
@@ -52,7 +55,6 @@ export function ShortcutsSheet({ onClose, onTour, mac: macProp }: Props) {
   useEffect(() => {
     const el = dialog.current
     if (!el) return
-    const opener = el.ownerDocument.activeElement
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Tab') return
       const stops = [...el.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])')].filter(
@@ -73,7 +75,8 @@ export function ShortcutsSheet({ onClose, onTour, mac: macProp }: Props) {
     el.addEventListener('keydown', onKey)
     return () => {
       el.removeEventListener('keydown', onKey)
-      if (opener instanceof HTMLElement && opener.isConnected) opener.focus({ preventScroll: true })
+      const back = opener.current
+      if (back instanceof HTMLElement && back.isConnected) back.focus({ preventScroll: true })
     }
   }, [])
 

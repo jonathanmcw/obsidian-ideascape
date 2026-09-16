@@ -171,7 +171,6 @@ export function Toolbar({
     const ro = new ResizeObserver(() => syncStop())
     ro.observe(el)
     return () => ro.disconnect()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const onBarKey = (e: ReactKeyboardEvent) => {

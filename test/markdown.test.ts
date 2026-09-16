@@ -393,3 +393,13 @@ test("markdown: an odd %% marker does not cost the map its layout block", () => 
   assert.equal(d.nodes["n1"]!.x, 13);
   assert.equal(d.nodes["n1"]!.y, 14);
 });
+
+test("markdown: a note whose only layout block is a fenced example keeps its own hands off it", () => {
+  // Someone's note about the format, opened as a map. The example is theirs: it is not read as this map's
+  // geometry, and writing the map back leaves the fence exactly as it was.
+  const note = ["# R", "", "- one ^n1", "", "A map ends like this:", "", "```markdown", "%%ideascape", '{"v":1,"pos":{"n1":[999,999]}}', "%%", "```", ""].join("\n");
+  const d = fromMarkdownMap(note, "x");
+  assert.notEqual(d.nodes["n1"]!.x, 999, "the example's coordinates are not adopted");
+  const out = toMarkdownMap(d);
+  assert.match(out, /```markdown\n%%ideascape\n\{"v":1,"pos":\{"n1":\[999,999\]\}\}\n%%\n```/, "the example survives the round trip untouched");
+});
