@@ -33,3 +33,12 @@ test("theme: the same guard works on a dark stage, moving the accent the other w
   const shown = t.vars["--accent"]!;
   assert.ok(contrast(shown, "#101014") >= 2.4, "the accent is lifted off a dark stage");
 });
+
+test("theme: where both ways out of the stage would do, the accent takes the shorter one", () => {
+  // Slightly lighter than its stage: going lighter clears the floor sooner than going dark would, and the
+  // accent should not be dragged all the way to near-black to get there.
+  const t = buildCustomTheme({ name: "C", base: "slate", branches: [], stage: "#6a6a6a", accent: "#6e6e6e" });
+  const shown = t.vars["--accent"]!;
+  assert.ok(lum(shown) > lum("#6e6e6e"), `the accent went lighter, not darker (got ${shown})`);
+  assert.ok(contrast(shown, "#6a6a6a") >= 2.4, "and it clears the floor");
+});
