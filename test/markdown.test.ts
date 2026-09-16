@@ -421,3 +421,22 @@ test("markdown: a note whose only layout block is inside a maths block keeps its
   assert.notEqual(d.nodes["n1"]!.x, 888, "the example's coordinates are not adopted");
   assert.match(toMarkdownMap(d), /888,888/, "and the block it sits in survives");
 });
+
+test("markdown: an example inside an unclosed comment or maths block, with text after it, is left alone", () => {
+  for (const open of ["<!--", "$$", "```"] as const) {
+    const note = ["# R", "", "- one ^n1", "", open, "%%ideascape", '{"v":1,"pos":{"n1":[777,777]}}', "%%", "", "and a line of prose after it", ""].join("\n");
+    const d = fromMarkdownMap(note, "x");
+    assert.notEqual(d.nodes["n1"]!.x, 777, `a quote inside an unclosed ${open} is not the map's`);
+    assert.match(toMarkdownMap(d), /777,777/, "and it survives the round trip");
+  }
+});
+
+test("markdown: a map whose own block follows a stray unclosed fence is read, not written again on every save", () => {
+  const note = ["# R", "", "- one ^n1", "", "```", "someone forgot the closing fence", "", "%%ideascape", '{"v":1,"pos":{"n1":[11,12]}}', "%%", ""].join("\n");
+  const d = fromMarkdownMap(note, "x");
+  assert.equal(d.nodes["n1"]!.x, 11, "the map's own block is still its own");
+  const once = toMarkdownMap(d);
+  const twice = toMarkdownMap(fromMarkdownMap(once, "x"));
+  assert.equal((once.match(/%%ideascape/g) ?? []).length, 1, "one block after a save");
+  assert.equal(twice, once, "and saving again changes nothing");
+});

@@ -659,12 +659,11 @@ function findGeometry(text: string): { start: number; open: string; body: string
   const inTerminalCode = (i: number) => !!fenced.terminal && i >= fenced.terminal[0]
   const all = [...text.matchAll(new RegExp(`(?:^|\\n)((?:${BLOCK_ALT})[ \\t]*)(?=\\n)`, 'g'))]
     .map((m) => ({ index: m.index + m[0].length - m[1].length, line: m[1] }))
-  // A note that documents the format must not have its own layout read out of the example. Where every candidate
-  // sits in code — a note whose fence is never closed, with the map's own block after it — the block is still the
-  // map's, and losing every position to a stray fence would be the worse answer.
   // A block inside a region something closes is somebody's example and never the map's, whatever else the note
-  // holds. A block after a region nobody closed is a different matter: the note has no other, and dropping it
-  // would lose every position and write a second block on the next save.
+  // holds. A region nobody closes is the hard case: a stray ``` or <!-- earlier in the note puts the map's own
+  // block inside it, and ignoring it would not only lose every position, it would append another block on every
+  // save, each one landing inside the same unclosed region. So a block there still counts, but only where the
+  // map's writer puts its own: last in the note, with nothing after it. An example with text after it is a quote.
   const usable = all.filter((o) => !inClosedCode(o.index))
   const loose = usable.filter((o) => !inTerminalCode(o.index))
   const strict = loose.length > 0
@@ -677,6 +676,9 @@ function findGeometry(text: string): { start: number; open: string; body: string
     let c = close.exec(text)
     while (c && (inClosedCode(c.index) || (strict && inTerminalCode(c.index)))) c = close.exec(text)
     if (!c) continue
+    // Only where the writer would have put it: in a note whose regions are all left open, a block with text after
+    // it belongs to whoever wrote that text.
+    if (!strict && text.slice(c.index + c[0].length).trim() !== '') continue
     return {
       start: Math.max(0, o.index - 1),
       open: o.line.trimEnd(),

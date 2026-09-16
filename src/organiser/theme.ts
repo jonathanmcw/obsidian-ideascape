@@ -210,18 +210,24 @@ function ringable(accent: string, stage: string): string {
   if (contrast(luminance(from), bg) >= RING_CONTRAST) return accent
   const hex = (rgb: [number, number, number]) => `#${rgb.map((v) => v.toString(16).padStart(2, '0')).join('')}`
   const mix = (toward: number, t: number) => from.map((v) => Math.round(v + (toward - v) * t)) as [number, number, number]
-  // Both ways out of the background are tried, and the nearest colour that clears the floor wins. Walking one way
-  // by a fixed number of steps can stop just short, which is how an accent can still vanish into its stage.
+  // Both ways out of the background are walked in full, and the colour that clears the floor with the smallest
+  // move wins, so the accent is changed as little as it can be. Walking one way and stopping at a step count can
+  // stop just short, which is how an accent can still vanish into its stage.
   let best = from
   let bestGap = -1
+  let winner: { rgb: [number, number, number]; t: number } | null = null
   for (const toward of [0, 255]) {
     for (let t = 0.05; t <= 1.0001; t += 0.05) {
       const rgb = mix(toward, t)
       const gap = contrast(luminance(rgb), bg)
-      if (gap >= RING_CONTRAST) return hex(rgb)
+      if (gap >= RING_CONTRAST) {
+        if (!winner || t < winner.t) winner = { rgb, t }
+        break
+      }
       if (gap > bestGap) { bestGap = gap; best = rgb }
     }
   }
+  if (winner) return hex(winner.rgb)
   // Nothing reached the floor, which only a mid-grey stage can do: the most distinct colour found still wins.
   return hex(best)
 }
