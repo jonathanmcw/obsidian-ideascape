@@ -185,9 +185,16 @@
 .io-root .inspector {
   grid-column: 3;
 }
-/* On a phone the panel is a sheet over the whole width; its close button brings the map back. */
+/* On a phone, or in a pane that narrow, the panel is a sheet over the whole width; the pane's own chrome would
+   otherwise spill over it, so it is hidden until the panel's close button brings the map back. */
 .io-root .app.is-narrow {
   --inspector-w: 100%;
+}
+.io-root .app.is-narrow .inspector {
+  border-left: 0;
+}
+.io-root .app.is-narrow.inspector-open .main {
+  visibility: hidden;
 }
 
 /* Both tracks are named explicitly. The rail unmounts when it is collapsed, and
@@ -410,10 +417,12 @@
 }
 .io-root .seg {
   position: relative;
-  /* Equal cells, whatever the labels' lengths: the thumb is a fraction of the width, so cells must match it. */
+  /* Equal cells, whatever the labels' lengths: the thumb is a fraction of the width, so cells must match it.
+     Never narrower than its words: a tight toolbar overflows rather than squashes it. */
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
+  min-width: max-content;
   flex: none;
   margin: 0;
   padding: 3px;
@@ -468,7 +477,7 @@
   top: calc(100% + 6px);
   display: flex;
   flex-direction: column;
-  min-width: 180px;
+  min-width: 220px;
   padding: 4px;
   background: var(--surface);
   border: 1px solid var(--line-strong);
@@ -476,10 +485,15 @@
   box-shadow: var(--shadow-2);
   z-index: 40;
 }
-.io-root .toolbar-menu button { height: 34px; padding: 0 10px; text-align: start; border-radius: 6px; font-size: 13px; color: var(--ink); }
-.io-root .toolbar-menu button:hover { background: var(--surface-2); }
-.io-root .toolbar-menu button.is-on { color: var(--accent, var(--ink)); font-weight: 600; }
+.io-root .toolbar-menu button {
+  display: flex; align-items: center; justify-content: flex-start; gap: 10px;
+  height: 34px; padding: 0 10px; text-align: start; border-radius: 6px; font-size: 13px; color: var(--ink);
+}
+.io-root .toolbar-menu button:hover:not(:disabled) { background: var(--surface-2); }
 .io-root .toolbar-menu button:disabled { opacity: 0.45; cursor: default; }
+.io-root .toolbar-menu .tm-icon { display: grid; place-items: center; flex: none; width: 18px; color: var(--ink-2); }
+.io-root .toolbar-menu .tm-label { flex: 1; white-space: nowrap; }
+.io-root .toolbar-menu .tm-check { display: grid; place-items: center; flex: none; color: var(--accent, var(--ink)); }
 .io-root .toolbar-menu-sep { height: 1px; margin: 4px 0; background: var(--line); }
 
 /* No min-width: 0 here on purpose. If the pane is too narrow for the actions,
@@ -1062,17 +1076,19 @@
   animation: slide-up 240ms var(--morph-ease);
 }
 
-.io-root .corner-left {
+.io-root .corner {
   position: absolute;
-  left: 14px;
+  right: 14px;
   bottom: calc(14px + var(--io-bottom-inset, 0px));
   z-index: 4;
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 8px;
 }
 .io-root .history {
   display: flex;
+  flex-direction: column;
   align-items: center;
   background: var(--surface);
   border: 1px solid var(--line);
@@ -1091,6 +1107,7 @@
 .io-root .history button:disabled { opacity: 0.35; cursor: default; }
 .io-root .zoom {
   display: flex;
+  flex-direction: column;
   align-items: center;
   background: var(--surface);
   border: 1px solid var(--line);
@@ -1109,19 +1126,10 @@
   background: color-mix(in srgb, var(--ink) 8%, transparent);
   color: var(--ink);
 }
-.io-root .zoom .zoom-val {
-  width: auto;
-  padding: 0 9px;
-  font-size: 11.5px;
-  font-variant-numeric: tabular-nums;
-  border-left: 1px solid var(--line);
-  border-right: 1px solid var(--line);
-}
 
 .io-root .help {
-  /* in the bottom-left cluster, after zoom and history */
+  /* last in the bottom-right column, after zoom and history */
   flex: none;
-  /* obsidian: bottom-right belongs to the app's status bar */
   z-index: 5;
   display: grid;
   place-items: center;
@@ -1660,107 +1668,82 @@
   }
 }
 
-@media (max-width: 760px) {
-  /* Below this the rail can no longer take a column of its own without
-     squeezing the canvas, so it floats above it instead. */
-  .io-root .app,
-.io-root .app.rail-open {
-    grid-template-columns: 0 minmax(0, 1fr);
-  }
-  .io-root .rail {
-    position: absolute;
-    left: 0;
-    /* Below the toolbar, not over it — otherwise the overlay hides the very
-       button that closes it. */
-    top: var(--toolbar-h);
-    bottom: 0;
-    width: var(--rail-w);
-    z-index: 30;
-    box-shadow: var(--shadow-3);
-    animation: rail-in 240ms var(--morph-ease);
-  }
-  .io-root .rail-head {
-    height: 40px;
-  }
-  .io-root .app.inspector-open,
-.io-root .app.rail-open.inspector-open {
-    grid-template-columns: 0 minmax(0, 1fr);
-  }
-  .io-root .inspector {
-    position: absolute;
-    right: 0;
-    top: var(--toolbar-h);
-    bottom: 0;
-    width: var(--inspector-w);
-    z-index: 30;
-    box-shadow: var(--shadow-3);
-  }
-  .io-root .doc-name .badge {
-    display: none;
-  }
-  .io-root .doc-name-btn {
-    max-width: 120px;
-  }
-  .io-root .seg-btn {
-    padding: 5px 10px;
-    font-size: 12.5px;
-  }
+/* In a pane under 760px the rail can no longer take a column of its own without squeezing the canvas, so it floats
+   above it. The document panel keeps its column at every width: beside the map, or, under 600px, as the full-width
+   sheet above. Judged from the pane (`.is-medium`, `.is-narrow`), not the window, so a split pane behaves like a
+   small window and a full-width panel never changes the answer. */
+.io-root .app.is-medium,
+.io-root .app.is-medium.rail-open,
+.io-root .app.is-narrow,
+.io-root .app.is-narrow.rail-open {
+  grid-template-columns: 0 minmax(0, 1fr);
+}
+.io-root .app.is-medium.inspector-open,
+.io-root .app.is-medium.rail-open.inspector-open,
+.io-root .app.is-narrow.inspector-open,
+.io-root .app.is-narrow.rail-open.inspector-open {
+  grid-template-columns: 0 minmax(0, 1fr) var(--inspector-w);
+}
+.io-root .app.is-medium .rail,
+.io-root .app.is-narrow .rail {
+  position: absolute;
+  left: 0;
+  /* Below the toolbar, not over it: otherwise the overlay hides the very button that closes it. */
+  top: var(--toolbar-h);
+  bottom: 0;
+  width: var(--rail-w);
+  z-index: 30;
+  box-shadow: var(--shadow-3);
+  animation: rail-in 240ms var(--morph-ease);
+}
+.io-root .app.is-medium .rail-head,
+.io-root .app.is-narrow .rail-head {
+  height: 40px;
 }
 
+/* A tight toolbar — the pane is narrow, or a side panel takes most of it (`.is-compact`, from the stage's width).
+   The switcher keeps the toolbar's left, where it always is; the shape's own toggle, Focus and Tidy fold into the
+   ... menu, and Document and Export go with them. */
+.io-root .app.is-compact .toolbar {
+  gap: 5px;
+  padding: 0 8px;
+}
+.io-root .app.is-compact .doc-name .badge {
+  display: none;
+}
+.io-root .app.is-compact .doc-name-btn {
+  max-width: 120px;
+  padding: 4px 6px;
+}
+.io-root .app.is-compact .toolbar-right {
+  margin-left: auto;
+}
+.io-root .app.is-compact .toolbar-centre {
+  display: none;
+}
+.io-root .app.is-compact .seg-btn {
+  min-width: 0;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+.io-root .app.is-compact .seg.seg-mini .seg-btn {
+  padding: 6px 10px;
+}
+.io-root .app.is-compact .toolbar .only-wide { display: none; }
+.io-root .app.is-compact .toolbar-more { display: block; }
+.io-root .app.is-compact .doc-name { max-width: 55%; }
+
 @media (max-width: 600px) {
-  /* A phone, or a window that narrow. The switcher keeps the toolbar's left, where it always is; the shape's own
-     toggle, Focus and Tidy fold into the ... menu; zoom, history and help stand in a column at the top right. */
+  /* A phone: everything at the edges clears the notch, the home indicator and Obsidian's navigation bar. */
   .io-root .toolbar {
-    gap: 5px;
-    padding: 0 8px;
     padding-left: max(8px, env(safe-area-inset-left));
     padding-right: max(8px, env(safe-area-inset-right));
   }
-  .io-root .doc-name-btn {
-    max-width: 120px;
-    padding: 4px 6px;
-  }
-  .io-root .toolbar-right {
-    margin-left: auto;
-  }
-  .io-root .toolbar-centre {
-    display: none;
-  }
-  .io-root .seg-btn {
-    min-width: 0;
-    padding: 6px 12px;
-    font-size: 13px;
-  }
-  .io-root .seg.seg-mini .seg-btn {
-    padding: 6px 10px;
-  }
-  /* The pill takes the bottom centre; the exit hint moves above it, the zoom
-     control keeps only the readout (pinch zooms), and everything at the bottom
-     edge clears the home indicator. */
   .io-root .esc {
     bottom: calc(14px + max(env(safe-area-inset-bottom), var(--io-bottom-inset, 0px)));
   }
-  .io-root .corner-left {
-    left: auto;
-    bottom: auto;
-    top: 12px;
+  .io-root .corner {
     right: max(14px, env(safe-area-inset-right));
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 8px;
-  }
-  .io-root .corner-left .history {
-    flex-direction: column;
-  }
-  .io-root .toolbar .only-wide { display: none; }
-  .io-root .toolbar-more { display: block; }
-  .io-root .doc-name { max-width: 55%; }
-  .io-root .zoom button:not(.zoom-val) {
-    display: none;
-  }
-  .io-root .zoom .zoom-val {
-    border: 0;
-    height: 30px;
   }
   .io-root .rail,
   .io-root .inspector {

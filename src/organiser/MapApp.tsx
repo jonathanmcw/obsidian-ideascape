@@ -174,8 +174,8 @@ export interface MapCommands {
 }
 export type { Format }
 
-/** How far Obsidian's own bars reach up into the stage: the mobile navigation bar, and on the desktop the status bar
- *  once a narrow window wraps it across the bottom-left corner where the controls sit. Both are fixed elements
+/** How far Obsidian's own bars reach up into the stage: the mobile navigation bar, and on the desktop the status bar,
+ *  which sits over the bottom-right corner where the controls stand. Both are fixed elements
  *  outside the view, so they are measured rather than assumed. */
 function bottomInsetFor(stage: HTMLElement): number {
   const box = stage.getBoundingClientRect()
@@ -183,8 +183,8 @@ function bottomInsetFor(stage: HTMLElement): number {
   for (const bar of stage.ownerDocument.querySelectorAll<HTMLElement>('.mobile-navbar, .status-bar')) {
     const r = bar.getBoundingClientRect()
     if (r.height === 0 || r.top >= box.bottom || r.bottom <= box.top) continue
-    // The controls live in the left 260px of the stage; a status bar that keeps to the right of them is no trouble.
-    if (r.left > box.left + 260) continue
+    // The controls live in the right 260px of the stage; a bar that stops short of them is no trouble.
+    if (r.right < box.right - 260) continue
     inset = Math.max(inset, box.bottom - r.top)
   }
   return Math.round(inset)
@@ -244,8 +244,16 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
   // obsidian: the outline column needs the stage width at layout time, so it is state, not only a ref.
   const [stageW, setStageW] = useState(0)
   const [bottomInset, setBottomInset] = useState(0)
-  /** A phone, or a pane that narrow: the outline hugs the edges and the document panel takes the whole width. */
-  const narrow = stageW > 0 && stageW < 600
+  const [paneW, setPaneW] = useState(0)
+  /** The pane is narrow (a phone, or a split that tight): the document panel becomes a sheet over the whole width.
+   *  Judged from the pane, which the panel does not change; the stage would be squeezed to nothing by the very
+   *  panel this decides on. */
+  const narrow = paneW > 0 && paneW < 600
+  /** Room for the panel beside the map, but not for the rail as a column of its own too: the rail floats. */
+  const medium = paneW >= 600 && paneW < 760
+  /** The space beside the panel is tight: the toolbar folds its centre and its right into the ... menu, and the
+   *  outline hugs the edges. */
+  const compact = stageW > 0 && stageW < 600
   const [morphing, setMorphing] = useState(false)
   const [edgesHidden, setEdgesHidden] = useState(false)
   const [cameraAnimated, setCameraAnimated] = useState(false)
@@ -260,6 +268,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
   const stageSize = useRef({ width: 0, height: 0 })
   const [historyTick, setHistoryTick] = useState(0)
   const stageRef = useRef<HTMLDivElement>(null)
+  const appRef = useRef<HTMLDivElement>(null)
   const timers = useRef<number[]>([])
   const camTimer = useRef<number>()
 
@@ -431,7 +440,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
 
   // Outline geometry: a column wraps at MAX_ROW_TEXT_W; full width wraps at the window. Neither is wider than the
   // stage allows, so a phone or a narrow pane wraps the rows instead of clipping them.
-  const outlineMargin = narrow ? 16 : 48
+  const outlineMargin = compact ? 16 : 48
   /** Where the first row sits below the toolbar — and the last row above the bottom edge. */
   const OUTLINE_TOP = 64
   const columnW = ROW_LEAD + MAX_ROW_TEXT_W + 40
@@ -592,6 +601,19 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
     // keystroke would fight the user's own panning.
   }, [viewKey])
 
+  // The pane's own width decides the narrow layout (see `narrow`).
+  useEffect(() => {
+    const el = appRef.current
+    if (!el) return
+    setPaneW(el.getBoundingClientRect().width)
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width
+      if (w) setPaneW(w)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   // The stage resizes for reasons no window event reports — the rail opening or
   // closing, most of all. Hold the visual centre instead of refitting, so the
   // map doesn't jump and the viewer's own pan and zoom survive.
@@ -600,7 +622,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
     if (!el) return
     let { width, height } = el.getBoundingClientRect()
     stageSize.current = { width, height }
-    setStageW(width)
+    if (width > 0) setStageW(width)
     setBottomInset(bottomInsetFor(el))
     const ro = new ResizeObserver((entries) => {
       const box = entries[0]?.contentRect
@@ -611,7 +633,8 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       width = box.width
       height = box.height
       stageSize.current = { width, height }
-      setStageW(width)
+      // A stage squeezed to nothing (the panel over it on a phone) keeps its last real width, so "narrow" holds.
+      if (width > 0) setStageW(width)
       setBottomInset(bottomInsetFor(el))
       setCamera((c) => ({ ...c, x: c.x + dx / 2, y: c.y + dy / 2 }))
     })
@@ -1526,7 +1549,8 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
 
   return (
     <div
-      className={`app${prefs.inspectorOpen ? ' inspector-open' : ''}${narrow ? ' is-narrow' : ''}`}
+      ref={appRef}
+      className={`app${prefs.inspectorOpen ? ' inspector-open' : ''}${narrow ? ' is-narrow' : ''}${medium ? ' is-medium' : ''}${compact ? ' is-compact' : ''}`}
       style={{ '--io-bottom-inset': `${bottomInset}px` } as React.CSSProperties}
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => {
@@ -1551,6 +1575,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
           arrangement={arrangement}
           onMapLayout={setLayout}
           onTidy={tidy}
+          onFit={() => fitCamera(frame, prefs.shape, true, focusSubtree)}
           inspectorOpen={prefs.inspectorOpen}
           onToggleInspector={() => setPrefs({ inspectorOpen: !prefs.inspectorOpen })}
         />
@@ -1650,20 +1675,18 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
             </>
           )}
 
-          {/* View and history controls share the bottom-left corner: where the hand
-              rests on a trackpad, and where a thumb reaches on a phone. */}
-          <div className="corner-left">
+          {/* View and history controls stand in a column at the bottom right, above Obsidian's own bars: zoom in
+              and out, undo (and redo, only while there is something to redo), and the shortcut sheet. The zoom level
+              is not shown; Fit is a key, a command, and an item in the phone's menu. */}
+          <div className="corner">
             {/* The Outline stays at 100%, so it has nothing to zoom. */}
             {prefs.shape === 'map' && (
-              <div className="zoom">
-                <button onClick={() => animateCamera({ ...camera, z: Math.max(0.2, camera.z / 1.2) }, 180)} title={`Zoom out — ${chord('⌥⌘-')}`}>
-                  −
-                </button>
-                <button className="zoom-val" onClick={() => fitCamera(frame, prefs.shape, true, focusSubtree)} title={`Fit — ${chord('⇧⌘0')}`}>
-                  {Math.round(camera.z * 100)}%
-                </button>
+              <div className="zoom" role="group" aria-label="Zoom">
                 <button onClick={() => animateCamera({ ...camera, z: Math.min(2.5, camera.z * 1.2) }, 180)} title={`Zoom in — ${chord('⌥⌘=')}`}>
                   +
+                </button>
+                <button onClick={() => animateCamera({ ...camera, z: Math.max(0.2, camera.z / 1.2) }, 180)} title={`Zoom out — ${chord('⌥⌘-')}`}>
+                  −
                 </button>
               </div>
             )}
@@ -1674,9 +1697,11 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
               <button onClick={undo} disabled={!(s.history.past.length > 0 && historyTick >= 0)} aria-label={`Undo — ${chord('⌘Z')}`}>
                 <IconUndo size={15} />
               </button>
-              <button onClick={redo} disabled={!(s.history.future.length > 0 && historyTick >= 0)} aria-label={`Redo — ${chord('⇧⌘Z')}`}>
-                <IconRedo size={15} />
-              </button>
+              {s.history.future.length > 0 && historyTick >= 0 && (
+                <button onClick={redo} aria-label={`Redo — ${chord('⇧⌘Z')}`}>
+                  <IconRedo size={15} />
+                </button>
+              )}
             </div>
             <button className="help" onClick={() => setShowKeys(true)} title="Shortcuts — ?">
               ?

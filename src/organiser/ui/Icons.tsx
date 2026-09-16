@@ -133,6 +133,12 @@ export const IconFull = ({ size }: P) => (
   </svg>
 )
 
+export const IconFit = ({ size }: P) => (
+  <svg {...base(size)}>
+    <path d="M2.5 6V3.5A1 1 0 0 1 3.5 2.5H6M10 2.5h2.5a1 1 0 0 1 1 1V6M13.5 10v2.5a1 1 0 0 1-1 1H10M6 13.5H3.5a1 1 0 0 1-1-1V10" />
+  </svg>
+)
+
 export const IconRedo = ({ size }: P) => (
   <svg {...base(size)}>
     <path d="M13 7.5H6.6a3.1 3.1 0 1 0 0 6.2h2.9" />
