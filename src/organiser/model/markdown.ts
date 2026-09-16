@@ -617,40 +617,29 @@ export function fromMarkdownMap(src: string, fallbackName = 'Untitled'): IODoc &
 /** The character offsets a fenced code block covers, so text quoting the format is not mistaken for it. */
 function fencedRanges(text: string): [number, number][] {
   const ranges: [number, number][] = []
-  const lines = text.split('\n')
-  // Obsidian comments are paired first. A ``` inside one is part of the comment, not a fence that swallows the
-  // rest of the note — the map's own layout block is such a comment, and a stray marker in one used to hide it.
-  const commented = lines.map(() => false)
-  let commentFrom = -1
-  for (let i = 0; i < lines.length; i++) {
-    if (!/^%%/.test(lines[i])) continue
-    if (commentFrom < 0) commentFrom = i
-    else {
-      for (let k = commentFrom; k <= i; k++) commented[k] = true
-      commentFrom = -1
-    }
-  }
   let at = 0
-  let open: { fence: string; from: number } | null = null
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
+  let fence: { mark: string; from: number } | null = null
+  let inComment = false
+  // One walk, in the order a reader takes the note: inside fenced code only a closing fence counts, inside an
+  // Obsidian comment only a %% line counts, and a comment that opens and closes on one line changes nothing.
+  for (const line of text.split('\n')) {
     const end = at + line.length
-    if (commented[i]) {
-      at = end + 1
-      continue
-    }
-    if (!open) {
+    if (fence) {
+      if (closesFence(fence.mark, line)) {
+        ranges.push([fence.from, end])
+        fence = null
+      }
+    } else if (inComment) {
+      if (/^%%/.test(line)) inComment = false
+    } else {
       const m = FENCE_RE.exec(line)
-      if (m) open = { fence: m[1], from: at }
-    } else if (closesFence(open.fence, line)) {
-      ranges.push([open.from, end])
-      open = null
+      if (m) fence = { mark: m[1], from: at }
+      else if (/^%%/.test(line) && !line.slice(2).includes('%%')) inComment = true
     }
     at = end + 1
   }
-  // A fence nothing closes runs to the end of the note, the way a reader sees it, so an example inside one is
-  // still an example and not the map's own geometry.
-  if (open) ranges.push([open.from, text.length])
+  // A fence nothing closes runs to the end of the note, the way a reader sees it.
+  if (fence) ranges.push([fence.from, text.length])
   return ranges
 }
 
@@ -658,17 +647,22 @@ function findGeometry(text: string): { start: number; open: string; body: string
   // The newline ahead of the line is matched, not looked behind for: older iOS has no lookbehind.
   const fenced = fencedRanges(text)
   const inCode = (i: number) => fenced.some(([from, to]) => i >= from && i < to)
-  const opens = [...text.matchAll(new RegExp(`(?:^|\\n)((?:${BLOCK_ALT})[ \\t]*)(?=\\n)`, 'g'))]
+  const all = [...text.matchAll(new RegExp(`(?:^|\\n)((?:${BLOCK_ALT})[ \\t]*)(?=\\n)`, 'g'))]
     .map((m) => ({ index: m.index + m[0].length - m[1].length, line: m[1] }))
-    // A note that documents the format — this README does — must not have its own layout read out of the example.
-    .filter((o) => !inCode(o.index))
+  // A note that documents the format must not have its own layout read out of the example. Where every candidate
+  // sits in code — a note whose fence is never closed, with the map's own block after it — the block is still the
+  // map's, and losing every position to a stray fence would be the worse answer.
+  const loose = all.filter((o) => !inCode(o.index))
+  // When nothing is loose, code stops counting for this note: the block and the %% that closes it both sit in it.
+  const strict = loose.length > 0
+  const opens = strict ? loose : all
   for (let k = opens.length - 1; k >= 0; k--) {
     const o = opens[k]
     const bodyStart = o.index + o.line.length + 1
     const close = /^%%[ \t]*$/gm
     close.lastIndex = bodyStart
     let c = close.exec(text)
-    while (c && inCode(c.index)) c = close.exec(text)
+    while (c && strict && inCode(c.index)) c = close.exec(text)
     if (!c) continue
     return {
       start: Math.max(0, o.index - 1),

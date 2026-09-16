@@ -353,3 +353,43 @@ test("markdown: an example inside a code fence that is never closed stays an exa
   assert.equal(d.nodes["n1"]!.x, 3, "the real block wins over the one in the unclosed fence");
   assert.equal(d.nodes["n1"]!.y, 4);
 });
+
+test("markdown: an inline comment before the layout block does not shift what counts as code", () => {
+  const note = [
+    "# R",
+    "",
+    "- one ^n1",
+    "",
+    "%% a note to self, opened and closed on one line %%",
+    "",
+    "```markdown",
+    "%%ideascape",
+    '{"v":1,"pos":{"n1":[999,999]}}',
+    "%%",
+    "```",
+    "",
+    "%%ideascape",
+    '{"v":1,"pos":{"n1":[5,6]}}',
+    "%%",
+    "",
+  ].join("\n");
+  const d = fromMarkdownMap(note, "x");
+  assert.equal(d.nodes["n1"]!.x, 5, "the real block after the fenced example still wins");
+  assert.equal(d.nodes["n1"]!.y, 6);
+});
+
+test("markdown: a note whose only layout block sits after an unclosed fence keeps its positions", () => {
+  // Read strictly, the unclosed fence swallows the rest of the note. Dropping the block would lose every
+  // position and write a second one on the next save, so the map's own block still counts.
+  const note = ["# R", "", "- one ^n1", "", "```", "an example that forgot its closing fence", "", "%%ideascape", '{"v":1,"pos":{"n1":[11,12]}}', "%%", ""].join("\n");
+  const d = fromMarkdownMap(note, "x");
+  assert.equal(d.nodes["n1"]!.x, 11);
+  assert.equal(d.nodes["n1"]!.y, 12);
+});
+
+test("markdown: an odd %% marker does not cost the map its layout block", () => {
+  const note = ["# R", "", "- one ^n1", "", "%%", "a comment nobody closed", "", "%%ideascape", '{"v":1,"pos":{"n1":[13,14]}}', "%%", ""].join("\n");
+  const d = fromMarkdownMap(note, "x");
+  assert.equal(d.nodes["n1"]!.x, 13);
+  assert.equal(d.nodes["n1"]!.y, 14);
+});

@@ -42,6 +42,7 @@ function MenuItem({ icon: Ic, label, checked, exclusive, disabled, onPick }: { i
       role={toggles ? (exclusive ? 'menuitemradio' : 'menuitemcheckbox') : 'menuitem'}
       aria-checked={toggles ? checked : undefined}
       className={checked ? 'is-on' : ''}
+      tabIndex={-1}
       disabled={disabled}
       onClick={onPick}
     >
@@ -100,8 +101,14 @@ export function Toolbar({
     return () => doc.removeEventListener('pointerdown', close, true)
   }, [more])
 
-  // An open menu takes the keyboard: the first row has focus, the arrows and Home and End walk the rows, and Esc
-  // closes it and hands focus back to the button that opened it, rather than dropping it on the document.
+  /** Close the menu the way Escape does: the button that opened it takes the keyboard back. */
+  const closeMenu = () => {
+    setMore(false)
+    moreBtn.current?.focus()
+  }
+
+  // An open menu takes the keyboard: the first row has focus, the arrows and Home and End walk the rows, Tab
+  // leaves the menu rather than walking every command in it, and Esc hands focus back to the button that opened it.
   useEffect(() => {
     if (!more) return
     const el = menuRef.current
@@ -117,7 +124,7 @@ export function Toolbar({
       else if (e.key === 'ArrowUp') go(here < 0 ? items.length - 1 : here - 1)
       else if (e.key === 'Home') go(0)
       else if (e.key === 'End') go(items.length - 1)
-      else if (e.key === 'Escape') {
+      else if (e.key === 'Escape' || e.key === 'Tab') {
         e.preventDefault()
         e.stopPropagation()
         setMore(false)
@@ -132,22 +139,40 @@ export function Toolbar({
   // The rows of an open menu are left out — the menu has its own keys — and a key handled here is kept from the
   // map behind, which reads the arrows as "move the selection".
   const barRef = useRef<HTMLElement>(null)
-  const current = useRef(0)
+  /** The control that holds the toolbar's tab stop, kept as the element rather than its place in the row: the row
+   *  itself changes with the pane's width, and an index would then point at something else, or at nothing. */
+  const stop = useRef<HTMLButtonElement | null>(null)
   const barButtons = () => [...(barRef.current?.querySelectorAll<HTMLButtonElement>('button') ?? [])].filter((b) => !b.closest('.toolbar-menu'))
   // Hidden is not the same as disabled: the ... button is display:none until the pane is tight, and the wide
   // toolbar's own actions go the other way. Neither can hold the keyboard while it is not drawn.
   const barItems = () => barButtons().filter((b) => !b.disabled && b.offsetParent !== null)
 
-  useEffect(() => {
-    const all = barButtons()
+  const setStop = (btn: HTMLButtonElement | null) => {
+    stop.current = btn
+    // Every button is set, not only the ones in the walk: a disabled or hidden one that comes back would
+    // otherwise still be carrying the tab stop it was born with.
+    barButtons().forEach((b) => { b.tabIndex = b === btn ? 0 : -1 })
+  }
+
+  /** Keep the stop on the control that has it, or move it to the first one still there. */
+  const syncStop = () => {
     const items = barItems()
     if (!items.length) return
-    if (current.current >= items.length) current.current = 0
-    const here = items[current.current]
-    // Every button is set, not only the ones that can be used: a disabled button that comes back would otherwise
-    // still be carrying the tab stop it was born with.
-    all.forEach((b) => { b.tabIndex = b === here ? 0 : -1 })
-  })
+    const held = stop.current
+    setStop(held && items.includes(held) ? held : items[0])
+  }
+
+  // What the toolbar holds changes with the shape, with what is on or off, and with the width of the pane, which
+  // is a class on a parent rather than a prop: the width is watched instead of guessed.
+  useEffect(syncStop, [shape, mapLayout, outlineWidth, focusActive, canFocus, inspectorOpen, tidyScope, more])
+  useEffect(() => {
+    const el = barRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => syncStop())
+    ro.observe(el)
+    return () => ro.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const onBarKey = (e: ReactKeyboardEvent) => {
     if (more) return
@@ -159,16 +184,9 @@ export function Toolbar({
     e.preventDefault()
     e.stopPropagation()
     const to = e.key === 'ArrowRight' ? here + 1 : e.key === 'ArrowLeft' ? here - 1 : e.key === 'Home' ? 0 : items.length - 1
-    const n = (to + items.length) % items.length
-    current.current = n
-    barButtons().forEach((b) => { b.tabIndex = b === items[n] ? 0 : -1 })
-    items[n].focus()
-  }
-
-  /** Close the menu the way Escape does: the button that opened it takes the keyboard back. */
-  const closeMenu = () => {
-    setMore(false)
-    moreBtn.current?.focus()
+    const next = items[(to + items.length) % items.length]
+    setStop(next)
+    next.focus()
   }
 
   const index = SHAPES.indexOf(shape)
@@ -182,8 +200,8 @@ export function Toolbar({
       ref={barRef}
       onKeyDown={onBarKey}
       onFocus={(e: ReactFocusEvent) => {
-        const i = barItems().indexOf(e.target as HTMLButtonElement)
-        if (i >= 0) current.current = i
+        const btn = e.target as HTMLButtonElement
+        if (barItems().includes(btn)) setStop(btn)
       }}
     >
       {/* Left: the shape. The map's name lives in the canvas's corner, not here. */}
