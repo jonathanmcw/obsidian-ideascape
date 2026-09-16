@@ -642,6 +642,24 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
     return () => ro.disconnect()
   }, [])
 
+  // Obsidian's status bar and the phone's navigation bar lie over the stage without resizing it, so their coming
+  // and going reaches no observer above. The window's own events and a theme change are when that happens.
+  useEffect(() => {
+    const el = stageRef.current
+    if (!el) return
+    const measure = () => setBottomInset(bottomInsetFor(el))
+    const win = el.ownerDocument.defaultView ?? window
+    win.addEventListener('resize', measure)
+    win.addEventListener('orientationchange', measure)
+    const mo = new MutationObserver(measure)
+    mo.observe(el.ownerDocument.body, { attributes: true, attributeFilter: ['class'] })
+    return () => {
+      win.removeEventListener('resize', measure)
+      win.removeEventListener('orientationchange', measure)
+      mo.disconnect()
+    }
+  }, [])
+
   /** Nudge the camera so a node is comfortably on screen. */
   const ensureVisible = useCallback(
     (id: NodeId) => {
@@ -1219,8 +1237,10 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
         return
       }
       if (e.key === 'Tab') {
-        stop(e)
+        // With nothing selected the key is left alone, so focus can still walk out of the map to the toolbar and
+        // on through Obsidian. Only a selected node takes Tab, where it means "add a child" or "move a level".
         if (!sel) return
+        stop(e)
         // The outline is an outliner: Tab and ⇧Tab move the row a level in or out,
         // typing or not, so Enter then Tab makes a child the way it does everywhere
         // else. The edit stays open on the moved node — its id does not change.
@@ -1489,9 +1509,17 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       addSibling: () => { if (selection && selection !== doc.rootId) createSibling(selection); else createChild(doc.rootId) },
       deleteSelection: () => { if (selection) deleteNode(selection) },
       copy: async (cut) => {
-        const text = takeSelection(cut)
-        if (text === null) return
-        try { await navigator.clipboard.writeText(text) } catch { flash('Could not reach the clipboard') }
+        // The clipboard is written before anything is taken: a clipboard the browser refuses must not cost the
+        // branch. The ⌘X path above uses the cut event's own clipboardData, which is written in the same breath.
+        const ids = topSelected()
+        if (!ids.length) return
+        const before = s.doc
+        try { await navigator.clipboard.writeText(toMarkdownList(doc, ids)) }
+        catch { flash('Could not reach the clipboard'); return }
+        // The map can move on while the clipboard is being asked for — a reload from disk, or a node committed
+        // from the render behind this one. Cutting then would write a document that is no longer the live one.
+        if (cut && s.doc !== before) { flash('The map changed, so nothing was cut') ; return }
+        takeSelection(cut)
       },
       paste: async () => {
         let text = ''
@@ -1682,10 +1710,12 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
             {/* The Outline stays at 100%, so it has nothing to zoom. */}
             {prefs.shape === 'map' && (
               <div className="zoom" role="group" aria-label="Zoom">
-                <button onClick={() => animateCamera({ ...camera, z: Math.min(2.5, camera.z * 1.2) }, 180)} title={`Zoom in — ${chord('⌥⌘=')}`}>
+                {/* Through zoomBy, the same path the keys take: the middle of the stage stays put instead of the
+                    map sliding away under the pointer. */}
+                <button onClick={() => zoomBy(1.2)} title={`Zoom in — ${chord('⌥⌘=')}`}>
                   +
                 </button>
-                <button onClick={() => animateCamera({ ...camera, z: Math.max(0.2, camera.z / 1.2) }, 180)} title={`Zoom out — ${chord('⌥⌘-')}`}>
+                <button onClick={() => zoomBy(1 / 1.2)} title={`Zoom out — ${chord('⌥⌘-')}`}>
                   −
                 </button>
               </div>

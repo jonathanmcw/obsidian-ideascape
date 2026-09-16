@@ -279,3 +279,33 @@ test("snap: the edge a node's alignment names lands on the grid; unset alignment
   // right edge 180 → 7.5 cells rounds up → 192
   assert.equal(snapX(d, "r", 100, 130, 24), 192 - 50);
 });
+
+test("markdown: a layout block quoted inside fenced code is not read as the map's own", () => {
+  // A note that documents the format: the real block comes first, the example after it, inside a fence.
+  const note = [
+    "# R",
+    "",
+    "- one ^n1",
+    "- two ^n2",
+    "",
+    "%%ideascape",
+    '{"v":1,"pos":{"n1":[10,20]}}',
+    "%%",
+    "",
+    "Written out, a map ends like this:",
+    "",
+    "```markdown",
+    "%%ideascape",
+    '{"v":1,"pos":{"n1":[999,999]}}',
+    "%%",
+    "```",
+    "",
+  ].join("\n");
+  const d = fromMarkdownMap(note, "x");
+  assert.equal(d.nodes["n1"]!.x, 10, "the map's own positions win over the quoted example");
+  assert.equal(d.nodes["n1"]!.y, 20);
+  // Writing it back leaves the fenced example exactly where it was.
+  const out = toMarkdownMap(d);
+  assert.match(out, /```markdown\n%%ideascape\n\{"v":1,"pos":\{"n1":\[999,999\]\}\}\n%%\n```/);
+  assert.equal((out.match(/%%ideascape/g) ?? []).length, 2, "one real block, one still quoted");
+});

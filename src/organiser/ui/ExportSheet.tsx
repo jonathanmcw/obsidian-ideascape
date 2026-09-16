@@ -16,32 +16,28 @@ interface Props {
   onClose: () => void
 }
 
-/** A clickable row. Deliberately not a <button>: the Markdown row carries its
- *  own style toggle, and buttons can't nest. */
+/** One format to export. The row's own action is a real button filling the row; anything else that belongs to
+ *  the row, such as the Markdown style toggle, sits beside that button rather than inside it. */
 function Row({
   onClick,
   disabled,
+  aside,
   children,
 }: {
   onClick: () => void
   disabled?: boolean
+  /** Controls that belong to the row but are not the row's own action, such as the Markdown style toggle.
+   *  They sit beside the button rather than inside it: a control nested in a button is neither valid nor
+   *  reliably reachable. */
+  aside?: React.ReactNode
   children: React.ReactNode
 }) {
   return (
-    <div
-      className="export-row"
-      role="button"
-      tabIndex={disabled ? -1 : 0}
-      aria-disabled={disabled}
-      onClick={() => !disabled && onClick()}
-      onKeyDown={(e) => {
-        if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
-          e.preventDefault()
-          onClick()
-        }
-      }}
-    >
-      {children}
+    <div className="export-row">
+      <button className="export-hit" disabled={disabled} onClick={onClick}>
+        {children}
+      </button>
+      {aside}
     </div>
   )
 }
@@ -93,7 +89,18 @@ export function ExportSheet({ doc, kind, themeId, nodeStyle, palette, resolveEmb
             </span>
           </Row>
 
-          <Row onClick={() => save(`${name}.md`, toMarkdown(doc, mdStyle), 'text/markdown')}>
+          <Row
+            onClick={() => save(`${name}.md`, toMarkdown(doc, mdStyle), 'text/markdown')}
+            aside={
+              <span className="export-toggle" role="group" aria-label="Markdown style">
+                {(['list', 'headings'] as const).map((st) => (
+                  <button key={st} className={mdStyle === st ? 'is-on' : ''} aria-pressed={mdStyle === st} onClick={() => setMdStyle(st)}>
+                    {st === 'list' ? 'Nested list' : 'Headings'}
+                  </button>
+                ))}
+              </span>
+            }
+          >
             <span className="export-ext">.md</span>
             <span>
               <b>Markdown</b>
@@ -102,13 +109,6 @@ export function ExportSheet({ doc, kind, themeId, nodeStyle, palette, resolveEmb
                   ? 'A nested list with every level kept, to open in Obsidian, Logseq or Workflowy. Positions, colours and free links stay in the map.'
                   : 'Headings to depth 6, then nested lists. Good for writing a document out of a map.'}
               </small>
-            </span>
-            <span className="export-toggle" onClick={(e) => e.stopPropagation()}>
-              {(['list', 'headings'] as const).map((s) => (
-                <button key={s} className={mdStyle === s ? 'is-on' : ''} onClick={() => setMdStyle(s)}>
-                  {s === 'list' ? 'Nested list' : 'Headings'}
-                </button>
-              ))}
             </span>
           </Row>
 

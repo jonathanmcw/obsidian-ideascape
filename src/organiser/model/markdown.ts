@@ -614,15 +614,42 @@ export function fromMarkdownMap(src: string, fallbackName = 'Untitled'): IODoc &
  * a `%%` line closes. `start` is where the text before it ends (the newline ahead of the block), `open` the opening
  * line without trailing space, `body` what sits between the two lines, and `after` the text after the closing line.
  */
+/** The character offsets a fenced code block covers, so text quoting the format is not mistaken for it. */
+function fencedRanges(text: string): [number, number][] {
+  const ranges: [number, number][] = []
+  let at = 0
+  let open: { fence: string; from: number } | null = null
+  for (const line of text.split('\n')) {
+    const end = at + line.length
+    if (!open) {
+      const m = FENCE_RE.exec(line)
+      if (m) open = { fence: m[1], from: at }
+    } else if (closesFence(open.fence, line)) {
+      ranges.push([open.from, end])
+      open = null
+    }
+    at = end + 1
+  }
+  // A fence nothing closes marks nothing. A reader would take it to the end of the note, but a stray ``` in a
+  // comment would then swallow the map's own layout block and lose every position with it.
+  return ranges
+}
+
 function findGeometry(text: string): { start: number; open: string; body: string; after: string } | null {
   // The newline ahead of the line is matched, not looked behind for: older iOS has no lookbehind.
-  const opens = [...text.matchAll(new RegExp(`(?:^|\\n)((?:${BLOCK_ALT})[ \\t]*)(?=\\n)`, 'g'))].map((m) => ({ index: m.index + m[0].length - m[1].length, line: m[1] }))
+  const fenced = fencedRanges(text)
+  const inCode = (i: number) => fenced.some(([from, to]) => i >= from && i < to)
+  const opens = [...text.matchAll(new RegExp(`(?:^|\\n)((?:${BLOCK_ALT})[ \\t]*)(?=\\n)`, 'g'))]
+    .map((m) => ({ index: m.index + m[0].length - m[1].length, line: m[1] }))
+    // A note that documents the format — this README does — must not have its own layout read out of the example.
+    .filter((o) => !inCode(o.index))
   for (let k = opens.length - 1; k >= 0; k--) {
     const o = opens[k]
     const bodyStart = o.index + o.line.length + 1
     const close = /^%%[ \t]*$/gm
     close.lastIndex = bodyStart
-    const c = close.exec(text)
+    let c = close.exec(text)
+    while (c && inCode(c.index)) c = close.exec(text)
     if (!c) continue
     return {
       start: Math.max(0, o.index - 1),

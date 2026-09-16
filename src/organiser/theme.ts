@@ -180,6 +180,52 @@ function hexToRgb(hex: string): [number, number, number] {
   return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : [0, 0, 0]
 }
 
+const HEX_RE = /^#[0-9a-f]{6}$/i
+
+/** How much light a colour throws back, on the sRGB curve the contrast formulas use. */
+function luminance([r, g, b]: [number, number, number]): number {
+  const f = (v: number) => {
+    const c = v / 255
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+  }
+  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b)
+}
+
+const contrast = (a: number, b: number) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
+
+/** What a ring, a caret or a selection outline needs to be found on its background. Not text contrast: these are
+ *  shapes several pixels thick, and holding a chosen hue matters more than the 4.5 a letter would need. */
+const RING_CONTRAST = 2.4
+
+/**
+ * An accent the eye can still find on this stage. Selection rings, the focus ring and the caret are all drawn in
+ * the accent, so a custom accent chosen within a whisker of the custom background would leave a selected node
+ * looking unselected. The hue the person picked is kept and stays their setting; only how light it is moves here,
+ * only as far as it must, and only in what is drawn.
+ */
+function ringable(accent: string, stage: string): string {
+  if (!HEX_RE.test(accent) || !HEX_RE.test(stage)) return accent
+  const bg = luminance(hexToRgb(stage))
+  const from = hexToRgb(accent)
+  if (contrast(luminance(from), bg) >= RING_CONTRAST) return accent
+  const hex = (rgb: [number, number, number]) => `#${rgb.map((v) => v.toString(16).padStart(2, '0')).join('')}`
+  const mix = (toward: number, t: number) => from.map((v) => Math.round(v + (toward - v) * t)) as [number, number, number]
+  // Both ways out of the background are tried, and the nearest colour that clears the floor wins. Walking one way
+  // by a fixed number of steps can stop just short, which is how an accent can still vanish into its stage.
+  let best = from
+  let bestGap = -1
+  for (const toward of [0, 255]) {
+    for (let t = 0.05; t <= 1.0001; t += 0.05) {
+      const rgb = mix(toward, t)
+      const gap = contrast(luminance(rgb), bg)
+      if (gap >= RING_CONTRAST) return hex(rgb)
+      if (gap > bestGap) { bestGap = gap; best = rgb }
+    }
+  }
+  // Nothing reached the floor, which only a mid-grey stage can do: the most distinct colour found still wins.
+  return hex(best)
+}
+
 export function buildCustomTheme(def: CustomThemeDef): Theme {
   const base = THEMES.find((t) => t.id === def.base) ?? THEMES[0]
   const vars = { ...base.vars }
@@ -188,8 +234,9 @@ export function buildCustomTheme(def: CustomThemeDef): Theme {
     vars['--bg'] = def.stage
   }
   if (def.accent) {
-    const [r, g, b] = hexToRgb(def.accent)
-    vars['--accent'] = def.accent
+    const shown = ringable(def.accent, vars['--stage'] ?? '')
+    const [r, g, b] = hexToRgb(shown)
+    vars['--accent'] = shown
     vars['--accent-soft'] = `rgba(${r},${g},${b},${base.dark ? 0.18 : 0.12})`
   }
   const branches = base.branches.map((c, i) => (def.branches[i] && /^#[0-9a-f]{6}$/i.test(def.branches[i]) ? def.branches[i] : c))

@@ -9,6 +9,8 @@ import mapLight from "./welcome/map-light.webp";
 import outlineDark from "./welcome/outline-dark.webp";
 import outlineLight from "./welcome/outline-light.webp";
 
+const PANEL_ID = "io-welcome-panel";
+
 /** What the welcome window can do: the tour is the one action it ends on. */
 export interface WelcomeActions {
   openTour(): Promise<void>;
@@ -69,36 +71,48 @@ export class WelcomeModal extends Modal {
     this.titleEl.setText(PLUGIN_NAME);
     this.modalEl.setAttribute("aria-label", `${PLUGIN_NAME} welcome`);
 
-    const figure = this.contentEl.createEl("figure", { cls: "io-welcome-figure" });
+    // The picture and its words are the panel the dots control, so a screen reader reads them as one slide.
+    const panel = this.contentEl.createDiv({ cls: "io-welcome-panel", attr: { role: "tabpanel", id: PANEL_ID } });
+    const figure = panel.createEl("figure", { cls: "io-welcome-figure" });
     this.shot = figure.createEl("img", { cls: "io-welcome-shot", attr: { width: 1200, height: 747 } });
-    const words = this.contentEl.createDiv("io-welcome-words");
+    const words = panel.createDiv("io-welcome-words");
     this.heading = words.createEl("h2", { cls: "io-welcome-title" });
     this.body = words.createEl("p", { cls: "io-welcome-body" });
 
     const foot = this.contentEl.createDiv("io-welcome-foot");
     const dots = foot.createDiv({ cls: "io-welcome-dots", attr: { role: "tablist" } });
     this.dots = this.slides.map((s, i) => {
-      const dot = dots.createEl("button", { cls: "io-welcome-dot", attr: { role: "tab", "aria-label": `${i + 1} of ${this.slides.length}: ${s.title}` } });
-      dot.addEventListener("click", () => this.show(i));
+      const dot = dots.createEl("button", { cls: "io-welcome-dot", attr: { role: "tab", "aria-controls": PANEL_ID, "aria-label": `${i + 1} of ${this.slides.length}: ${s.title}` } });
+      dot.addEventListener("click", () => this.show(i, "dot"));
+      // One dot at a time is a tab stop, and the arrows walk between them: the row is one control, not three.
+      dot.addEventListener("keydown", (e) => {
+        const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+        if (!step) return;
+        e.preventDefault();
+        e.stopPropagation();
+        this.show((this.index + step + this.slides.length) % this.slides.length, "dot");
+      });
       return dot;
     });
     const actions = foot.createDiv("io-welcome-actions");
     this.back = actions.createEl("button", { text: "Back" });
-    this.back.addEventListener("click", () => this.show(this.index - 1));
+    this.back.addEventListener("click", () => this.show(this.index - 1, "back"));
     this.next = actions.createEl("button", { cls: "mod-cta" });
     this.next.addEventListener("click", () => {
-      if (this.index < this.slides.length - 1) this.show(this.index + 1);
+      if (this.index < this.slides.length - 1) this.show(this.index + 1, "next");
       else { this.close(); void this.actions.openTour(); }
     });
 
-    this.scope.register([], "ArrowLeft", () => { this.show(this.index - 1); return false; });
-    this.scope.register([], "ArrowRight", () => { this.show(this.index + 1); return false; });
+    this.scope.register([], "ArrowLeft", () => { this.show(this.index - 1, "keep"); return false; });
+    this.scope.register([], "ArrowRight", () => { this.show(this.index + 1, "keep"); return false; });
     // The screenshots follow the theme, so a theme change while the window is open swaps them too.
     this.themeRef = this.app.workspace.on("css-change", () => this.paint());
-    this.show(0);
+    this.show(0, "next");
   }
 
-  private show(i: number): void {
+  /** `where` says what should hold the keyboard afterwards: the button that carries the window forward, the dot
+   *  the person is walking along, or whatever had focus already. */
+  private show(i: number, where: "next" | "back" | "dot" | "keep"): void {
     if (i < 0 || i >= this.slides.length) return;
     const moved = i !== this.index;
     this.index = i;
@@ -106,7 +120,11 @@ export class WelcomeModal extends Modal {
     // The new picture is in place at once; a short fade only softens the change. Nothing here waits for an
     // animation frame, so a window that is not being drawn still shows the slide when it is.
     if (moved && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) this.shot.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: "ease" });
-    this.next.focus();
+    if (where === "next") this.next.focus();
+    // Back keeps the keyboard on Back, so a second press carries on the way it was going. On the first slide Back
+    // is hidden, so the keyboard would have nowhere to sit: it moves to the button that is still there.
+    else if (where === "back") (this.index > 0 ? this.back : this.next).focus();
+    else if (where === "dot") this.dots[this.index]?.focus();
   }
 
   private paint(): void {
@@ -116,7 +134,10 @@ export class WelcomeModal extends Modal {
     this.shot.alt = s.alt;
     this.heading.setText(s.title);
     this.body.setText(s.body);
-    this.dots.forEach((d, k) => d.setAttribute("aria-selected", String(k === this.index)));
+    this.dots.forEach((d, k) => {
+      d.setAttribute("aria-selected", String(k === this.index));
+      d.tabIndex = k === this.index ? 0 : -1;
+    });
     const last = this.index === this.slides.length - 1;
     this.back.toggleVisibility(this.index > 0);
     this.next.setText(last ? "Start" : "Next");

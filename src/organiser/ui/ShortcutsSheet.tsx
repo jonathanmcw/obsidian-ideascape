@@ -47,6 +47,36 @@ export function ShortcutsSheet({ onClose, onTour, mac: macProp }: Props) {
     field.current?.focus({ preventScroll: true })
   }, [])
 
+  // A dialog keeps Tab to itself: without this, Shift+Tab walks out behind the scrim and presses buttons on the
+  // map nobody can see. Whatever had focus before gets it back when the sheet closes.
+  useEffect(() => {
+    const el = dialog.current
+    if (!el) return
+    const opener = el.ownerDocument.activeElement
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return
+      const stops = [...el.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])')].filter(
+        (n) => n.offsetParent !== null || n === el.ownerDocument.activeElement,
+      )
+      if (!stops.length) return
+      const first = stops[0]
+      const last = stops[stops.length - 1]
+      const here = el.ownerDocument.activeElement
+      if (e.shiftKey && (here === first || !el.contains(here))) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && here === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
+    el.addEventListener('keydown', onKey)
+    return () => {
+      el.removeEventListener('keydown', onKey)
+      if (opener instanceof HTMLElement && opener.isConnected) opener.focus({ preventScroll: true })
+    }
+  }, [])
+
   // The sheet keeps its opening height while filtering: centred in the scrim, a sheet that shrank with every
   // keystroke would move the field being typed into. min() lets a window made smaller still win.
   const [openHeight, setOpenHeight] = useState<number>()
@@ -84,6 +114,7 @@ export function ShortcutsSheet({ onClose, onTour, mac: macProp }: Props) {
         className={`sheet wide sk-sheet${mac ? ' is-mac' : ''}`}
         onMouseDown={(e) => e.stopPropagation()}
         role="dialog"
+        aria-modal="true"
         aria-label="Keyboard shortcuts"
       >
         <div className="sheet-head">

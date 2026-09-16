@@ -568,7 +568,7 @@
   border-radius: 12px;
   box-shadow: var(--shadow-3);
   z-index: 20;
-  animation: pop-in 160ms var(--morph-ease);
+  animation: io-pop-in 160ms var(--morph-ease);
 }
 
 .io-root .menu-label {
@@ -632,7 +632,7 @@
   color: var(--ink-2);
   background: var(--surface-2);
   border-bottom: 1px dashed var(--line-strong);
-  animation: slide-down 320ms var(--morph-ease);
+  animation: io-slide-down 320ms var(--morph-ease);
 }
 .io-root .trust .link {
   margin-left: auto;
@@ -657,7 +657,7 @@
   pointer-events: none;
   box-shadow: inset 0 0 140px 10px color-mix(in srgb, var(--ink) 14%, transparent);
   z-index: 3;
-  animation: fade-in 220ms ease;
+  animation: io-fade-in 220ms ease;
 }
 
 .io-root .stage {
@@ -690,7 +690,7 @@
   transition: transform 420ms var(--morph-ease);
 }
 .io-root .world.crossfade {
-  animation: crossfade 200ms ease;
+  animation: io-crossfade 200ms ease;
 }
 
 .io-root .edges {
@@ -758,7 +758,7 @@
   transition: transform var(--morph), width var(--morph), height var(--morph), padding-left var(--morph),
     border-radius var(--morph), background-color 200ms ease, border-color 200ms ease, box-shadow 180ms ease,
     opacity 220ms ease, filter 220ms ease;
-  animation: node-in 260ms var(--morph-ease);
+  animation: io-node-in 260ms var(--morph-ease);
 }
 
 /* Past a few hundred nodes, animating width / height / padding means the
@@ -1010,7 +1010,7 @@
   color: var(--accent);
   font: 600 13px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'PingFang TC', 'Noto Sans TC', sans-serif;
   cursor: pointer;
-  animation: pop-in 140ms var(--morph-ease);
+  animation: io-pop-in 140ms var(--morph-ease);
   transition: transform 120ms var(--morph-ease), background 120ms ease, color 120ms ease;
 }
 .io-root .node-knob:hover {
@@ -1036,7 +1036,7 @@
   border: 1px solid var(--line);
   border-radius: 9px;
   box-shadow: var(--shadow-1);
-  animation: slide-down 240ms var(--morph-ease);
+  animation: io-slide-down 240ms var(--morph-ease);
 }
 .io-root .crumb button {
   color: var(--ink-2);
@@ -1073,7 +1073,7 @@
   border: 1px solid var(--line);
   border-radius: 999px;
   box-shadow: var(--shadow-1);
-  animation: slide-up 240ms var(--morph-ease);
+  animation: io-slide-up 240ms var(--morph-ease);
 }
 
 .io-root .corner {
@@ -1164,7 +1164,7 @@
   background: color-mix(in srgb, var(--ink) 88%, transparent);
   border-radius: 14px;
   pointer-events: none;
-  animation: hud 900ms var(--morph-ease) forwards;
+  animation: io-hud 900ms var(--morph-ease) forwards;
 }
 .io-root .hud b {
   font: 600 20px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -1189,7 +1189,7 @@
   background: color-mix(in srgb, var(--ink) 90%, transparent);
   border-radius: 999px;
   box-shadow: var(--shadow-2);
-  animation: slide-down 220ms var(--morph-ease);
+  animation: io-slide-down 220ms var(--morph-ease);
 }
 
 /* ---------------------------- export sheet ---------------------------- */
@@ -1205,7 +1205,7 @@
   padding: 24px 24px 48px;
   background: color-mix(in srgb, var(--ink) 32%, transparent);
   backdrop-filter: blur(3px);
-  animation: fade-in 160ms ease;
+  animation: io-fade-in 160ms ease;
 }
 
 /* Head and note stay put; only the body scrolls, so the title and the close
@@ -1220,7 +1220,7 @@
   border: 1px solid var(--line);
   border-radius: 16px;
   box-shadow: var(--shadow-3);
-  animation: sheet-in 240ms var(--morph-ease);
+  animation: io-sheet-in 240ms var(--morph-ease);
 }
 
 .io-root .sheet.wide {
@@ -1436,37 +1436,53 @@
   padding: 12px;
 }
 
+/* The row is the frame; the button inside it is the export. The frame reacts to what the button is doing, so the
+   row still lights up as one thing under the pointer. */
 .io-root .export-row {
   display: flex;
   align-items: center;
   gap: 14px;
   width: 100%;
-  padding: 12px 14px;
-  text-align: start;
+  padding-right: 14px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface-2);
   transition: border-color 140ms ease, transform 140ms var(--morph-ease), box-shadow 140ms ease;
 }
-.io-root .export-row {
+.io-root .export-hit {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+  padding: 12px 0 12px 14px;
+  text-align: start;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  border-radius: 12px;
   cursor: pointer;
 }
-.io-root .export-row:hover:not([aria-disabled='true']) {
+.io-root .export-row:has(.export-hit:hover:not(:disabled)) {
   border-color: var(--accent);
   box-shadow: var(--shadow-1);
 }
-.io-root .export-row:active:not([aria-disabled='true']) {
+.io-root .export-row:has(.export-hit:active:not(:disabled)) {
   transform: scale(0.995);
 }
-.io-root .export-row[aria-disabled='true'] {
+.io-root .export-row:has(.export-hit:disabled) {
   opacity: 0.5;
-  pointer-events: none;
 }
-.io-root .export-row:focus-visible {
+.io-root .export-hit:disabled {
+  cursor: default;
+}
+.io-root .export-hit:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
-.io-root .export-row > span:nth-child(2) {
+.io-root .export-hit > span:nth-child(2) {
   flex: 1;
   min-width: 0;
 }
@@ -1694,7 +1710,7 @@
   width: var(--rail-w);
   z-index: 30;
   box-shadow: var(--shadow-3);
-  animation: rail-in 240ms var(--morph-ease);
+  animation: io-rail-in 240ms var(--morph-ease);
 }
 .io-root .app.is-medium .rail-head,
 .io-root .app.is-narrow .rail-head {
@@ -1704,6 +1720,19 @@
 /* A tight toolbar — the pane is narrow, or a side panel takes most of it (`.is-compact`, from the stage's width).
    The switcher keeps the toolbar's left, where it always is; the shape's own toggle, Focus and Tidy fold into the
    ... menu, and Document and Export go with them. */
+/* The count is a live region: hidden from sight in a tight pane, but still read out as matches are found. */
+.io-root .app.is-compact .find-count {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  min-width: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.io-root .app.is-compact .find-input { flex-basis: 120px; }
 .io-root .app.is-compact .toolbar {
   gap: 5px;
   padding: 0 8px;
@@ -1744,6 +1773,8 @@
   }
   .io-root .corner {
     right: max(14px, env(safe-area-inset-right));
+    /* The home indicator sits under the same corner when no navigation bar was measured. */
+    bottom: calc(14px + max(env(safe-area-inset-bottom), var(--io-bottom-inset, 0px)));
   }
   .io-root .rail,
   .io-root .inspector {
@@ -1759,7 +1790,7 @@
   }
 }
 
-@keyframes rail-in {
+@keyframes io-rail-in {
   from {
     transform: translateX(-100%);
   }
@@ -1767,47 +1798,47 @@
 
 /* ---------------------------- motion ---------------------------- */
 
-@keyframes pop-in {
+@keyframes io-pop-in {
   from {
     opacity: 0;
     transform: scale(0.94);
   }
 }
-@keyframes fade-in {
+@keyframes io-fade-in {
   from {
     opacity: 0;
   }
 }
-@keyframes slide-down {
+@keyframes io-slide-down {
   from {
     opacity: 0;
     transform: translateY(-6px);
   }
 }
-@keyframes slide-up {
+@keyframes io-slide-up {
   from {
     opacity: 0;
     transform: translate(-50%, 6px);
   }
 }
-@keyframes sheet-in {
+@keyframes io-sheet-in {
   from {
     opacity: 0;
     transform: translateY(10px) scale(0.98);
   }
 }
-@keyframes node-in {
+@keyframes io-node-in {
   from {
     opacity: 0;
     transform-origin: center;
   }
 }
-@keyframes crossfade {
+@keyframes io-crossfade {
   50% {
     opacity: 0.35;
   }
 }
-@keyframes hud {
+@keyframes io-hud {
   0% {
     opacity: 0;
     transform: translate(-50%, -50%) scale(0.9);
@@ -1968,7 +1999,7 @@
   line-height: 16px;
   color: var(--ink);
   pointer-events: none;
-  animation: fade-in 120ms ease-out;
+  animation: io-fade-in 120ms ease-out;
 }
 .io-root .node-toolbar.is-below .nt-tip { bottom: auto; top: calc(100% + 6px); }
 .io-root .node-toolbar .nt-tip kbd { padding: 2px 5px; background: var(--surface-2); color: var(--ink-2); }
@@ -2021,6 +2052,13 @@
   position: absolute;
   right: 14px;
   top: 12px;
+  /* Never wider than the stage it floats over: in a tight split the field gives way first, and the buttons,
+     which are how you leave the search, always stay on screen. */
+  left: 14px;
+  justify-content: flex-end;
+  max-width: calc(100% - 28px);
+  width: max-content;
+  margin-left: auto;
   z-index: 5;
   display: flex;
   align-items: center;
@@ -2033,6 +2071,8 @@
 }
 .io-root .find-input {
   width: 180px;
+  min-width: 0;
+  flex: 0 1 180px;
   border: 0;
   background: transparent;
   color: var(--ink);
@@ -2045,6 +2085,7 @@
 .io-root .find-input::placeholder { color: var(--ink-3); }
 .io-root .find-count {
   min-width: 64px;
+  flex: none;
   margin-right: 4px;
   font-size: 11px;
   color: var(--ink-3);
@@ -2185,7 +2226,7 @@
 .io-root .sw:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* the colour popover: fixed to the window so nothing clips it */
 .io-root .inspector { position: relative; }
-.io-root .cpop { position: absolute; left: 12px; right: 12px; z-index: 60; padding: 10px 10px 6px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line-strong); box-shadow: var(--shadow-3); animation: fade-in 120ms ease; }
+.io-root .cpop { position: absolute; left: 12px; right: 12px; z-index: 60; padding: 10px 10px 6px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line-strong); box-shadow: var(--shadow-3); animation: io-fade-in 120ms ease; }
 .io-root .cp-key { width: 14px; flex: none; text-align: center; font: 600 11px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ink-3); }
 .io-root .cpop .cp-hex { flex: 1; width: auto; min-width: 60px; }
 /* the map's own colours row sits under the theme cards */
