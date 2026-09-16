@@ -55,6 +55,7 @@ export class WelcomeModal extends Modal {
   private readonly slides = slides();
   private index = 0;
   private shot!: HTMLImageElement;
+  private panel!: HTMLElement;
   private heading!: HTMLElement;
   private body!: HTMLElement;
   private dots: HTMLButtonElement[] = [];
@@ -72,7 +73,8 @@ export class WelcomeModal extends Modal {
     this.modalEl.setAttribute("aria-label", `${PLUGIN_NAME} welcome`);
 
     // The picture and its words are the panel the dots control, so a screen reader reads them as one slide.
-    const panel = this.contentEl.createDiv({ cls: "io-welcome-panel", attr: { role: "tabpanel", id: PANEL_ID } });
+    this.panel = this.contentEl.createDiv({ cls: "io-welcome-panel", attr: { role: "tabpanel", id: PANEL_ID } });
+    const panel = this.panel;
     const figure = panel.createEl("figure", { cls: "io-welcome-figure" });
     this.shot = figure.createEl("img", { cls: "io-welcome-shot", attr: { width: 1200, height: 747 } });
     const words = panel.createDiv("io-welcome-words");
@@ -82,7 +84,7 @@ export class WelcomeModal extends Modal {
     const foot = this.contentEl.createDiv("io-welcome-foot");
     const dots = foot.createDiv({ cls: "io-welcome-dots", attr: { role: "tablist" } });
     this.dots = this.slides.map((s, i) => {
-      const dot = dots.createEl("button", { cls: "io-welcome-dot", attr: { role: "tab", "aria-controls": PANEL_ID, "aria-label": `${i + 1} of ${this.slides.length}: ${s.title}` } });
+      const dot = dots.createEl("button", { cls: "io-welcome-dot", attr: { role: "tab", id: `${PANEL_ID}-tab-${i}`, "aria-controls": PANEL_ID, "aria-label": `${i + 1} of ${this.slides.length}: ${s.title}` } });
       dot.addEventListener("click", () => this.show(i, "dot"));
       // One dot at a time is a tab stop, and the arrows walk between them: the row is one control, not three.
       dot.addEventListener("keydown", (e) => {
@@ -120,7 +122,8 @@ export class WelcomeModal extends Modal {
     // The new picture is in place at once; a short fade only softens the change. Nothing here waits for an
     // animation frame, so a window that is not being drawn still shows the slide when it is.
     if (moved && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) this.shot.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: "ease" });
-    if (where === "next") this.next.focus();
+    const strandedOnBack = where === "keep" && this.index === 0 && this.modalEl.ownerDocument.activeElement === this.back;
+    if (where === "next" || strandedOnBack) this.next.focus();
     // Back keeps the keyboard on Back, so a second press carries on the way it was going. On the first slide Back
     // is hidden, so the keyboard would have nowhere to sit: it moves to the button that is still there.
     else if (where === "back") (this.index > 0 ? this.back : this.next).focus();
@@ -138,6 +141,8 @@ export class WelcomeModal extends Modal {
       d.setAttribute("aria-selected", String(k === this.index));
       d.tabIndex = k === this.index ? 0 : -1;
     });
+    // The panel is named by the dot that is showing it, so it is not an unnamed region.
+    this.panel.setAttribute("aria-labelledby", `${PANEL_ID}-tab-${this.index}`);
     const last = this.index === this.slides.length - 1;
     this.back.toggleVisibility(this.index > 0);
     this.next.setText(last ? "Start" : "Next");

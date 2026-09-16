@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactElement } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type FocusEvent as ReactFocusEvent, type ReactElement } from 'react'
 import type { Arrangement, MapLayout, Shape } from '../model/types'
 import { LAYOUT_LABEL, MAP_LAYOUTS, SHAPES, SHAPE_LABEL } from '../model/types'
 import type { OutlineWidth } from '../model/store'
@@ -128,6 +128,43 @@ export function Toolbar({
     return () => el.removeEventListener('keydown', onKey)
   }, [more])
 
+  // A toolbar is one stop on the way round, not a dozen: Tab reaches it once and the arrows walk its controls.
+  // The rows of an open menu are left out — the menu has its own keys — and a key handled here is kept from the
+  // map behind, which reads the arrows as "move the selection".
+  const barRef = useRef<HTMLElement>(null)
+  const current = useRef(0)
+  const barButtons = () => [...(barRef.current?.querySelectorAll<HTMLButtonElement>('button') ?? [])].filter((b) => !b.closest('.toolbar-menu'))
+  // Hidden is not the same as disabled: the ... button is display:none until the pane is tight, and the wide
+  // toolbar's own actions go the other way. Neither can hold the keyboard while it is not drawn.
+  const barItems = () => barButtons().filter((b) => !b.disabled && b.offsetParent !== null)
+
+  useEffect(() => {
+    const all = barButtons()
+    const items = barItems()
+    if (!items.length) return
+    if (current.current >= items.length) current.current = 0
+    const here = items[current.current]
+    // Every button is set, not only the ones that can be used: a disabled button that comes back would otherwise
+    // still be carrying the tab stop it was born with.
+    all.forEach((b) => { b.tabIndex = b === here ? 0 : -1 })
+  })
+
+  const onBarKey = (e: ReactKeyboardEvent) => {
+    if (more) return
+    const items = barItems()
+    const here = items.indexOf(e.target as HTMLButtonElement)
+    if (here < 0) return
+    const keys = ['ArrowRight', 'ArrowLeft', 'Home', 'End']
+    if (!keys.includes(e.key)) return
+    e.preventDefault()
+    e.stopPropagation()
+    const to = e.key === 'ArrowRight' ? here + 1 : e.key === 'ArrowLeft' ? here - 1 : e.key === 'Home' ? 0 : items.length - 1
+    const n = (to + items.length) % items.length
+    current.current = n
+    barButtons().forEach((b) => { b.tabIndex = b === items[n] ? 0 : -1 })
+    items[n].focus()
+  }
+
   /** Close the menu the way Escape does: the button that opened it takes the keyboard back. */
   const closeMenu = () => {
     setMore(false)
@@ -137,7 +174,18 @@ export function Toolbar({
   const index = SHAPES.indexOf(shape)
 
   return (
-    <header className="toolbar" aria-label="Map controls">
+    <header
+      className="toolbar"
+      role="toolbar"
+      aria-orientation="horizontal"
+      aria-label="Map controls"
+      ref={barRef}
+      onKeyDown={onBarKey}
+      onFocus={(e: ReactFocusEvent) => {
+        const i = barItems().indexOf(e.target as HTMLButtonElement)
+        if (i >= 0) current.current = i
+      }}
+    >
       {/* Left: the shape. The map's name lives in the canvas's corner, not here. */}
       <div className="seg seg-shape" style={{ ['--seg-index' as string]: index, ['--seg-count' as string]: SHAPES.length }} role="group" aria-label="View">
         <span className="seg-thumb" />

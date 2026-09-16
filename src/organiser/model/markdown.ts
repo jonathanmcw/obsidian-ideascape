@@ -617,10 +617,28 @@ export function fromMarkdownMap(src: string, fallbackName = 'Untitled'): IODoc &
 /** The character offsets a fenced code block covers, so text quoting the format is not mistaken for it. */
 function fencedRanges(text: string): [number, number][] {
   const ranges: [number, number][] = []
+  const lines = text.split('\n')
+  // Obsidian comments are paired first. A ``` inside one is part of the comment, not a fence that swallows the
+  // rest of the note — the map's own layout block is such a comment, and a stray marker in one used to hide it.
+  const commented = lines.map(() => false)
+  let commentFrom = -1
+  for (let i = 0; i < lines.length; i++) {
+    if (!/^%%/.test(lines[i])) continue
+    if (commentFrom < 0) commentFrom = i
+    else {
+      for (let k = commentFrom; k <= i; k++) commented[k] = true
+      commentFrom = -1
+    }
+  }
   let at = 0
   let open: { fence: string; from: number } | null = null
-  for (const line of text.split('\n')) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
     const end = at + line.length
+    if (commented[i]) {
+      at = end + 1
+      continue
+    }
     if (!open) {
       const m = FENCE_RE.exec(line)
       if (m) open = { fence: m[1], from: at }
@@ -630,8 +648,9 @@ function fencedRanges(text: string): [number, number][] {
     }
     at = end + 1
   }
-  // A fence nothing closes marks nothing. A reader would take it to the end of the note, but a stray ``` in a
-  // comment would then swallow the map's own layout block and lose every position with it.
+  // A fence nothing closes runs to the end of the note, the way a reader sees it, so an example inside one is
+  // still an example and not the map's own geometry.
+  if (open) ranges.push([open.from, text.length])
   return ranges
 }
 

@@ -309,3 +309,47 @@ test("markdown: a layout block quoted inside fenced code is not read as the map'
   assert.match(out, /```markdown\n%%ideascape\n\{"v":1,"pos":\{"n1":\[999,999\]\}\}\n%%\n```/);
   assert.equal((out.match(/%%ideascape/g) ?? []).length, 2, "one real block, one still quoted");
 });
+
+test("markdown: a stray code fence inside a comment does not hide the map's layout block", () => {
+  // The fence never closes. Read as code it would swallow the note's end, layout block and all.
+  const note = [
+    "# R",
+    "",
+    "- one ^n1",
+    "",
+    "%%",
+    "a note to self with a stray ``` in it",
+    "%%",
+    "",
+    "%%ideascape",
+    '{"v":1,"pos":{"n1":[7,8]}}',
+    "%%",
+    "",
+  ].join("\n");
+  const d = fromMarkdownMap(note, "x");
+  assert.equal(d.nodes["n1"]!.x, 7, "the layout block is still found after the comment");
+  assert.equal(d.nodes["n1"]!.y, 8);
+});
+
+test("markdown: an example inside a code fence that is never closed stays an example", () => {
+  const note = [
+    "# R",
+    "",
+    "- one ^n1",
+    "",
+    "%%ideascape",
+    '{"v":1,"pos":{"n1":[3,4]}}',
+    "%%",
+    "",
+    "How a map ends, for reference:",
+    "",
+    "```markdown",
+    "%%ideascape",
+    '{"v":1,"pos":{"n1":[999,999]}}',
+    "%%",
+    "",
+  ].join("\n");
+  const d = fromMarkdownMap(note, "x");
+  assert.equal(d.nodes["n1"]!.x, 3, "the real block wins over the one in the unclosed fence");
+  assert.equal(d.nodes["n1"]!.y, 4);
+});

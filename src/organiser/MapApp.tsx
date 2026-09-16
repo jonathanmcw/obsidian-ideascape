@@ -1543,7 +1543,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
         putDoc(s.doc)
       },
     })
-  }, [endEdit, stageApi, commit, createChild, createSibling, deleteNode, doc, edit, fitCamera, flash, focusId, focusSubtree, format, frame, onApi, openSearch, pasteText, prefs.inspectorOpen, prefs.shape, putDoc, redo, reveal, rootRef, s, selection, setPrefs, shiftTo, sizeSelection, takeSelection, tidy, toggleFocus, toggleLayout, toggleOrderedSelection, toggleTaskSelection, undo, withEdit, zoomBy])
+  }, [endEdit, stageApi, commit, createChild, createSibling, deleteNode, doc, edit, fitCamera, flash, focusId, focusSubtree, format, frame, onApi, openSearch, pasteText, prefs.inspectorOpen, prefs.shape, putDoc, redo, reveal, rootRef, s, selection, setPrefs, shiftTo, sizeSelection, takeSelection, tidy, toggleFocus, toggleLayout, toggleOrderedSelection, toggleTaskSelection, topSelected, undo, withEdit, zoomBy])
   useEffect(() => () => onApi?.(null), [onApi])
 
   /* -------------------- import -------------------- */
