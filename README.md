@@ -1,6 +1,8 @@
 # Ideascape
 
-Make a mind map with ease, from Obsidian without having to subscribe to another app. Visualise your ideas simply with keyboard : Tab adds a child, Enter adds a sibling, and typing fills it in. The map is saved as a plain Markdown list inside an ordinary note, so it reads, searches and syncs like everything else in your vault, and the same note opens as an outline.
+Create your own mind map with ease, from Obsidian without having to subscribe to another app. 
+
+Visualise your ideas simply with a keyboard : Tab adds a child, Enter adds a sibling, and typing fills it in. The map is saved as a plain Markdown list inside an ordinary note, so it reads, searches and syncs like everything else in your vault, and the same note opens as an outline.
 
 ![A Lisbon weekend built from the keyboard: Tab and Enter add nodes, ⌘B and ⌘I style them, ⌘↵ adds checkboxes, ⇧⌘7 numbers a list, ⌘. folds a branch, ⌥⌘F focuses on it, and ⌘2 and ⌘1 switch between outline and map. Each key shows in the corner as it is pressed.](docs/showcase.gif)
 
