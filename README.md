@@ -112,7 +112,7 @@ ideascape: root
 
 ## Privacy
 
-The plugin works entirely offline. It makes no network requests, collects no data, and only writes to the maps you edit, new maps you create and files you export.
+The plugin works entirely offline. It makes no network requests, collects no data, and only writes to the maps you edit, new maps you create and files you export. It uses the system clipboard only when you copy, cut or paste branches.
 
 ## Compatibility
 
