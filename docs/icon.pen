@@ -26,7 +26,7 @@
         {
           "type": "frame",
           "id": "zunzG",
-          "name": "Ideascape icon",
+          "name": "Earlier · detailed",
           "clip": true,
           "width": 512,
           "height": 512,
@@ -437,6 +437,370 @@
                 },
                 "blur": 14
               }
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "PsED8",
+          "name": "Earlier · open nodes",
+          "clip": true,
+          "width": 512,
+          "height": 512,
+          "fill": {
+            "type": "gradient",
+            "gradientType": "linear",
+            "enabled": true,
+            "rotation": 180,
+            "size": {
+              "height": 1
+            },
+            "colors": [
+              {
+                "color": "#9A7BFA",
+                "position": 0
+              },
+              {
+                "color": "#7B5CF0",
+                "position": 1
+              }
+            ]
+          },
+          "cornerRadius": 115,
+          "layout": "none",
+          "children": [
+            {
+              "type": "path",
+              "id": "kdw0I",
+              "x": 0,
+              "y": 0,
+              "name": "Branches",
+              "geometry": "M286 232c28-18 36-60 70-60m-56 84l60 0m-74 24c28 18 36 60 70 60m-130-108c-28-18-36-60-70-60m56 84l-60 0m74 24c-28 18-36 60-70 60",
+              "viewBox": [
+                0,
+                0,
+                512,
+                512
+              ],
+              "width": 512,
+              "height": 512,
+              "stroke": "#FFFFFF",
+              "strokeWidth": 18,
+              "strokeLinejoin": "round",
+              "strokeLinecap": "round"
+            },
+            {
+              "type": "path",
+              "id": "DpGLv",
+              "x": 0,
+              "y": 0,
+              "name": "Centre",
+              "geometry": "M241 227l30 0a29 29 0 0 1 0 58l-30 0a29 29 0 0 1 0-58z",
+              "viewBox": [
+                0,
+                0,
+                512,
+                512
+              ],
+              "width": 512,
+              "height": 512,
+              "stroke": "#FFFFFF",
+              "strokeWidth": 18,
+              "strokeLinejoin": "round",
+              "strokeLinecap": "round"
+            },
+            {
+              "type": "path",
+              "id": "RweA4",
+              "x": 0,
+              "y": 0,
+              "name": "Node",
+              "geometry": "M358 172a16 16 0 1 1 32 0 16 16 0 1 1-32 0z",
+              "viewBox": [
+                0,
+                0,
+                512,
+                512
+              ],
+              "width": 512,
+              "height": 512,
+              "stroke": "#FFFFFF",
+              "strokeWidth": 18,
+              "strokeLinejoin": "round",
+              "strokeLinecap": "round"
+            },
+            {
+              "type": "path",
+              "id": "quBV6",
+              "x": 0,
+              "y": 0,
+              "name": "Node",
+              "geometry": "M362 256a16 16 0 1 1 32 0 16 16 0 1 1-32 0z",
+              "viewBox": [
+                0,
+                0,
+                512,
+                512
+              ],
+              "width": 512,
+              "height": 512,
+              "stroke": "#FFFFFF",
+              "strokeWidth": 18,
+              "strokeLinejoin": "round",
+              "strokeLinecap": "round"
+            },
+            {
+              "type": "path",
+              "id": "IUAaE",
+              "x": 0,
+              "y": 0,
+              "name": "Node",
+              "geometry": "M358 340a16 16 0 1 1 32 0 16 16 0 1 1-32 0z",
+              "viewBox": [
+                0,
+                0,
+                512,
+                512
+              ],
+              "width": 512,
+              "height": 512,
+              "stroke": "#FFFFFF",
+              "strokeWidth": 18,
+              "strokeLinejoin": "round",
+              "strokeLinecap": "round"
+            },
+            {
+              "type": "path",
+              "id": "ZMKbI",
+              "x": 0,
+              "y": 0,
+              "name": "Node",
+              "geometry": "M122 172a16 16 0 1 1 32 0 16 16 0 1 1-32 0z",
+              "viewBox": [
+                0,
+                0,
+                512,
+                512
+              ],
+              "width": 512,
+              "height": 512,
+              "stroke": "#FFFFFF",
+              "strokeWidth": 18,
+              "strokeLinejoin": "round",
+              "strokeLinecap": "round"
+            },
+            {
+              "type": "path",
+              "id": "PmIQH",
+              "x": 0,
+              "y": 0,
+              "name": "Node",
+              "geometry": "M118 256a16 16 0 1 1 32 0 16 16 0 1 1-32 0z",
+              "viewBox": [
+                0,
+                0,
+                512,
+                512
+              ],
+              "width": 512,
+              "height": 512,
+              "stroke": "#FFFFFF",
+              "strokeWidth": 18,
+              "strokeLinejoin": "round",
+              "strokeLinecap": "round"
+            },
+            {
+              "type": "path",
+              "id": "TjKwu",
+              "x": 0,
+              "y": 0,
+              "name": "Node",
+              "geometry": "M122 340a16 16 0 1 1 32 0 16 16 0 1 1-32 0z",
+              "viewBox": [
+                0,
+                0,
+                512,
+                512
+              ],
+              "width": 512,
+              "height": 512,
+              "stroke": "#FFFFFF",
+              "strokeWidth": 18,
+              "strokeLinejoin": "round",
+              "strokeLinecap": "round"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "OOVV8",
+          "name": "Ideascape icon · final",
+          "clip": true,
+          "width": 512,
+          "height": 512,
+          "fill": {
+            "type": "gradient",
+            "gradientType": "linear",
+            "enabled": true,
+            "rotation": 180,
+            "size": {
+              "height": 1
+            },
+            "colors": [
+              {
+                "color": "#9A7BFA",
+                "position": 0
+              },
+              {
+                "color": "#7B5CF0",
+                "position": 1
+              }
+            ]
+          },
+          "cornerRadius": 115,
+          "layout": "none",
+          "children": [
+            {
+              "type": "path",
+              "id": "gghtw",
+              "x": 0,
+              "y": 0,
+              "name": "Branches",
+              "geometry": "M288 235.7c36.8-4.8 40-62.9 83.2-62.9m-83.2 103.5c36.8 4.8 40 62.9 83.2 62.9m-73.6-83.2l84.8 0m-158.4-20.3c-36.8-4.8-40-62.9-83.2-62.9m83.2 103.5c-36.8 4.8-40 62.9-83.2 62.9m73.6-83.2l-84.8 0",
+              "viewBox": [
+                0,
+                0,
+                512,
+                512
+              ],
+              "width": 512,
+              "height": 512,
+              "stroke": "#FFFFFF",
+              "strokeWidth": 16,
+              "strokeLinejoin": "round",
+              "strokeLinecap": "round"
+            },
+            {
+              "type": "path",
+              "id": "DFkTx",
+              "x": 0,
+              "y": 0,
+              "name": "Centre",
+              "geometry": "M240.8 229.6l30.4 0a26.4 26.4 0 0 1 0 52.8l-30.4 0a26.4 26.4 0 0 1 0-52.8z",
+              "viewBox": [
+                0,
+                0,
+                512,
+                512
+              ],
+              "width": 512,
+              "height": 512,
+              "stroke": "#FFFFFF",
+              "strokeWidth": 16,
+              "strokeLinejoin": "round",
+              "strokeLinecap": "round"
+            },
+            {
+              "type": "path",
+              "id": "KyeF5",
+              "x": 0,
+              "y": 0,
+              "name": "Node",
+              "geometry": "M371.2 172.8a19.2 19.2 0 1 1 38.4 0 19.2 19.2 0 1 1-38.4 0z",
+              "viewBox": [
+                0,
+                0,
+                512,
+                512
+              ],
+              "fill": "#FFFFFF",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "type": "path",
+              "id": "nFhKi",
+              "x": 0,
+              "y": 0,
+              "name": "Node",
+              "geometry": "M382.4 256a19.2 19.2 0 1 1 38.4 0 19.2 19.2 0 1 1-38.4 0z",
+              "viewBox": [
+                0,
+                0,
+                512,
+                512
+              ],
+              "fill": "#FFFFFF",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "type": "path",
+              "id": "xXKsE",
+              "x": 0,
+              "y": 0,
+              "name": "Node",
+              "geometry": "M371.2 339.2a19.2 19.2 0 1 1 38.4 0 19.2 19.2 0 1 1-38.4 0z",
+              "viewBox": [
+                0,
+                0,
+                512,
+                512
+              ],
+              "fill": "#FFFFFF",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "type": "path",
+              "id": "Ci5n1",
+              "x": 0,
+              "y": 0,
+              "name": "Node",
+              "geometry": "M102.4 172.8a19.2 19.2 0 1 1 38.4 0 19.2 19.2 0 1 1-38.4 0z",
+              "viewBox": [
+                0,
+                0,
+                512,
+                512
+              ],
+              "fill": "#FFFFFF",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "type": "path",
+              "id": "kZ04D",
+              "x": 0,
+              "y": 0,
+              "name": "Node",
+              "geometry": "M91.2 256a19.2 19.2 0 1 1 38.4 0 19.2 19.2 0 1 1-38.4 0z",
+              "viewBox": [
+                0,
+                0,
+                512,
+                512
+              ],
+              "fill": "#FFFFFF",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "type": "path",
+              "id": "nIRDg",
+              "x": 0,
+              "y": 0,
+              "name": "Node",
+              "geometry": "M102.4 339.2a19.2 19.2 0 1 1 38.4 0 19.2 19.2 0 1 1-38.4 0z",
+              "viewBox": [
+                0,
+                0,
+                512,
+                512
+              ],
+              "fill": "#FFFFFF",
+              "width": 512,
+              "height": 512
             }
           ]
         }
