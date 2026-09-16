@@ -1,18 +1,18 @@
 # Ideascape
 
-Turn a note into a keyboard-first mind map, and read the same note as an outline. The map stays a plain Markdown list, so the note still works everywhere else in Obsidian.
+Make a mind map with less fuss: Tab adds a child, Enter adds a sibling, and typing fills it in. The map is saved as a plain Markdown list inside an ordinary note, so it reads, searches and syncs like everything else in your vault, and the same note opens as an outline.
 
 ![A Lisbon weekend built from the keyboard: Tab and Enter add nodes, ⌘B and ⌘I style them, ⌘↵ adds checkboxes, ⇧⌘7 numbers a list, ⌘. folds a branch, ⌥⌘F focuses on it, and ⌘2 and ⌘1 switch between outline and map. Each key shows in the corner as it is pressed.](docs/showcase.gif)
 
 ## What it does
 
-- **One note, two views.** Press ⌘1 for the map and ⌘2 for the outline. Both edit the same note.
 - **Built for the keyboard.** Tab adds a child, Enter adds a sibling, the arrow keys move around, and typing replaces the selected node's text. Press `?` in a map to see every shortcut.
+- **One note, two views.** Press ⌘1 for the map and ⌘2 for the outline. Both edit the same note.
 - **Plain Markdown underneath.** The title is the note's heading and each node is a list item with a block id, so you can link to any node (`[[Plan#^a1b2c3]]`), search it, and read it on mobile or in git.
 - **Mind map or free layout.** Branches spread either side of the centre, or you place nodes yourself. Tidy puts a free layout back in order.
 - **Formatting while you type.** Bold, italic, underline, strikethrough, highlight, code, links, headings, alignment, checkboxes and numbered items, from the keyboard or the bar above the node.
 - **Themes that fit your vault.** Follow your Obsidian theme in light or dark mode, pick Paper, Slate, Graphite or Midnight, or make your own. Each map can keep its own theme and node style.
-- **Focus on one branch.** Hide everything else while you work on it.
+- **Focus on one branch.** Bring it forward and dim the rest while you work on it.
 - **Bring things in, send things out.** Paste a Markdown list, drop in a `.canvas` or OPML file, or drag notes from the file explorer. Export as PNG, Markdown, OPML or JSON Canvas.
 
 <table>
@@ -93,7 +93,8 @@ ideascape: root
 ```
 
 - The heading is the centre of the map, and the nested list is the tree.
-- Any other text in the note (paragraphs, code, callouts) is kept. Text between list items belongs to the item above it: it moves with that item, and goes to the end of the list if the item is deleted.
+- The map draws the list, and only the list. Headings below the first one, paragraphs, tables, embedded images, code and callouts are kept in the note exactly as they were, but they are not drawn as nodes, so a note that is mostly prose or tables shows as a small map beside a long note. Nothing is lost: editing the map rewrites the list item you changed and the `%%` comment, and leaves the rest of the note byte for byte as it was.
+- Text between list items belongs to the item above it: it moves with that item, and goes to the end of the list if the item is deleted.
 - Positions, folds and the map's own look are kept in the `%%` comment at the end, which Obsidian doesn't show in reading view. Delete it and the map lays itself out again, with its folds and its own look back to the defaults.
 - Turning a note you already have into a map only adds the property, block ids and that comment. If more would change, the plugin asks first and offers to work on a copy.
 - Without Ideascape, a map is still an ordinary note: a heading and a nested list, with a short block id at the end of each item and the `%%` comment hidden in reading view.
