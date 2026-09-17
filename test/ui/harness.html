@@ -1,0 +1,239 @@
+<!doctype html>
+<!--
+  The map's chrome, outside Obsidian, for checks that need it rendered.
+
+  Why this exists: a stylesheet can be valid, and a test that greps it can pass, while a control is 0px wide or
+  invisible on screen. Those are the regressions this plugin has actually shipped. scripts/ui-check.mjs loads this
+  page in a browser and reads computed styles; the pictures it saves are for a person to look through.
+
+  It is a fixture, not the app: the markup mirrors the components' classes (Toolbar.tsx, NodeBar.tsx, MapApp.tsx's
+  shell, ShortcutsSheet.tsx) and test/ui.test.ts fails if a class here stops appearing in them, so it cannot rot
+  quietly. Obsidian's own variables are set below at the values the app defines, because the plugin now reads its
+  radii, type, icon weight and motion from them.
+
+  Open it directly in a browser to look at it: harness.html?theme=dark&shell=phone
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ideascape chrome</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  /* Obsidian 1.13's variables, at the values app.css defines (macOS desktop; the phone shell overrides below). */
+  body {
+    --radius-s: 4px; --radius-m: 8px; --radius-l: 12px; --radius-xl: 24px;
+    --clickable-icon-radius: var(--radius-m); --corner-shape: superellipse(1.33);
+    --input-radius: var(--radius-m); --input-height: 30px; --modal-radius: var(--radius-xl);
+    --icon-size: var(--icon-m); --icon-xs: 14px; --icon-s: 16px; --icon-m: 18px; --icon-l: 18px;
+    --icon-xs-stroke-width: 2px; --icon-s-stroke-width: 2px; --icon-m-stroke-width: 1.75px; --icon-l-stroke-width: 1.75px;
+    --font-ui-smaller: 12px; --font-ui-small: 13px; --font-ui-medium: 15px; --font-medium: 500; --font-semibold: 600;
+    --font-interface: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+    --anim-duration-fast: 140ms; --anim-duration-moderate: 300ms;
+    --touch-size-s: 40px; --touch-size-m: 44px;
+    margin: 0; background: #202020; font-family: var(--font-interface);
+  }
+  body.is-mobile { --clickable-icon-radius: 44px; --modal-radius: var(--radius-l); }
+  .surface { padding: 16px; }
+  .surface > h2 { margin: 0 0 8px; font: 600 12px/1 var(--font-interface); color: #888; text-transform: uppercase; letter-spacing: .05em; }
+  .frame { position: relative; overflow: hidden; border-radius: 10px; }
+  .io-root { height: auto; }
+
+  /* The map's own theme variables, as organiser/theme.ts sets them at runtime. Paper (light) and Graphite (dark). */
+  .io-root[data-theme='paper'] {
+    --bg: #f2f0eb; --surface: #ffffff; --surface-2: #faf9f6; --stage: #f7f5f1;
+    --line: rgba(35,31,26,0.10); --line-strong: rgba(35,31,26,0.18);
+    --ink: #231f1a; --ink-2: rgba(35,31,26,0.72); --ink-3: rgba(35,31,26,0.62);
+    --accent: #3b6ef5; --accent-soft: rgba(59,110,245,0.12); --danger: #c73e3e; --edge: rgba(35,31,26,0.26);
+    --shadow-1: 0 1px 2px rgba(35,31,26,0.06), 0 2px 6px rgba(35,31,26,0.05);
+    --shadow-2: 0 2px 4px rgba(35,31,26,0.07), 0 8px 20px rgba(35,31,26,0.09);
+    --shadow-3: 0 8px 16px rgba(35,31,26,0.10), 0 24px 48px rgba(35,31,26,0.14);
+    --branch-0: #d2691e; --branch-1: #2f6fd0; --branch-2: #2e8b57; --branch-3: #d3a45c;
+    --branch-4: #7b5ea7; --branch-5: #2f8f8f; --branch-6: #c0567a; --branch-7: #b3543c;
+  }
+  .io-root[data-theme='graphite'] {
+    --bg: #1a191d; --surface: #232227; --surface-2: #1d1c21; --stage: #1f1e23;
+    --line: rgba(255,255,255,0.10); --line-strong: rgba(255,255,255,0.18);
+    --ink: #e9e7e4; --ink-2: rgba(233,231,228,0.74); --ink-3: rgba(233,231,228,0.60);
+    --accent: #7aa2f7; --accent-soft: rgba(122,162,247,0.16); --danger: #e06c75; --edge: rgba(233,231,228,0.28);
+    --shadow-1: 0 1px 2px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.25);
+    --shadow-2: 0 2px 4px rgba(0,0,0,0.35), 0 8px 20px rgba(0,0,0,0.35);
+    --shadow-3: 0 8px 16px rgba(0,0,0,0.4), 0 24px 48px rgba(0,0,0,0.45);
+    --branch-0: #e0a458; --branch-1: #7aa2f7; --branch-2: #79c08a; --branch-3: #d9c26a;
+    --branch-4: #b48ce0; --branch-5: #6fc3c3; --branch-6: #e087a8; --branch-7: #e0806a;
+  }
+</style>
+</head>
+<body>
+<div class="io-root" data-theme="paper" data-node-style="outline">
+  <div class="app">
+
+    <section class="surface" data-surface="toolbar">
+      <h2>Toolbar</h2>
+      <div class="frame">
+        <div class="toolbar" role="toolbar" aria-label="Map controls">
+          <div class="seg seg-shape" style="--seg-index:0;--seg-count:2" role="group" aria-label="View">
+            <span class="seg-thumb"></span>
+            <button class="seg-btn is-on" aria-pressed="true">Map</button>
+            <button class="seg-btn" aria-pressed="false">Outline</button>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;justify-content:center">
+            <div class="seg seg-mini" style="--seg-index:0;--seg-count:2" role="group" aria-label="Layout">
+              <span class="seg-thumb"></span>
+              <button class="seg-btn is-on" aria-pressed="true"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="3.25" cy="8" r="1.5"/><path d="M4.75 8h2.5M7.25 8V4.25h2.25M7.25 8v3.75h2.25"/><circle cx="11.5" cy="4.25" r="1.5"/></svg></button>
+              <button class="seg-btn" aria-pressed="false"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v12M2 8h12"/></svg></button>
+            </div>
+          </div>
+          <div class="toolbar-right" style="display:flex;gap:8px;align-items:center;justify-content:flex-end">
+            <button class="icon-btn is-on" aria-label="Document panel"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4.5h12M2 11.5h12"/><circle cx="6" cy="4.5" r="1.8"/><circle cx="10.5" cy="11.5" r="1.8"/></svg></button>
+            <button class="icon-btn" aria-label="Export"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10.5V3M5 5.5L8 2.5l3 3M3 10v3h10v-3"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="surface" data-surface="canvas">
+      <h2>Canvas: nodes, find, corner controls</h2>
+      <div class="frame" style="height:340px">
+        <div class="canvas-wrap" style="position:absolute;inset:0">
+          <span class="doc-name"><button class="doc-name-btn">Launch a podcast</button></span>
+          <div class="stage shape-map" style="position:absolute;inset:0">
+            <div class="nodes" role="tree">
+              <div class="node as-pill is-root" role="treeitem" style="position:absolute;left:280px;top:150px;width:170px;height:34px;--branch:var(--branch-1);--node-radius:17px">
+                <span class="node-label">Launch a podcast</span>
+              </div>
+              <div class="node as-pill is-selected" role="treeitem" style="position:absolute;left:520px;top:90px;width:130px;height:30px;--branch:var(--branch-0);--branch-ink:#fff;--node-radius:15px">
+                <span class="node-check" role="checkbox" data-task=" "></span>
+                <span class="node-label">Gear</span>
+                <span class="node-knob" aria-label="Pull out a new idea"></span>
+              </div>
+              <div class="node as-pill" role="treeitem" style="position:absolute;left:520px;top:200px;width:150px;height:30px;--branch:var(--branch-2);--branch-ink:#1a1a1a;--node-radius:15px">
+                <span class="node-check is-done" role="checkbox" data-task="x"><svg class="io-icon" width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8.5l3.2 3.2L13 5"/></svg></span>
+                <span class="node-label">Publishing</span>
+              </div>
+            </div>
+            <div class="find" role="search">
+              <input class="find-input" placeholder="Find in map" value="podcast">
+              <span class="find-count">1 of 3</span>
+              <button class="find-btn prev" aria-label="Previous match"><svg class="io-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5L10.5 8 6 12.5"/></svg></button>
+              <button class="find-btn" aria-label="Next match"><svg class="io-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5L10.5 8 6 12.5"/></svg></button>
+            </div>
+            <div class="corner">
+              <div class="zoom" role="group" aria-label="Zoom">
+                <button aria-label="Zoom in"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.5v9M3.5 8h9"/></svg></button>
+                <button aria-label="Zoom out"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8h9"/></svg></button>
+              </div>
+              <div class="history" role="group" aria-label="History">
+                <button aria-label="Undo"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8a4.5 4.5 0 1 0 1.3-3.2M3.5 2.8v2.4h2.4"/></svg></button>
+                <button aria-label="Redo"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12.5 8a4.5 4.5 0 1 1-1.3-3.2M12.5 2.8v2.4h-2.4"/></svg></button>
+              </div>
+              <button class="help" aria-label="Shortcuts">?</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="surface" data-surface="node-bar">
+      <h2>Node bar (pointer)</h2>
+      <div class="frame" style="height:120px">
+        <div class="stage" style="position:absolute;inset:0">
+          <div class="node-toolbar" role="toolbar" style="left:50%;top:30px">
+            <div class="nt-row nt-main">
+              <button class="nt-drop" aria-label="Node type">Aa<svg class="nt-chev" viewBox="0 0 8 8" aria-hidden="true"><path d="M1.5 3L4 5.5 6.5 3" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+              <span class="nt-sep"></span>
+              <button class="fmt fmt-bold" aria-label="Bold"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5h4a2.5 2.5 0 0 1 0 5h-4zM4.5 7.5h4.6a2.75 2.75 0 0 1 0 5.5H4.5z"/></svg></button>
+              <button class="fmt fmt-italic is-on" aria-label="Italic"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5H6.5M9.5 13.5H6M9.2 2.5L6.8 13.5"/></svg></button>
+              <span class="nt-sep"></span>
+              <button aria-label="Branch colour"><span class="nt-dot" style="background:var(--branch-0)"></span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="surface" data-surface="phone-dock">
+      <h2>Phone dock (docked node bar, More open)</h2>
+      <div class="frame" style="height:260px">
+        <div class="stage" style="position:absolute;inset:0">
+          <div class="node-toolbar is-docked" role="toolbar">
+            <div class="nt-phone-more" role="menu" aria-label="More editing options">
+              <div class="nt-phone-group nt-phone-format" role="group" aria-label="Formatting">
+                <button class="fmt fmt-bold" aria-label="Bold"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4.5 2.5h4a2.5 2.5 0 0 1 0 5h-4z"/></svg></button>
+                <button class="fmt fmt-italic" aria-label="Italic"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 2.5H6.5"/></svg></button>
+                <button class="fmt fmt-underline" aria-label="Underline"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 2.5v5a4 4 0 0 0 8 0v-5"/></svg></button>
+                <button class="fmt fmt-code" aria-label="Code"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 4L2.5 8 6 12"/></svg></button>
+                <button class="fmt fmt-highlight" aria-label="Highlight"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 12h10"/></svg></button>
+                <button class="fmt fmt-strike" aria-label="Strikethrough"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 8h10"/></svg></button>
+              </div>
+              <div class="nt-phone-group nt-phone-align" role="group" aria-label="Alignment">
+                <button class="is-on" aria-label="Align left"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="2" rx="1" fill="currentColor"/></svg></button>
+                <button aria-label="Align centre"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="3" width="8" height="2" rx="1" fill="currentColor"/></svg></button>
+                <button aria-label="Align right"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="2" rx="1" fill="currentColor"/></svg></button>
+              </div>
+              <div class="nt-phone-group nt-phone-arrange" role="group" aria-label="Arrange node">
+                <button class="nt-move-up" aria-label="Move up"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 3.5L10.5 8 6 12.5"/></svg></button>
+                <button class="nt-move-down" aria-label="Move down"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 3.5L10.5 8 6 12.5"/></svg></button>
+                <button aria-label="Outdent"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 4h7M7 8h7M7 12h7M4 6L2 8l2 2"/></svg></button>
+                <button aria-label="Indent"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 4h7M7 8h7M7 12h7M2 6l2 2-2 2"/></svg></button>
+              </div>
+            </div>
+            <div class="nt-row nt-main">
+              <button class="nt-drop" aria-label="Node type">Aa<svg class="nt-chev" viewBox="0 0 8 8" aria-hidden="true"><path d="M1.5 3L4 5.5 6.5 3" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
+              <button aria-label="Branch colour"><span class="nt-dot" style="background:var(--branch-2)"></span></button>
+              <button class="is-on" aria-haspopup="menu" aria-expanded="true" aria-label="More editing options"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="3" cy="8" r="1"/><circle cx="8" cy="8" r="1"/><circle cx="13" cy="8" r="1"/></svg></button>
+              <button aria-label="New line"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 4v4H4M7 5L4 8l3 3"/></svg></button>
+              <button aria-label="Add child"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 3.5v9M3.5 8h9"/></svg></button>
+              <button class="nt-done" aria-label="Done"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8.5l3.2 3.2L13 5"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="surface" data-surface="sheet">
+      <h2>Sheet over its scrim</h2>
+      <div class="frame" style="height:300px">
+        <div class="scrim" style="position:absolute;inset:0">
+          <div class="sheet wide sk-sheet" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
+            <div class="sheet-head">
+              <h2>Shortcuts</h2>
+              <input class="sk-filter" type="search" placeholder="Filter shortcuts" aria-label="Filter shortcuts">
+              <button class="icon-btn" aria-label="Close"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+            </div>
+            <ul class="sk-essentials" aria-label="Essentials">
+              <li><span class="sk-keys"><kbd class="sk-cap">Tab</kbd></span> Add child</li>
+              <li><span class="sk-keys"><kbd class="sk-cap">Enter</kbd></span> Add sibling</li>
+            </ul>
+            <div class="sk-body">
+              <div class="sk-cols">
+                <div class="sk-col">
+                  <section>
+                    <h3>Build</h3>
+                    <dl>
+                      <dt><span class="sk-keys"><kbd class="sk-cap">Tab</kbd></span></dt><dd>Add child</dd>
+                      <dt><span class="sk-keys"><kbd class="sk-cap">⇧</kbd><kbd class="sk-cap">Tab</kbd></span></dt><dd>Move out a level</dd>
+                      <dt><span class="sk-keys"><kbd class="sk-cap">⌘</kbd><kbd class="sk-cap">Enter</kbd><span class="sk-or">or</span><kbd class="sk-cap">⇧</kbd><kbd class="sk-cap">7</kbd></span></dt><dd>Toggle checkbox</dd>
+                    </dl>
+                  </section>
+                </div>
+              </div>
+            </div>
+            <div class="sheet-note sk-note"><span>Commands can be given your own keys in Settings → Hotkeys.</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+<script>
+  // ?theme=dark|light and ?shell=phone|desktop, so a person can open this page in the state they want to see.
+  const q = new URLSearchParams(location.search)
+  const root = document.querySelector('.io-root')
+  root.dataset.theme = q.get('theme') === 'dark' ? 'graphite' : 'paper'
+  if (q.get('shell') === 'phone') document.body.classList.add('is-mobile', 'is-phone')
+  if (q.get('editing')) document.querySelector('.app').classList.add('is-editing')
+  if (q.get('shell') === 'tablet') document.body.classList.add('is-mobile', 'is-tablet')
+</script>
+</body>
+</html>

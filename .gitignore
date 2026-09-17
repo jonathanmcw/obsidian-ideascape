@@ -7,3 +7,4 @@ data.json
 __pycache__/
 *.pyc
 demo-vault/
+/review/

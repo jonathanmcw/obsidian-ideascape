@@ -1083,6 +1083,10 @@
 .io-root .sk-sheet .sheet-head {
   padding: 10px 10px 10px 20px;
 }
+.io-root .sheet-head .icon-btn {
+  /* never squeezed by a long title or a filter field beside it */
+  flex: none;
+}
 .io-root .sk-sheet .sheet-head .icon-btn {
   width: 28px;
   height: 28px;

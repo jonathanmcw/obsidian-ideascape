@@ -8,7 +8,7 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production && node scripts/build-css.mjs",
-    "check": "npm run lint && npm test && npm run build && npm run verify:release",
+    "check": "npm run lint && npm test && npm run build && npm run ui && npm run verify:release",
     "dev": "node scripts/build-css.mjs && node esbuild.config.mjs",
     "css": "node scripts/build-css.mjs",
     "test": "node --test test/*.test.ts",
@@ -17,7 +17,8 @@
     "showcase": "bash scripts/shots/showcase.sh",
     "install:vault": "node scripts/install.mjs",
     "welcome:again": "node scripts/welcome-again.mjs",
-    "fresh:start": "node scripts/fresh-start.mjs"
+    "fresh:start": "node scripts/fresh-start.mjs",
+    "ui": "node scripts/ui-check.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
@@ -28,6 +29,7 @@
     "eslint": "^9.39.5",
     "eslint-plugin-obsidianmd": "^0.4.2",
     "obsidian": "^1.13.1",
+    "playwright": "^1.63.0",
     "tslib": "^2.8.0",
     "typescript": "^5.6.0",
     "typescript-eslint": "^8.70.0"

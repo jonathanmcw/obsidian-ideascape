@@ -21,4 +21,7 @@ jobs:
 
       - run: npm ci
 
+      # The chrome is checked rendered (npm run ui), which needs a browser to render it in.
+      - run: npx playwright install --with-deps chromium
+
       - run: npm run check

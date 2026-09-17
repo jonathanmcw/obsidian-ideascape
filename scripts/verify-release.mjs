@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { readFileSync, statSync } from "node:fs";
+import { cssStructureProblems } from "./css-structure.mjs";
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 /** Git, when this is a checkout with tags; "" anywhere else (a tarball, a sandbox), where the tag check is skipped. */
@@ -73,6 +74,23 @@ for (const block of scannedCss.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
   const properties = [...block[2].matchAll(/(?:^|;)\s*([\w-]+)\s*:/g)].map(match => match[1]);
   const duplicate = properties.find((property, index) => properties.indexOf(property) !== index);
   assert.equal(duplicate, undefined, `release CSS must not repeat ${duplicate} in ${selector}`);
+}
+
+// Valid CSS that is no longer shaped the way it reads: a rule spliced into a selector list, a rule left behind by
+// the component it styled, a token read but never defined. None of these fail a build or a grep.
+const structure = cssStructureProblems(builtCss);
+assert.deepEqual(structure, [], `release CSS is misshapen:\n  ${structure.join("\n  ")}`);
+
+// The pictures are part of what is released — the directory and the README show them. They cannot be checked for
+// accuracy, only for age: a picture older than the interface it shows is one nobody has looked at since.
+const lastTouched = path => Number(git(["log", "-1", "--format=%ct", "--", path]).trim()) || 0;
+const uiTouched = Math.max(...["src/organiser", "src/styles", "src/welcome.ts", "src/map-view.ts"].map(lastTouched));
+const shotsTaken = lastTouched("docs/screenshots");
+if (uiTouched && shotsTaken && uiTouched > shotsTaken) {
+  const days = Math.round((uiTouched - shotsTaken) / 86400);
+  const stale = `the interface changed after the screenshots were taken (${days === 0 ? "the same day" : `${days} day${days === 1 ? "" : "s"} later`}): bash scripts/shots/capture.sh screenshots`;
+  if (process.argv.includes("--strict")) assert.fail(stale);
+  console.warn(`  note: ${stale}`);
 }
 
 console.log(`Verified release output ${manifest.version}: main.js, manifest.json, styles.css`);
