@@ -3,6 +3,9 @@ interface P {
 }
 
 const base = (size = 16) => ({
+  // Every icon carries the class the stylesheet weights: drawn on a 16 grid, they take two thirds of Obsidian's
+  // 24-grid stroke, so they sit at the same optical weight as the app's own icons above them.
+  className: 'io-icon',
   width: size,
   height: size,
   viewBox: '0 0 16 16',
@@ -23,7 +26,7 @@ export const IconFocus = ({ size }: P) => (
 
 /** Three bars, ragged the way the text will be. */
 export const IconAlign = ({ align, size = 16 }: { align: 'left' | 'center' | 'right'; size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 16 16" aria-hidden="true">
+  <svg className="io-icon" width={size} height={size} viewBox="0 0 16 16" aria-hidden="true">
     {[1, 0.6, 0.85].map((w, i) => {
       const width = w * 12
       const x = align === 'left' ? 2 : align === 'right' ? 14 - width : 8 - width / 2
@@ -63,6 +66,26 @@ export const IconExport = ({ size }: P) => (
 export const IconPlus = ({ size }: P) => (
   <svg {...base(size)}>
     <path d="M8 3.5v9M3.5 8h9" />
+  </svg>
+)
+
+export const IconMinus = ({ size }: P) => (
+  <svg {...base(size)}>
+    <path d="M3.5 8h9" />
+  </svg>
+)
+
+/** Back to where a panel came from. */
+export const IconBack = ({ size }: P) => (
+  <svg {...base(size)}>
+    <path d="M10 3L5 8l5 5" />
+  </svg>
+)
+
+/** Put a colour back to the theme's own. */
+export const IconReset = ({ size }: P) => (
+  <svg {...base(size)}>
+    <path d="M3.5 8a4.5 4.5 0 1 0 1.3-3.2M3.5 2.8v2.4h2.4" />
   </svg>
 )
 

@@ -4,7 +4,7 @@ import { CUSTOM_SLOTS, CUSTOM_THEME_ID, HOST_THEME_ID, THEMES, allThemes, themeB
 import { toneOf, withHue } from '../colour'
 import { ColourPopover } from './ColourPopover'
 import { PLUGIN_NAME } from '../../brand'
-import { IconClose } from './Icons'
+import { IconBack, IconClose, IconPlus } from './Icons'
 import { chord } from './keys'
 
 interface Props {
@@ -58,11 +58,6 @@ const IconInfo = () => (
   </svg>
 )
 
-const IconBack = () => (
-  <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
-    <path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-)
 
 /** A labelled on/off switch, the panel's one row type. */
 function Switch({ label, on, disabled, onChange }: { label: string; on: boolean; disabled?: boolean; onChange: (on: boolean) => void }) {
@@ -106,7 +101,7 @@ export function Inspector({ themeId, themePinned, defaultThemeId, nodeStyle, sha
       <aside className="inspector">
         <div className="inspector-head">
           <button className="icon-btn sm" onClick={() => setEditingTheme(false)} aria-label="Back to the document panel">
-            <IconBack />
+            <IconBack size={14} />
           </button>
           <span className="inspector-title">Custom theme</span>
           <button className="icon-btn sm" onClick={onClose} aria-label={`Close — ${chord('⌘/')}`}>
@@ -195,7 +190,7 @@ export function Inspector({ themeId, themePinned, defaultThemeId, nodeStyle, sha
                   }}
                   aria-label="Add a colour of your own"
                 >
-                  +
+                  <IconPlus size={13} />
                 </button>
               )
             })}

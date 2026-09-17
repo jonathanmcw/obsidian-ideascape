@@ -13,7 +13,7 @@
   font: 600 11px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'PingFang TC', 'Noto Sans TC', sans-serif;
   cursor: pointer;
   opacity: 0.45;
-  transition: transform 120ms var(--morph-ease), background 120ms ease, color 120ms ease, opacity 120ms ease;
+  transition: transform var(--io-fast) var(--morph-ease), background var(--io-fast) ease, color var(--io-fast) ease, opacity var(--io-fast) ease;
 }
 /* obsidian: parents always show a faint fold button; it lights up on hover or selection.
    The pill also grows an invisible bridge towards the knob, so the pointer can travel to it
@@ -88,7 +88,7 @@
   cursor: ew-resize;
   opacity: 0;
   border-radius: 4px;
-  transition: opacity 120ms ease;
+  transition: opacity var(--io-fast) ease;
 }
 .io-root .node-resize[data-side='right'] { right: -3px; }
 .io-root .node-resize[data-side='left'] { left: -3px; }
@@ -109,6 +109,20 @@
   --inspector-w: 224px;
   --toolbar-h: 52px;
   --radius: 10px;
+  /* Obsidian's own shapes, with this sheet's former values as the fallback outside Obsidian (the export canvas,
+     tests). Each platform and theme then gets the radius Obsidian itself uses: 4px icon buttons on Windows and
+     Linux, 8px and squircles on macOS, rounder still on a phone. */
+  --io-r-panel: var(--radius-m, 8px);
+  --io-r-dialog: var(--modal-radius, var(--radius-l, 14px));
+  --io-r-control: var(--clickable-icon-radius, 7px);
+  --io-r-input: var(--input-radius, 7px);
+  --io-r-cell: max(2px, calc(var(--io-r-panel) - 3px));
+  /* Obsidian's interface steps are 12 / 13 / 15; below them the map has one size of its own for hints and captions. */
+  --io-font-micro: 11px;
+  /* Obsidian's two everyday speeds. A state change (hover, colour, fade) is fast; something that travels (a thumb,
+     a sheet, a settle) is moderate. The Shift keeps --morph, which is its own, longer story. */
+  --io-fast: var(--anim-duration-fast, 140ms);
+  --io-moderate: var(--anim-duration-moderate, 300ms);
   /* Obsidian Canvas mobile benchmark: 40px controls with 24px glyphs. */
   --mobile-control-size: 40px;
   --mobile-control-icon: 24px;
@@ -118,6 +132,23 @@
 
 .io-root * {
   box-sizing: border-box;
+}
+
+/* Obsidian draws its icons on a 24 grid; these are drawn on 16, so two thirds of its stroke is the same weight on
+   screen. Chrome that sits beside the app's small icons (the find bar, the node bar, the corner) takes its small
+   stroke; the toolbar, level with the view header, takes its medium one. */
+.io-root .io-icon {
+  stroke-width: calc(var(--io-icon-stroke, 1.75px) * 2 / 3);
+}
+.io-root .toolbar {
+  --io-icon-stroke: var(--icon-m-stroke-width, 1.75px);
+}
+.io-root .find,
+.io-root .node-toolbar,
+.io-root .corner,
+.io-root .inspector,
+.io-root .sheet {
+  --io-icon-stroke: var(--icon-s-stroke-width, 2px);
 }
 
 .io-root {
@@ -132,7 +163,12 @@
 .io-root {
   background: var(--bg);
   color: var(--ink);
-  font: 400 14px/1.45 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'PingFang TC', 'Noto Sans TC', sans-serif;
+  /* Obsidian's interface font, so the map's chrome follows the person's setting. The nodes below keep the system
+     stack, because layout/measure.ts measures their text with exactly that list. */
+  font-family: var(--font-interface, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'PingFang TC', 'Noto Sans TC', sans-serif);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
 }
@@ -172,7 +208,7 @@
   grid-template-columns: 0 minmax(0, 1fr);
   height: 100%;
   overflow: hidden;
-  transition: grid-template-columns 260ms var(--morph-ease);
+  transition: grid-template-columns var(--io-moderate) var(--morph-ease);
 }
 .io-root .app.inspector-open {
   grid-template-columns: 0 minmax(0, 1fr) var(--inspector-w);
@@ -246,15 +282,15 @@
 
 .io-root .doc-name-btn {
   font-weight: 600;
-  font-size: 13px;
+  font-size: var(--font-ui-small, 13px);
   color: var(--ink-2);
   padding: 4px 8px;
-  border-radius: 7px;
+  border-radius: var(--io-r-control);
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  transition: background 120ms ease;
+  transition: background var(--io-fast) ease;
 }
 .io-root .doc-name-btn:hover {
   color: var(--ink);
@@ -264,12 +300,12 @@
 .io-root .doc-name-input {
   /* the button's size and weight, so clicking the name to rename it does not change how it reads */
   font-family: inherit;
-  font-size: 13px;
+  font-size: var(--font-ui-small, 13px);
   font-weight: 600;
   color: var(--ink);
   background: var(--surface-2);
   border: 1px solid var(--accent);
-  border-radius: 7px;
+  border-radius: var(--io-r-input);
   padding: 4px 8px;
   outline: none;
   width: 200px;
@@ -305,7 +341,8 @@
   padding: 3px;
   background: var(--surface-2);
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--io-r-panel);
+  corner-shape: var(--corner-shape, round);
 }
 
 .io-root .seg-thumb {
@@ -315,21 +352,21 @@
   left: 3px;
   width: calc((100% - 6px) / var(--seg-count, 3));
   background: var(--surface);
-  border-radius: 7px;
+  border-radius: var(--io-r-cell);
   box-shadow: var(--shadow-1);
   transform: translateX(calc(var(--seg-index) * 100%));
-  transition: transform 380ms var(--morph-ease);
+  transition: transform var(--io-moderate) var(--morph-ease);
 }
 
 .io-root .seg-btn {
   position: relative;
   min-width: 78px;
   padding: 5px 12px;
-  font-size: 13px;
+  font-size: var(--font-ui-small, 13px);
   font-weight: 500;
   color: var(--ink-2);
-  border-radius: 7px;
-  transition: color 200ms ease;
+  border-radius: var(--io-r-cell);
+  transition: color var(--io-fast) ease;
 }
 .io-root .seg-btn.is-on {
   color: var(--ink);
@@ -358,13 +395,14 @@
   padding: 4px;
   background: var(--surface);
   border: 1px solid var(--line-strong);
-  border-radius: 9px;
+  border-radius: var(--io-r-panel);
+  corner-shape: var(--corner-shape, round);
   box-shadow: var(--shadow-2);
   z-index: 40;
 }
 .io-root .toolbar-menu button {
   display: flex; align-items: center; justify-content: flex-start; gap: 10px;
-  height: 34px; padding: 0 10px; text-align: start; border-radius: 6px; font-size: 13px; color: var(--ink);
+  height: 34px; padding: 0 10px; text-align: start; border-radius: var(--io-r-cell); font-size: var(--font-ui-small, 13px); color: var(--ink);
 }
 .io-root .toolbar-menu button:hover:not(:disabled) { background: var(--surface-2); }
 .io-root .toolbar-menu button:disabled { opacity: 0.45; cursor: default; }
@@ -395,9 +433,9 @@
   place-items: center;
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: var(--io-r-control);
   color: var(--ink-2);
-  transition: background 120ms ease, color 120ms ease, transform 120ms var(--morph-ease);
+  transition: background var(--io-fast) ease, color var(--io-fast) ease, transform var(--io-fast) var(--morph-ease);
 }
 .io-root .icon-btn.sm {
   width: 26px;
@@ -427,10 +465,11 @@
   padding: 6px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--io-r-panel);
+  corner-shape: var(--corner-shape, round);
   box-shadow: var(--shadow-3);
   z-index: 20;
-  animation: io-pop-in 160ms var(--morph-ease);
+  animation: io-pop-in var(--io-fast) var(--morph-ease);
 }
 
 .io-root .swatches {
@@ -464,7 +503,7 @@
   pointer-events: none;
   box-shadow: inset 0 0 140px 10px color-mix(in srgb, var(--ink) 14%, transparent);
   z-index: 3;
-  animation: io-fade-in 220ms ease;
+  animation: io-fade-in var(--io-fast) ease;
 }
 
 .io-root .stage {
@@ -494,17 +533,17 @@
   will-change: transform;
 }
 .io-root .world.animated {
-  transition: transform 420ms var(--morph-ease);
+  transition: transform var(--io-moderate) var(--morph-ease);
 }
 .io-root .world.crossfade {
-  animation: io-crossfade 200ms ease;
+  animation: io-crossfade var(--io-fast) ease;
 }
 
 .io-root .edges {
   position: absolute;
   overflow: visible;
   pointer-events: none;
-  transition: opacity 170ms ease 40ms;
+  transition: opacity var(--io-fast) ease 40ms;
 }
 .io-root .edges.hidden {
   opacity: 0;
@@ -538,6 +577,8 @@
 }
 
 .io-root .nodes {
+  /* Measured, not inherited: layout/measure.ts sizes every label against this exact list. */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'PingFang TC', 'Noto Sans TC', sans-serif;
   position: absolute;
   left: 0;
   top: 0;
@@ -563,9 +604,9 @@
   cursor: default;
   user-select: none;
   transition: transform var(--morph), width var(--morph), height var(--morph), padding-left var(--morph),
-    border-radius var(--morph), background-color 200ms ease, border-color 200ms ease, box-shadow 180ms ease,
-    opacity 220ms ease, filter 220ms ease;
-  animation: io-node-in 260ms var(--morph-ease);
+    border-radius var(--morph), background-color var(--io-fast) ease, border-color var(--io-fast) ease, box-shadow 180ms ease,
+    opacity var(--io-fast) ease, filter var(--io-fast) ease;
+  animation: io-node-in var(--io-moderate) var(--morph-ease);
 }
 
 /* Past a few hundred nodes, animating width / height / padding means the
@@ -689,7 +730,7 @@
   width: 4px;
   background: var(--branch);
   opacity: 1;
-  transition: opacity 200ms ease;
+  transition: opacity var(--io-fast) ease;
 }
 .io-root .node.as-row .node-bar,
 .io-root .node.is-root .node-bar {
@@ -706,7 +747,7 @@
   border-radius: 2px;
   background: var(--branch);
   opacity: 0;
-  transition: opacity 200ms ease;
+  transition: opacity var(--io-fast) ease;
 }
 .io-root .node.as-row .node-dot {
   opacity: 1;
@@ -733,7 +774,7 @@
   color: var(--ink-3);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 200ms ease, background 120ms ease;
+  transition: opacity var(--io-fast) ease, background var(--io-fast) ease;
 }
 .io-root .node.as-row .node-disc {
   opacity: 1;
@@ -744,7 +785,7 @@
   color: var(--ink);
 }
 .io-root .node-disc svg {
-  transition: transform 200ms var(--morph-ease);
+  transition: transform var(--io-fast) var(--morph-ease);
 }
 
 .io-root .node-label {
@@ -779,10 +820,11 @@
   right: 8px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 11px;
+  font-size: var(--io-font-micro);
   color: var(--ink-3);
   border: 1px solid var(--line-strong);
-  border-radius: 9px;
+  border-radius: var(--io-r-panel);
+  corner-shape: var(--corner-shape, round);
   padding: 1px 6px;
 }
 
@@ -802,8 +844,8 @@
   color: var(--accent);
   font: 600 13px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'PingFang TC', 'Noto Sans TC', sans-serif;
   cursor: pointer;
-  animation: io-pop-in 140ms var(--morph-ease);
-  transition: transform 120ms var(--morph-ease), background 120ms ease, color 120ms ease;
+  animation: io-pop-in var(--io-fast) var(--morph-ease);
+  transition: transform var(--io-fast) var(--morph-ease), background var(--io-fast) ease, color var(--io-fast) ease;
 }
 .io-root .node-knob:hover {
   transform: scale(1.18);
@@ -822,17 +864,18 @@
   align-items: center;
   gap: 2px;
   padding: 5px 10px;
-  font-size: 12px;
+  font-size: var(--font-ui-smaller, 12px);
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: var(--io-r-panel);
+  corner-shape: var(--corner-shape, round);
   box-shadow: var(--shadow-1);
-  animation: io-slide-down 240ms var(--morph-ease);
+  animation: io-slide-down var(--io-moderate) var(--morph-ease);
 }
 .io-root .crumb button {
   color: var(--ink-2);
   padding: 1px 3px;
-  border-radius: 5px;
+  border-radius: var(--io-r-cell);
 }
 .io-root .crumb button:hover {
   color: var(--ink);
@@ -858,13 +901,13 @@
   align-items: center;
   gap: 5px;
   padding: 5px 12px;
-  font-size: 11.5px;
+  font-size: var(--io-font-micro);
   color: var(--ink-2);
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 999px;
   box-shadow: var(--shadow-1);
-  animation: io-slide-up 240ms var(--morph-ease);
+  animation: io-slide-up var(--io-moderate) var(--morph-ease);
 }
 
 .io-root .corner {
@@ -883,7 +926,8 @@
   align-items: center;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: var(--io-r-panel);
+  corner-shape: var(--corner-shape, round);
   box-shadow: var(--shadow-1);
 }
 .io-root .history button {
@@ -892,7 +936,7 @@
   width: 28px;
   height: 28px;
   color: var(--ink-2);
-  transition: background 120ms ease;
+  transition: background var(--io-fast) ease;
 }
 .io-root .history button:hover:not(:disabled) { background: color-mix(in srgb, var(--ink) 8%, transparent); color: var(--ink); }
 .io-root .history button:disabled { opacity: 0.35; cursor: default; }
@@ -902,16 +946,18 @@
   align-items: center;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: var(--io-r-panel);
+  corner-shape: var(--corner-shape, round);
   box-shadow: var(--shadow-1);
   overflow: hidden;
 }
 .io-root .zoom button {
+  display: grid;
+  place-items: center;
   width: 28px;
   height: 28px;
   color: var(--ink-2);
-  font-size: 15px;
-  transition: background 120ms ease;
+  transition: background var(--io-fast) ease;
 }
 .io-root .zoom button:hover {
   background: color-mix(in srgb, var(--ink) 8%, transparent);
@@ -932,7 +978,7 @@
   background: var(--surface);
   border: 1px solid var(--line);
   box-shadow: var(--shadow-1);
-  transition: background 120ms ease, color 120ms ease, transform 120ms var(--morph-ease);
+  transition: background var(--io-fast) ease, color var(--io-fast) ease, transform var(--io-fast) var(--morph-ease);
 }
 .io-root .help:hover {
   color: var(--ink);
@@ -952,7 +998,8 @@
   padding: 14px 22px;
   color: var(--surface);
   background: color-mix(in srgb, var(--ink) 88%, transparent);
-  border-radius: 14px;
+  border-radius: var(--io-r-panel);
+  corner-shape: var(--corner-shape, round);
   pointer-events: none;
   animation: io-hud 900ms var(--morph-ease) forwards;
 }
@@ -960,7 +1007,7 @@
   font: 600 20px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 .io-root .hud span {
-  font-size: 11px;
+  font-size: var(--io-font-micro);
   opacity: 0.75;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -974,12 +1021,12 @@
   z-index: 8;
   max-width: 420px;
   padding: 9px 16px;
-  font-size: 12.5px;
+  font-size: var(--font-ui-smaller, 12px);
   color: var(--surface);
   background: color-mix(in srgb, var(--ink) 90%, transparent);
   border-radius: 999px;
   box-shadow: var(--shadow-2);
-  animation: io-slide-down 220ms var(--morph-ease);
+  animation: io-slide-down var(--io-fast) var(--morph-ease);
 }
 
 /* ---------------------------- export sheet ---------------------------- */
@@ -995,7 +1042,7 @@
   padding: 24px 24px 48px;
   background: rgba(0, 0, 0, 0.32);
   backdrop-filter: blur(3px);
-  animation: io-fade-in 160ms ease;
+  animation: io-fade-in var(--io-fast) ease;
 }
 
 /* Head and note stay put; only the body scrolls, so the title and the close
@@ -1008,9 +1055,10 @@
   overflow: hidden;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--io-r-dialog);
+  corner-shape: var(--corner-shape, round);
   box-shadow: var(--shadow-3);
-  animation: io-sheet-in 240ms var(--morph-ease);
+  animation: io-sheet-in var(--io-moderate) var(--morph-ease);
 }
 
 .io-root .sheet.wide {
@@ -1046,11 +1094,11 @@
   margin: 0;
   padding: 0 10px;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--font-ui-small, 13px);
   color: var(--ink);
   background: var(--surface-2);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--io-r-input);
   box-shadow: none;
   outline: none;
   appearance: none;
@@ -1069,7 +1117,7 @@
   margin: 0;
   padding: 7px 20px;
   list-style: none;
-  font-size: 12.5px;
+  font-size: var(--font-ui-smaller, 12px);
   color: var(--ink);
   background: var(--surface-2);
   border-bottom: 1px solid var(--line);
@@ -1126,7 +1174,7 @@
 }
 .io-root .sk-cols h3 {
   margin: 0 0 6px;
-  font-size: 11px;
+  font-size: var(--io-font-micro);
   font-weight: 600;
   line-height: 16px;
   letter-spacing: 0.05em;
@@ -1152,7 +1200,7 @@
 }
 .io-root .sk-cols dd {
   margin: 0;
-  font-size: 12.5px;
+  font-size: var(--font-ui-smaller, 12px);
   line-height: 17px;
   color: var(--ink);
 }
@@ -1166,32 +1214,32 @@
   margin: 0;
   padding: 0 5px;
   font-family: inherit;
-  font-size: 11.5px;
+  font-size: var(--io-font-micro);
   font-weight: 500;
   line-height: 1;
   color: var(--ink-2);
   background: var(--surface);
   border: 1px solid var(--line-strong);
   border-bottom-width: 2px;
-  border-radius: 5px;
+  border-radius: var(--io-r-cell);
   box-shadow: none;
   white-space: nowrap;
 }
 .io-root .sk-or {
   margin: 0 2px;
-  font-size: 11px;
+  font-size: var(--io-font-micro);
   color: var(--ink-3);
 }
 /* gestures and typed text are not keys */
 .io-root .sk-word {
-  font-size: 12px;
+  font-size: var(--font-ui-smaller, 12px);
   color: var(--ink-3);
   white-space: nowrap;
 }
 .io-root .sk-empty {
   margin: 0;
   padding: 28px 0 40px;
-  font-size: 13px;
+  font-size: var(--font-ui-small, 13px);
   text-align: center;
   color: var(--ink-3);
 }
@@ -1203,7 +1251,7 @@
 }
 .io-root .sk-link {
   margin-left: auto;
-  font-size: 11.5px;
+  font-size: var(--io-font-micro);
   font-weight: 500;
   color: var(--accent);
   white-space: nowrap;
@@ -1223,7 +1271,7 @@
 .io-root .sheet-head h2 {
   flex: 1;
   margin: 0;
-  font-size: 15px;
+  font-size: var(--font-ui-medium, 15px);
   font-weight: 600;
 }
 
@@ -1244,9 +1292,10 @@
   align-items: center;
   width: 100%;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--io-r-panel);
+  corner-shape: var(--corner-shape, round);
   background: var(--surface-2);
-  transition: border-color 140ms ease, transform 140ms var(--morph-ease), box-shadow 140ms ease;
+  transition: border-color var(--io-fast) ease, transform var(--io-fast) var(--morph-ease), box-shadow var(--io-fast) ease;
 }
 .io-root .export-hit {
   display: flex;
@@ -1261,7 +1310,8 @@
   background: none;
   border: 0;
   box-shadow: none;
-  border-radius: 12px;
+  border-radius: var(--io-r-panel);
+  corner-shape: var(--corner-shape, round);
   cursor: pointer;
 }
 .io-root .export-row.is-hovered,
@@ -1288,13 +1338,13 @@
 }
 .io-root .export-row b {
   display: block;
-  font-size: 13.5px;
+  font-size: var(--font-ui-small, 13px);
   font-weight: 600;
 }
 .io-root .export-row small {
   display: block;
   margin-top: 2px;
-  font-size: 11.5px;
+  font-size: var(--io-font-micro);
   line-height: 1.4;
   color: var(--ink-2);
   white-space: normal;
@@ -1310,14 +1360,14 @@
   color: var(--ink-2);
   background: var(--surface);
   border: 1px solid var(--line-strong);
-  border-radius: 7px;
+  border-radius: var(--io-r-cell);
 }
 
 .io-root .sheet-note {
   flex: none;
   margin: 0;
   padding: 12px 20px 16px;
-  font-size: 11.5px;
+  font-size: var(--io-font-micro);
   line-height: 1.5;
   color: var(--ink-2);
   border-top: 1px solid var(--line);
@@ -1352,7 +1402,7 @@
 .io-root .inspector-title {
   flex: 1;
   font-weight: 600;
-  font-size: 12.5px;
+  font-size: var(--font-ui-smaller, 12px);
   letter-spacing: 0.02em;
   color: var(--ink-2);
   text-transform: uppercase;
@@ -1373,7 +1423,7 @@
 
 .io-root .inspector-body h3 {
   margin: 16px 0 9px;
-  font-size: 11px;
+  font-size: var(--io-font-micro);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -1385,7 +1435,7 @@
 
 .io-root .inspector-note {
   margin: 9px 0 0;
-  font-size: 11px;
+  font-size: var(--io-font-micro);
   line-height: 1.45;
   color: var(--ink-3);
 }
@@ -1400,17 +1450,18 @@
   padding: 3px;
   background: var(--surface-2);
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: var(--io-r-panel);
+  corner-shape: var(--corner-shape, round);
 }
 .io-root .seg-tiles button {
   flex: 1;
   display: grid;
   place-items: center;
   height: 26px;
-  border-radius: 6px;
+  border-radius: var(--io-r-cell);
   color: var(--ink-2);
-  font-size: 12px;
-  transition: background 120ms ease, color 120ms ease;
+  font-size: var(--font-ui-smaller, 12px);
+  transition: background var(--io-fast) ease, color var(--io-fast) ease;
 }
 .io-root .seg-tiles button:hover {
   color: var(--ink);
@@ -1485,7 +1536,7 @@
 .io-root .app.is-compact .seg-btn {
   min-width: 0;
   padding: 6px 12px;
-  font-size: 13px;
+  font-size: var(--font-ui-small, 13px);
 }
 .io-root .app.is-compact .seg.seg-mini .seg-btn {
   padding: 6px 10px;
@@ -1518,7 +1569,7 @@
   .io-root .sheet.wide {
     width: 100%;
     max-width: 100%;
-    border-radius: 14px;
+    border-radius: var(--io-r-dialog);
   }
   .io-root .sheet-head {
     min-width: 0;
@@ -1580,6 +1631,12 @@ body.is-mobile .io-root .history {
 }
 body.is-mobile .io-root .zoom button,
 body.is-mobile .io-root .history button,
+/* A phone shows the note's name in Obsidian's own header, and the root node carries it again: a third copy would
+   cost 40px of map. Renaming stays where a phone does it, in the note's menu. */
+body.is-phone .io-root .doc-name {
+  display: none;
+}
+
 body.is-mobile .io-root .help {
   width: var(--mobile-control-size);
   height: var(--mobile-control-size);
@@ -1737,7 +1794,7 @@ body.is-mobile .io-root .app.is-editing .corner .help {
   color: var(--ink-2);
   font: 600 9px/1 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'PingFang TC', 'Noto Sans TC', sans-serif;
   cursor: pointer;
-  transition: background-color 120ms ease, border-color 120ms ease;
+  transition: background-color var(--io-fast) ease, border-color var(--io-fast) ease;
 }
 /* a finger-sized target around a 15px box */
 .io-root .node-check::after { content: ''; position: absolute; inset: -7px; }
@@ -1755,7 +1812,8 @@ body.is-mobile .io-root .app.is-editing .corner .help {
   flex-direction: column;
   gap: 3px;
   padding: 3px;
-  border-radius: 9px;
+  border-radius: var(--io-r-panel);
+  corner-shape: var(--corner-shape, round);
   background: var(--surface);
   border: 1px solid var(--line-strong);
   box-shadow: var(--shadow-2);
@@ -1778,7 +1836,7 @@ body.is-mobile .io-root .app.is-editing .corner .help {
   width: 28px;
   height: 26px;
   padding: 0;
-  border-radius: 6px;
+  border-radius: var(--io-r-control);
   color: var(--ink-2);
 }
 .io-root .node-toolbar button svg { display: block; }
@@ -1792,11 +1850,11 @@ body.is-mobile .io-root .app.is-editing .corner .help {
 .io-root .node-toolbar .nt-palette button.is-on { background: none; }
 .io-root .node-toolbar .nt-palette button.is-on .nt-dot { box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--accent); }
 /* the two dropdowns: what is current, with a small chevron; the open menu is a column */
-.io-root .node-toolbar .nt-drop { width: auto; display: flex; align-items: center; gap: 3px; padding: 0 5px 0 7px; font-size: 11px; font-weight: 600; font-family: inherit; }
+.io-root .node-toolbar .nt-drop { width: auto; display: flex; align-items: center; gap: 3px; padding: 0 5px 0 7px; font-size: var(--io-font-micro); font-weight: 600; font-family: inherit; }
 .io-root .node-toolbar .nt-chev { width: 9px; height: 9px; opacity: 0.7; }
 .io-root .node-toolbar .nt-menu { display: flex; flex-direction: column; gap: 1px; padding: 3px; min-width: 168px; }
-.io-root .node-toolbar .nt-menu button { width: auto; height: 26px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 8px; font-size: 12px; font-family: inherit; color: var(--ink); }
-.io-root .node-toolbar .nt-menu .nt-hint { font-size: 10.5px; color: var(--ink-3); }
+.io-root .node-toolbar .nt-menu button { width: auto; height: 26px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 8px; font-size: var(--font-ui-smaller, 12px); font-family: inherit; color: var(--ink); }
+.io-root .node-toolbar .nt-menu .nt-hint { font-size: var(--io-font-micro); color: var(--ink-3); }
 .io-root .node-toolbar .nt-menu button.is-on { background: var(--accent-soft); color: var(--accent); }
 .io-root .node-toolbar .nt-menu button.is-on .nt-hint { color: inherit; opacity: 0.8; }
 .io-root .node-toolbar .nt-type-choice { display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -1811,15 +1869,16 @@ body.is-mobile .io-root .app.is-editing .corner .help {
   align-items: center;
   gap: 8px;
   padding: 4px 5px 4px 8px;
-  border-radius: 7px;
+  border-radius: var(--io-r-panel);
+  corner-shape: var(--corner-shape, round);
   background: var(--surface);
   border: 1px solid var(--line-strong);
   box-shadow: var(--shadow-2);
-  font-size: 11.5px;
+  font-size: var(--io-font-micro);
   line-height: 16px;
   color: var(--ink);
   pointer-events: none;
-  animation: io-fade-in 120ms ease-out;
+  animation: io-fade-in var(--io-fast) ease-out;
 }
 .io-root .node-toolbar.is-below .nt-tip { bottom: auto; top: calc(100% + 6px); }
 .io-root .node-toolbar .nt-tip kbd { padding: 2px 5px; background: var(--surface-2); color: var(--ink-2); }
@@ -1836,12 +1895,12 @@ body.is-mobile .io-root .app.is-editing .corner .help {
 
 /* obsidian: theme picker inside Properties */
 .io-root .theme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.io-root .theme-card { display: flex; height: auto; min-height: 0; flex-direction: column; gap: 6px; padding: 6px; border-radius: 9px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink-2); font-size: 12px; text-align: start; }
+.io-root .theme-card { display: flex; height: auto; min-height: 0; flex-direction: column; gap: 6px; padding: 6px; border-radius: var(--io-r-panel); corner-shape: var(--corner-shape, round); border: 1px solid var(--line); background: var(--surface-2); color: var(--ink-2); font-size: var(--font-ui-smaller, 12px); text-align: start; }
 .io-root .theme-card:hover { border-color: var(--line-strong); color: var(--ink); }
 .io-root .theme-card.is-on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); color: var(--ink); }
 /* the theme in effect while the map follows the default: shown, not chosen */
 .io-root .theme-card.is-auto { border-style: dashed; border-color: var(--line-strong); color: var(--ink); }
-.io-root .theme-preview { display: flex; gap: 4px; align-items: center; justify-content: center; height: 34px; border-radius: 6px; border: 1px solid; }
+.io-root .theme-preview { display: flex; gap: 4px; align-items: center; justify-content: center; height: 34px; border-radius: var(--io-r-cell); border: 1px solid; }
 .io-root .theme-preview i { display: block; width: 10px; height: 10px; border-radius: 50%; }
 .io-root .theme-name { padding: 0 2px; font-weight: 600; }
 
@@ -1851,10 +1910,10 @@ body.is-mobile .io-root .app.is-editing .corner .help {
 .io-root .node.as-row.has-media .node-label { text-align: start; }
 .io-root .node-media { display: flex; flex-direction: column; align-items: center; }
 .io-root .node.as-row .node-media { align-items: flex-start; }
-.io-root .media { position: relative; margin-top: 6px; border-radius: 6px; overflow: hidden; background: var(--surface-2); }
+.io-root .media { position: relative; margin-top: 6px; border-radius: var(--io-r-cell); overflow: hidden; background: var(--surface-2); }
 .io-root .media img { display: block; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 .io-root .media audio { display: block; width: 100%; height: 100%; }
-.io-root .media-missing { display: block; padding: 8px 10px; font-size: 11px; color: var(--ink-3); }
+.io-root .media-missing { display: block; padding: 8px 10px; font-size: var(--io-font-micro); color: var(--ink-3); }
 .io-root .media-remove { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; border-radius: 50%; background: color-mix(in srgb, var(--ink) 60%, transparent); color: var(--surface); font-size: 14px; line-height: 20px; text-align: center; }
 .io-root .media-remove:hover { background: var(--accent); }
 
@@ -1877,7 +1936,8 @@ body.is-mobile .io-root .app.is-editing .corner .help {
   padding: 4px 6px 4px 10px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: var(--io-r-panel);
+  corner-shape: var(--corner-shape, round);
   box-shadow: var(--shadow-1);
 }
 .io-root .find-input {
@@ -1888,7 +1948,7 @@ body.is-mobile .io-root .app.is-editing .corner .help {
   background: transparent;
   color: var(--ink);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--font-ui-small, 13px);
   padding: 2px 0;
   outline: none;
   box-shadow: none;
@@ -1898,7 +1958,7 @@ body.is-mobile .io-root .app.is-editing .corner .help {
   min-width: 64px;
   flex: none;
   margin-right: 4px;
-  font-size: 11px;
+  font-size: var(--io-font-micro);
   color: var(--ink-3);
   text-align: end;
   white-space: nowrap;
@@ -1911,7 +1971,7 @@ body.is-mobile .io-root .app.is-editing .corner .help {
   height: 24px;
   padding: 0;
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--io-r-control);
   background: transparent;
   color: var(--ink-2);
   cursor: pointer;
@@ -2050,8 +2110,8 @@ body.is-mobile .io-root .app.is-editing .corner .help {
     width: 100%;
     height: 48px;
     padding: 0 10px;
-    border-radius: 8px;
-    font-size: 12px;
+    border-radius: var(--io-r-cell);
+    font-size: var(--font-ui-smaller, 12px);
   }
   .io-root .node-toolbar.is-docked > .nt-type-menu .nt-type-choice { gap: 8px; }
   .io-root .node-toolbar.is-docked > .nt-type-menu .nt-hint { display: none; }
@@ -2092,7 +2152,7 @@ body.is-mobile .io-root .app.is-editing .corner .help {
 .io-root .cp-row { display: flex; align-items: center; gap: 8px; }
 .io-root .cp-swatch { display: block; flex: none; width: 20px; height: 20px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18); }
 /* small buttons: a filled primary and a quiet destructive one */
-.io-root .btn { height: 26px; padding: 0 10px; border-radius: 7px; font-family: inherit; font-size: 12px; font-weight: 600; color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--line); cursor: pointer; transition: background 120ms ease, color 120ms ease; }
+.io-root .btn { height: 26px; padding: 0 10px; border-radius: var(--io-r-control); font-family: inherit; font-size: var(--font-ui-smaller, 12px); font-weight: 600; color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--line); cursor: pointer; transition: background var(--io-fast) ease, color var(--io-fast) ease; }
 .io-root .btn:hover { color: var(--ink); border-color: var(--line-strong); }
 .io-root .btn.is-primary { color: #fff; background: var(--accent); border-color: transparent; }
 .io-root .btn.is-primary:hover { color: #fff; filter: brightness(1.08); }
@@ -2104,28 +2164,28 @@ body.is-mobile .io-root .app.is-editing .corner .help {
 .io-root .cp input[type='range'] { flex: 1; min-width: 0; height: 10px; margin: 0; border-radius: 5px; appearance: none; -webkit-appearance: none; background: var(--surface-2); outline: none; }
 .io-root .cp input[type='range']::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--surface); border: 1.5px solid var(--ink-2); box-shadow: var(--shadow-1); cursor: pointer; }
 .io-root .cp input[type='range']:focus-visible::-webkit-slider-thumb { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-.io-root .cp-hex { width: 82px; flex: none; height: 24px; padding: 0 6px; font: 500 11.5px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; outline: none; }
+.io-root .cp-hex { width: 82px; flex: none; height: 24px; padding: 0 6px; font: 500 11.5px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--io-r-input); outline: none; }
 .io-root .cp-hex:focus { border-color: var(--accent); }
 
 /* obsidian: the Document panel's colour slots, its info note, and the custom theme editor */
-.io-root .inspector-info { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0 4px; padding: 8px 6px 8px 10px; border-radius: 8px; background: var(--accent-soft); color: var(--ink-2); font-size: 11.5px; line-height: 1.4; }
+.io-root .inspector-info { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0 4px; padding: 8px 6px 8px 10px; border-radius: var(--io-r-panel); corner-shape: var(--corner-shape, round); background: var(--accent-soft); color: var(--ink-2); font-size: var(--io-font-micro); line-height: 1.4; }
 .io-root .inspector-info > svg { flex: none; margin-top: 1px; color: var(--accent); }
 .io-root .inspector-info > span { flex: 1; }
 .io-root .inspector-info > .icon-btn { flex: none; width: 22px; height: 22px; margin: -3px -2px -3px 0; color: var(--ink-3); }
 .io-root .palette-slots { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 8px; }
 .io-root .palette-slot { position: relative; width: 26px; height: 26px; padding: 0; border-radius: 50%; border: 1px solid rgba(0, 0, 0, 0.12); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); cursor: pointer; }
 .io-root .palette-slot.is-labelled { width: auto; min-width: 26px; padding: 0 10px; border-radius: 999px; }
-.io-root .palette-slot.is-labelled > span { font-size: 11px; font-weight: 600; color: #fff; text-shadow: 0 0 3px rgba(0, 0, 0, 0.55); }
-.io-root .palette-slot.is-empty { background: transparent; border: 1.5px dashed var(--line-strong); color: var(--ink-3); font-size: 15px; line-height: 1; box-shadow: none; }
+.io-root .palette-slot.is-labelled > span { font-size: var(--io-font-micro); font-weight: 600; color: #fff; text-shadow: 0 0 3px rgba(0, 0, 0, 0.55); }
+.io-root .palette-slot.is-empty { background: transparent; border: 1.5px dashed var(--line-strong); color: var(--ink-3); font-size: var(--font-ui-medium, 15px); line-height: 1; box-shadow: none; }
 .io-root .palette-slot.is-empty:hover { border-color: var(--accent); color: var(--accent); }
 .io-root .palette-slot.is-open { box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--accent); }
-.io-root .inspector-input { width: 100%; height: 28px; padding: 0 8px; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: 7px; outline: none; }
+.io-root .inspector-input { width: 100%; height: 28px; padding: 0 8px; font-family: inherit; font-size: var(--font-ui-small, 13px); font-weight: 500; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--io-r-input); outline: none; }
 .io-root .inspector-input:focus { border-color: var(--accent); }
 .io-root .seg-tiles.is-disabled { opacity: 0.5; }
 .io-root .seg-tiles button:disabled { cursor: default; }
 /* the custom theme's own Edit button sits in its card's corner, over the preview — a sibling of the card, not inside it */
 .io-root .theme-card-wrap { position: relative; display: grid; }
-.io-root .theme-edit { position: absolute; top: 9px; right: 9px; width: 22px; height: 22px; display: grid; place-items: center; padding: 0; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-2); box-shadow: var(--shadow-1); }
+.io-root .theme-edit { position: absolute; top: 9px; right: 9px; width: 22px; height: 22px; display: grid; place-items: center; padding: 0; border-radius: var(--io-r-control); border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-2); box-shadow: var(--shadow-1); }
 .io-root .theme-edit:hover { color: var(--accent); border-color: var(--accent); }
 .io-root .theme-edit svg { display: block; }
 /* four options in a 224px panel: two rows */
@@ -2133,21 +2193,21 @@ body.is-mobile .io-root .app.is-editing .corner .help {
 
 /* obsidian: the Document panel's full-width segmented control (the toolbar's, stretched) */
 .io-root .seg.seg-full { display: flex; width: 100%; }
-.io-root .seg.seg-full .seg-btn { flex: 1; min-width: 0; padding: 5px 6px; font-size: 12.5px; }
+.io-root .seg.seg-full .seg-btn { flex: 1; min-width: 0; padding: 5px 6px; font-size: var(--font-ui-smaller, 12px); }
 .io-root .seg.seg-full.is-disabled { opacity: 0.5; }
 .io-root .seg.seg-full .seg-btn:disabled { cursor: default; }
 /* a labelled row with a switch at its end */
-.io-root .inspector-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 30px; font-size: 13px; color: var(--ink); }
+.io-root .inspector-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 30px; font-size: var(--font-ui-small, 13px); color: var(--ink); }
 .io-root .inspector-row.is-disabled { color: var(--ink-3); }
-.io-root .sw { position: relative; flex: none; width: 34px; height: 20px; padding: 0; border-radius: 999px; background: color-mix(in srgb, var(--ink) 18%, transparent); transition: background 160ms ease; cursor: pointer; }
+.io-root .sw { position: relative; flex: none; width: 34px; height: 20px; padding: 0; border-radius: 999px; background: color-mix(in srgb, var(--ink) 18%, transparent); transition: background var(--io-fast) ease; cursor: pointer; }
 .io-root .sw.is-on { background: var(--accent); }
 .io-root .sw:disabled { cursor: default; opacity: 0.5; }
-.io-root .sw-knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); transition: transform 160ms var(--morph-ease); }
+.io-root .sw-knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); transition: transform var(--io-fast) var(--morph-ease); }
 .io-root .sw.is-on .sw-knob { transform: translateX(14px); }
 .io-root .sw:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* the colour popover: fixed to the window so nothing clips it */
 .io-root .inspector { position: relative; }
-.io-root .cpop { position: absolute; left: 12px; right: 12px; z-index: 60; padding: 10px 10px 6px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line-strong); box-shadow: var(--shadow-3); animation: io-fade-in 120ms ease; }
+.io-root .cpop { position: absolute; left: 12px; right: 12px; z-index: 60; padding: 10px 10px 6px; border-radius: var(--io-r-panel); corner-shape: var(--corner-shape, round); background: var(--surface); border: 1px solid var(--line-strong); box-shadow: var(--shadow-3); animation: io-fade-in var(--io-fast) ease; }
 .io-root .cp-key { width: 14px; flex: none; text-align: center; font: 600 11px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ink-3); }
 .io-root .cpop .cp-hex { flex: 1; width: auto; min-width: 60px; }
 /* the map's own colours row sits under the theme cards */
@@ -2156,8 +2216,8 @@ body.is-mobile .io-root .app.is-editing .corner .help {
 /* obsidian: with Snap to grid on, a drop or a nudge settles in a snap — the Shift keeps its glide */
 .io-root .stage.is-snap .nodes:not(.morphing) .node {
   transition: transform 150ms cubic-bezier(0.2, 0.9, 0.25, 1), width var(--morph), height var(--morph), padding-left var(--morph),
-    border-radius var(--morph), background-color 200ms ease, border-color 200ms ease, box-shadow 180ms ease,
-    opacity 220ms ease, filter 220ms ease;
+    border-radius var(--morph), background-color var(--io-fast) ease, border-color var(--io-fast) ease, box-shadow 180ms ease,
+    opacity var(--io-fast) ease, filter var(--io-fast) ease;
 }
 
 /* Motion reduction must outrank the component transitions above without priority flags. Repeating the root class is

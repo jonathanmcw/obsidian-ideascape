@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { hexToHsl, hslToHex, isHex, type HSL } from '../colour'
+import { IconBack, IconCheck, IconReset, IconTrash } from './Icons'
 
 interface Props {
   /** The colour being edited, hex. */
@@ -17,27 +18,7 @@ interface Props {
   onDone: () => void
 }
 
-const IconTrash = () => (
-  <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M3 4.5h10M6.5 4.5v-1a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1M4.5 4.5l.6 8a1 1 0 0 0 1 .9h3.8a1 1 0 0 0 1-.9l.6-8M6.8 7v4M9.2 7v4" />
-  </svg>
-)
-const IconReset = () => (
-  <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M3.5 8a4.5 4.5 0 1 0 1.3-3.2M3.5 2.8v2.4h2.4" />
-  </svg>
-)
-const IconTick = () => (
-  <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M3 8.5l3.2 3.2L13 5" />
-  </svg>
-)
 
-const IconBack = () => (
-  <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
-    <path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-)
 
 /** obsidian: one small view for editing a colour, the same on the bar and in the panel. A header
  *  with the way back, the colour and its hex, and the two actions; under it three sliders — hue,
@@ -74,7 +55,7 @@ export function ColourPicker({ value, tone, onChange, onBack, onRemove, removeNa
       <div className="cp-head">
         {onBack && (
           <button type="button" className="icon-btn sm" onClick={onBack}>
-            <IconBack />
+            <IconBack size={14} />
             <span className="sr-only">Back</span>
           </button>
         )}
@@ -98,12 +79,12 @@ export function ColourPicker({ value, tone, onChange, onBack, onRemove, removeNa
         <div className="cp-ctas">
           {onRemove && (
             <button type="button" className={`btn is-icon${destructive ? ' is-danger' : ''}`} onClick={onRemove}>
-              {destructive ? <IconTrash /> : <IconReset />}
+              {destructive ? <IconTrash size={15} /> : <IconReset size={15} />}
               <span className="sr-only">{removeName}</span>
             </button>
           )}
           <button type="button" className="btn is-icon is-primary" onClick={onDone}>
-            <IconTick />
+            <IconCheck size={15} />
             <span className="sr-only">Done</span>
           </button>
         </div>

@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { Align, NodeType, NodeTypeState } from '../model/types'
 import { FORMAT_LABEL, type Format } from './format'
 import { chord } from './keys'
-import { IconAlign, IconCheck, IconCheckbox, IconChevron, IconIndent, IconMore, IconNewLine, IconNumbered, IconOutdent } from './Icons'
+import { IconAlign, IconCheck, IconCheckbox, IconChevron, IconIndent, IconMore, IconNewLine, IconNumbered, IconOutdent, IconPlus } from './Icons'
 import { ColourPicker } from './ColourPicker'
 import { hueOf as hueOfHex, sortByHue, toneOf, withHue } from '../colour'
 import { CUSTOM_SLOTS } from '../theme'
@@ -96,11 +96,6 @@ interface Tip {
 
 type Menu = null | 'type' | 'colour' | 'more'
 
-const IconPlus = () => (
-  <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
-    <path d="M6 2v8M2 6h8" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-  </svg>
-)
 
 /** True on a touch screen: bigger targets, fewer buttons, and the actions that keys usually cover. */
 function useCoarsePointer(): boolean {
@@ -453,7 +448,7 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
                 </button>
               ) : (
                 <button key={slot} type="button" tabIndex={-1} role="menuitem" className={`nt-empty${picking === slot ? ' is-picking' : ''}`} onClick={() => openPicker(slot)}>
-                  <IconPlus />
+                  <IconPlus size={12} />
                   <Name>Add a colour of your own</Name>
                 </button>
               )

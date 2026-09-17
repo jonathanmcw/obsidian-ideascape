@@ -38,7 +38,7 @@ import { arrowMove, type ArrowDir } from './layout/nav'
 import { arrangementKind, arrangementOf, nextLayout, shownLayout, tidied, withLayout } from './layout/arrange'
 import { activeLabel, applyFormat, insertLineBreak, type Format } from './ui/format'
 import { renderInto } from './ui/wysiwyg'
-import { IconChevron, IconClose, IconRedo, IconUndo } from './ui/Icons'
+import { IconChevron, IconClose, IconMinus, IconPlus, IconRedo, IconUndo } from './ui/Icons'
 import { chord } from './ui/keys'
 import { embedKind, embedsOf, plainText, stripEmbeds, withEmbeds, type Embed } from './model/inline'
 import { MAX_ROW_TEXT_W, ROW_LEAD, setOutlineWidths } from './layout/measure'
@@ -1676,7 +1676,9 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
         />
 
         <div className={`canvas-wrap${focusId ? ' is-focused' : ''}`}>
-          {!focusId && (
+          {/* The find bar takes the same corner, and its field matters more than a name Obsidian's own header
+              already shows. */}
+          {!focusId && search === null && (
             <DocTitle
               name={fileName ?? doc.name}
               onRename={async (name) => {
@@ -1780,10 +1782,10 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
                 {/* Through zoomBy, the same path the keys take: the middle of the stage stays put instead of the
                     map sliding away under the pointer. */}
                 <button onClick={() => zoomBy(1.2)} aria-label={`Zoom in — ${chord('⌥⌘=')}`} data-tooltip-position="left">
-                  +
+                  <IconPlus size={15} />
                 </button>
                 <button onClick={() => zoomBy(1 / 1.2)} aria-label={`Zoom out — ${chord('⌥⌘-')}`} data-tooltip-position="left">
-                  −
+                  <IconMinus size={15} />
                 </button>
               </div>
             )}
