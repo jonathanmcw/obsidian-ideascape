@@ -3,7 +3,7 @@
   "name": "Ideascape",
   "version": "0.9.1",
   "minAppVersion": "1.7.2",
-  "description": "Build a mind map from the keyboard. Tab adds a child, Enter a sibling, and typing fills it in. The map is a plain Markdown list in an ordinary note, and the same note opens as an outline.",
+  "description": "Build mind maps with intuitive keyboard actions, shortcuts, and an outline view.",
   "author": "Jonathan Wong",
   "authorUrl": "https://github.com/jonathanmcw",
   "fundingUrl": "https://buymeacoffee.com/jonathanmcw",

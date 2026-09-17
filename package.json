@@ -1,7 +1,7 @@
 {
   "name": "obsidian-ideascape",
   "version": "0.9.1",
-  "description": "An Obsidian plugin that turns a note into a keyboard-first mind map with an outline view, stored as a plain Markdown list.",
+  "description": "Build mind maps with intuitive keyboard actions, shortcuts, and an outline view.",
   "main": "main.js",
   "private": true,
   "license": "MIT",

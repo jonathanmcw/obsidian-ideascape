@@ -2,9 +2,7 @@
 
 ![A Lisbon weekend built from the keyboard: Tab and Enter add nodes, ⌘B and ⌘I style them, ⌘↵ adds checkboxes, ⇧⌘7 numbers a list, ⌘. folds a branch, ⌥⌘F focuses on it, and ⌘2 and ⌘1 switch between outline and map. Each key shows in the corner as it is pressed.](docs/showcase.gif)
 
-Create your own mind map with ease, from Obsidian without having to subscribe to another app. 
-
-Visualise your ideas simply with a keyboard : Tab adds a child, Enter adds a sibling, and typing fills it in. The map is saved as a plain Markdown list inside an ordinary note, so it reads, searches and syncs like everything else in your vault, and the same note opens as an outline.
+Create and edit mind maps in Obsidian without leaving the keyboard. Tab adds a child, Enter adds a sibling, arrows navigate, and typing edits the selected node. Switch the same map to a structured outline when you need a linear view, then return to the map with one shortcut.
 
 ## What it does
 
@@ -15,11 +13,11 @@ Visualise your ideas simply with a keyboard : Tab adds a child, Enter adds a sib
 - **Formatting while you type.** Bold, italic, underline, strikethrough, highlight, code, links, headings, alignment, checkboxes and numbered items, from the keyboard or the bar above the node.
 - **Themes that fit your vault.** Follow your Obsidian theme in light or dark mode, pick Paper, Slate, Graphite or Midnight, or make your own. Each map can keep its own theme and node style.
 - **Focus on one branch.** Bring it forward and dim the rest while you work on it.
-- **Bring things in, send things out.** Paste a Markdown list, drop in a `.canvas` or OPML file, or drag notes from the file explorer. Export as PNG, Markdown, OPML or JSON Canvas.
+- **Import and export (beta).** Early support for Markdown lists, `.canvas`, OPML, notes from the file explorer, and PNG or structured-data exports is available for testing. Review the result carefully; these workflows are still being refined.
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/screenshots/07-welcome-dark.png" alt="The welcome window on its first slide, a Kyoto weekend as a mind map"><br><b>First run.</b> Three slides: what a map is, the two views, how a note becomes one. Start opens the tour.</td>
+    <td width="50%"><img src="docs/screenshots/07-welcome-dark.png" alt="The welcome window on its first slide, a Kyoto weekend as a mind map"><br><b>First run.</b> Three slides: what a map is, how map and outline views relate, and the keyboard basics. Start opens the tour.</td>
     <td width="50%"><img src="docs/screenshots/08-tour-dark.png" alt="The tour map, each node showing the feature it names"><br><b>The tour.</b> A map where every node is the feature it describes: the bold node is bold, the folded one is folded.</td>
   </tr>
   <tr>
@@ -45,9 +43,9 @@ Found a bug, or have an idea? [Open an issue](https://github.com/jonathanmcw/obs
 
 ## Getting started
 
-1. Turn Ideascape on. A short welcome shows what a map is, the two views, and how a note becomes a map; Start opens the tour.
+1. Turn Ideascape on. A short welcome shows what a map is, how map and outline views relate, and the keyboard basics; Start opens the tour.
 2. **New map:** the ribbon button, a folder's **New map here**, or the command **Create a new map**.
-3. **A note you already have:** right-click it and choose **Open as a map**. Its heading becomes the centre and its lists become branches.
+3. **Existing notes (beta):** **Open as a map** is available for testing with list-based notes. Use a copy while this path is refined.
 4. **Take the tour:** a map where every node shows a feature by using it. It's in Settings, in the shortcut sheet, and the command **Take the tour**. Press `?` in any map for every shortcut.
 
 ### Keys to know
@@ -98,7 +96,7 @@ ideascape: root
 - The map draws the list, and only the list. Headings below the first one, paragraphs, tables, embedded images, code and callouts are kept in the note exactly as they were, but they are not drawn as nodes, so a note that is mostly prose or tables shows as a small map beside a long note. Nothing is lost: editing the map rewrites the list item you changed and the `%%` comment, and leaves the rest of the note byte for byte as it was.
 - Text between list items belongs to the item above it: it moves with that item, and goes to the end of the list if the item is deleted.
 - Positions, folds and the map's own look are kept in the `%%` comment at the end, which Obsidian doesn't show in reading view. Delete it and the map lays itself out again, with its folds and its own look back to the defaults.
-- Turning a note you already have into a map only adds the property, block ids and that comment. If more would change, the plugin asks first and offers to work on a copy.
+- Opening an existing note as a map is still a beta workflow. Test it with a copy and review the generated property, block ids and layout comment before relying on the result.
 - Without Ideascape, a map is still an ordinary note: a heading and a nested list, with a short block id at the end of each item and the `%%` comment hidden in reading view.
 
 ## Settings
