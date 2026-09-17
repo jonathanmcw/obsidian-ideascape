@@ -14,6 +14,7 @@
     "test": "node --test test/*.test.ts",
     "lint": "eslint src manifest.json package.json --max-warnings 11",
     "verify:release": "node scripts/verify-release.mjs",
+    "showcase": "bash scripts/shots/showcase.sh",
     "install:vault": "node scripts/install.mjs",
     "welcome:again": "node scripts/welcome-again.mjs",
     "fresh:start": "node scripts/fresh-start.mjs"
