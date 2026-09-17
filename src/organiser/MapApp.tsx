@@ -1,7 +1,7 @@
 import type * as React from 'react'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-import type { Align, IODoc, LayoutKind, MapLayout, NodeId, Shape } from './model/types'
+import type { Align, IODoc, LayoutKind, MapLayout, NodeId, NodeType, Shape } from './model/types'
 import { LAYOUT_LABEL, SHAPES, SHAPE_LABEL } from './model/types'
 import {
   addChild,
@@ -26,7 +26,7 @@ import {
   isDescendant,
   bakePositions,
   setWidth,
-  setSize,
+  setNodeType,
   graft,
 } from './model/doc'
 import { setOrdered, setPalette, setTask, toggleTaskDone, walk } from './model/doc'
@@ -886,7 +886,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       commit(moveBy(d, id, sx, sy))
     },
     setAlign: (id, align) => commit(setAlign(withEdit(doc), id, align)),
-    setSize: (id, size) => commit(setSize(withEdit(doc), id, size)),
+    setNodeType: (id, type) => commit(setNodeType(withEdit(doc), id, type)),
     setBranch: (id, branch) => commit(setBranchColor(withEdit(doc), id, branch)),
     createChild,
     linkNodes: (from, to) => {
@@ -979,8 +979,6 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
     },
     hoverLink: (target, href, event) => onHoverLink?.(target, href, event),
     toggleTask: (id) => commit(toggleTaskDone(withEdit(doc), id)),
-    setOrdered: (id, ordered) => commit(setOrdered(withEdit(doc), id, ordered)),
-    setTask: (id, on) => commit(setTask(withEdit(doc), id, on ? ' ' : undefined)),
     openTag: (tag) => onOpenTag?.(tag),
     setPalette: (slot, hex) => commit(setPalette(withEdit(doc), slot, hex), `palette-${slot}`),
     addOwnColour: (id, slot, hex) => commit(setBranchColor(setPalette(withEdit(doc), slot, hex), id, 8 + slot)),
@@ -1465,7 +1463,8 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       const ids = multi.size > 1 ? [...multi] : selection ? [selection] : []
       if (!ids.length) return
       let d = withEdit(doc)
-      for (const id of ids) d = setSize(d, id, level)
+      const type: NodeType = level ? `h${level}` : 'text'
+      for (const id of ids) d = setNodeType(d, id, type)
       commit(d)
     },
     [commit, doc, multi, selection, withEdit],
@@ -1488,7 +1487,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
     // Plain nodes get a box first; all-open ticks; all-done (or a mix) reopens — the three states in order.
     const plain = ids.some((id) => d.nodes[id]?.task == null)
     const allDone = !plain && ids.every((id) => d.nodes[id]?.task === 'x')
-    for (const id of ids) d = setTask(d, id, plain ? ' ' : allDone ? ' ' : 'x')
+    for (const id of ids) d = plain ? setNodeType(d, id, 'checklist') : setTask(d, id, allDone ? ' ' : 'x')
     commit(d)
   }, [commit, doc, selectedIds, withEdit])
 
@@ -1497,7 +1496,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
     if (!ids.length) return
     let d = withEdit(doc)
     const on = !ids.every((id) => d.nodes[id]?.ordered)
-    for (const id of ids) d = setOrdered(d, id, on)
+    for (const id of ids) d = on ? setNodeType(d, id, 'numbered') : setOrdered(d, id, false)
     commit(d)
   }, [commit, doc, selectedIds, withEdit])
 

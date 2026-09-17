@@ -68,8 +68,9 @@ test("mobile UI: corner controls match Obsidian Canvas's 40px controls and 24px 
   const css = readFileSync(new URL("../src/organiser/styles.css", import.meta.url), "utf8");
   assert.match(css, /--mobile-control-size:\s*40px/);
   assert.match(css, /--mobile-control-icon:\s*24px/);
-  assert.match(css, /grid-template-columns:\s*repeat\(6/, "More fits in two compact rows instead of three");
-  assert.match(css, /\.nt-phone-arrange[^}]*grid-template-columns:\s*repeat\(4/, "Arrange keeps four structural actions together");
+  assert.match(css, /\.nt-main > button\s*\{[^}]*flex:\s*0 0 44px;[^}]*width:\s*44px;[^}]*height:\s*44px;/s);
+  assert.match(css, /\.nt-phone-format[^}]*grid-template-columns:\s*repeat\(6, 44px\)/);
+  assert.match(css, /\.nt-phone-arrange[^}]*grid-template-columns:\s*repeat\(4, 44px\)/, "Arrange stays grouped inside More");
 });
 
 test("mobile UI: editing separates history from the keyboard dock and hides unrelated controls", () => {
@@ -94,4 +95,17 @@ test("mobile UI: More inserts a line break without changing Return's sibling act
   const toolbar = readFileSync(new URL("../src/organiser/ui/NodeBar.tsx", import.meta.url), "utf8");
   assert.match(toolbar, /<IconNewLine\s*\/>/);
   assert.match(toolbar, /<Name>New line<\/Name>/);
+  assert.doesNotMatch(toolbar, /nt-arrange-drop/, "Move is no longer a second menu in the primary dock");
+});
+
+test("mobile UI: node type is one responsive chooser and checkboxes keep a square visual", () => {
+  const toolbar = readFileSync(new URL("../src/organiser/ui/NodeBar.tsx", import.meta.url), "utf8");
+  assert.match(toolbar, /\['text', 'Aa', 'Text'/);
+  assert.match(toolbar, /\['numbered', '', 'Numbered'/);
+  assert.match(toolbar, /\['checklist', '', 'Checklist'/);
+
+  const css = readFileSync(new URL("../src/organiser/styles.css", import.meta.url), "utf8");
+  assert.match(css, /grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(css, /\.node-check\s*\{[^}]*width:\s*15px;[^}]*height:\s*15px;[^}]*min-width:\s*15px;[^}]*max-width:\s*15px;[^}]*aspect-ratio:\s*1;/s);
+  assert.match(css, /\.node-check::after\s*\{[^}]*inset:\s*-14\.5px;/s, "the square keeps a 44px touch target");
 });

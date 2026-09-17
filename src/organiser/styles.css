@@ -1990,6 +1990,11 @@ body.is-mobile .io-root .app.is-editing .corner .help {
   place-items: center;
   width: 15px;
   height: 15px;
+  min-width: 15px;
+  max-width: 15px;
+  flex: 0 0 15px;
+  aspect-ratio: 1;
+  box-sizing: border-box;
   margin-right: 7px;
   padding: 0;
   border: 1.5px solid var(--ink-3);
@@ -2061,6 +2066,9 @@ body.is-mobile .io-root .app.is-editing .corner .help {
 .io-root .node-toolbar .nt-menu .nt-hint { font-size: 10.5px; color: var(--ink-3); }
 .io-root .node-toolbar .nt-menu button.is-on { background: var(--accent-soft); color: var(--accent); }
 .io-root .node-toolbar .nt-menu button.is-on .nt-hint { color: inherit; opacity: 0.8; }
+.io-root .node-toolbar .nt-type-choice { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.io-root .node-toolbar .nt-type-choice > svg { width: 16px; height: 16px; flex: none; }
+.io-root .node-toolbar .nt-type-choice > span:first-child { min-width: 20px; font-weight: 600; text-align: center; }
 /* the tip after a still hover: the control's name and its keys, on the far side of the bar from the node, like the menus */
 .io-root .node-toolbar .nt-tip {
   position: absolute;
@@ -2221,10 +2229,11 @@ body.is-mobile .io-root .app.is-editing .corner .help {
   .io-root .node-toolbar .nt-done { color: var(--accent); }
   .io-root .history button { width: var(--mobile-control-size); height: var(--mobile-control-size); }
   .io-root .zoom button { width: var(--mobile-control-size); height: var(--mobile-control-size); }
+  .io-root .node-check::after { inset: -14.5px; }
 }
 
   /* A phone editor uses a stable dock above the software keyboard. The primary row stays small; More opens the
-     remaining formatting, alignment and list actions above it. A touch iPad keeps the floating contextual bar. */
+     remaining formatting, alignment and arrange actions above it. A touch iPad keeps the floating contextual bar. */
   .io-root .node-toolbar.is-docked {
     left: max(8px, env(safe-area-inset-left));
     right: max(8px, env(safe-area-inset-right));
@@ -2239,67 +2248,88 @@ body.is-mobile .io-root .app.is-editing .corner .help {
   .io-root .node-toolbar.is-docked .nt-main {
     flex-wrap: nowrap;
     justify-content: center;
+    gap: 4px;
     max-width: none;
   }
   .io-root .node-toolbar.is-docked .nt-main > button {
-    flex: 0 1 44px;
-    min-width: 40px;
+    flex: 0 0 44px;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
   }
   .io-root .node-toolbar.is-docked .nt-main > .nt-drop {
-    flex-basis: 54px;
+    flex-basis: 44px;
+    padding: 0 4px;
   }
+  .io-root .node-toolbar.is-docked .nt-main > .nt-sep { display: none; }
   .io-root .node-toolbar.is-docked .nt-phone-more {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: calc(100% + 6px);
-    display: grid;
-    grid-template-columns: repeat(6, minmax(40px, 1fr));
-    gap: 4px;
-    padding: 6px;
-    border: 1px solid var(--line-strong);
-    border-radius: 12px;
-    background: var(--surface);
-    box-shadow: var(--shadow-2);
-  }
-  .io-root .node-toolbar.is-docked .nt-phone-more button {
-    width: 100%;
-    height: 40px;
-  }
-  .io-root .node-toolbar.is-docked .nt-phone-arrange {
     position: absolute;
     left: 50%;
     bottom: calc(100% + 6px);
     transform: translateX(-50%);
-    display: grid;
-    grid-template-columns: repeat(4, minmax(52px, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 4px;
-    width: min(calc(100% - 8px), 320px);
+    width: min(calc(100% - 8px), 296px);
     padding: 6px;
     border: 1px solid var(--line-strong);
     border-radius: 12px;
     background: var(--surface);
     box-shadow: var(--shadow-2);
   }
-  .io-root .node-toolbar.is-docked .nt-phone-arrange button {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  .io-root .node-toolbar.is-docked .nt-phone-group {
+    display: grid;
     justify-content: center;
-    gap: 2px;
-    width: 100%;
-    height: 52px;
-    border-radius: 8px;
-    font-size: 10.5px;
-    color: var(--ink-2);
+    gap: 4px;
   }
-  .io-root .node-toolbar.is-docked .nt-phone-arrange button:disabled {
+  .io-root .node-toolbar.is-docked .nt-phone-group + .nt-phone-group {
+    margin-top: 2px;
+    padding-top: 6px;
+    border-top: 1px solid var(--line);
+  }
+  .io-root .node-toolbar.is-docked .nt-phone-format { grid-template-columns: repeat(6, 44px); }
+  .io-root .node-toolbar.is-docked .nt-phone-align { grid-template-columns: repeat(3, 44px); }
+  .io-root .node-toolbar.is-docked .nt-phone-arrange { grid-template-columns: repeat(4, 44px); }
+  .io-root .node-toolbar.is-docked .nt-phone-group button {
+    width: 44px;
+    height: 44px;
+  }
+  .io-root .node-toolbar.is-docked .nt-phone-group button:disabled {
     opacity: 0.32;
     cursor: default;
   }
   .io-root .node-toolbar.is-docked .nt-phone-arrange .nt-move-up svg { transform: rotate(-90deg); }
   .io-root .node-toolbar.is-docked .nt-phone-arrange .nt-move-down svg { transform: rotate(90deg); }
-  .io-root .node-toolbar.is-docked > .nt-menu,
+  .io-root .node-toolbar.is-docked > .nt-type-menu {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 6px);
+    transform: translateX(-50%);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+    width: min(calc(100% - 8px), 320px);
+    min-width: 0;
+    padding: 6px;
+    border: 1px solid var(--line-strong);
+    border-radius: 12px;
+    background: var(--surface);
+    box-shadow: var(--shadow-2);
+  }
+  .io-root .node-toolbar.is-docked > .nt-type-menu button {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    width: 100%;
+    height: 48px;
+    padding: 0 10px;
+    border-radius: 8px;
+    font-size: 12px;
+  }
+  .io-root .node-toolbar.is-docked > .nt-type-menu .nt-type-choice { gap: 8px; }
+  .io-root .node-toolbar.is-docked > .nt-type-menu .nt-hint { display: none; }
+  .io-root .node-toolbar.is-docked > .nt-menu:not(.nt-type-menu),
   .io-root .node-toolbar.is-docked > .nt-col,
   .io-root .node-toolbar.is-docked > .nt-editor {
     align-self: center;

@@ -113,7 +113,7 @@ export default class MapPlugin extends Plugin {
     for (const [al, label] of [["left", "left"], ["center", "centre"], ["right", "right"]] as const)
       this.addCommand({ id: `map-align-${al}`, name: `Align node text ${label}`, checkCallback: c => this.withMap(c, a => a.align(al)) });
     for (const [z, label] of [[undefined, "body"], [1, "heading 1"], [2, "heading 2"], [3, "heading 3"]] as const)
-      this.addCommand({ id: `map-size-${z ?? 0}`, name: `Set node text size: ${label}`, checkCallback: c => this.withMap(c, a => a.size(z)) });
+      this.addCommand({ id: `map-size-${z ?? 0}`, name: `Set node type: ${label}`, checkCallback: c => this.withMap(c, a => a.size(z)) });
     for (const [dir, dx, dy] of [["left", -8, 0], ["right", 8, 0], ["up", 0, -8], ["down", 0, 8]] as const)
       this.addCommand({ id: `map-nudge-${dir}`, name: `Nudge selected branch ${dir} (free layout)`, checkCallback: c => this.withMap(c, a => a.nudge(dx, dy)) });
     this.registerEvent(this.app.workspace.on("file-menu", (menu, file) => {

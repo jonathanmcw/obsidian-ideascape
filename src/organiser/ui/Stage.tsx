@@ -1,6 +1,6 @@
 import type * as React from 'react'
 import { memo, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import type { Align, IODoc, IONode, LayoutKind, NodeId, Shape } from '../model/types'
+import type { Align, IODoc, IONode, LayoutKind, NodeId, NodeType, Shape } from '../model/types'
 import { applyFormat, insertLineBreak } from './format'
 import { NodeBar } from './NodeBar'
 import { RichLabel } from './RichLabel'
@@ -11,7 +11,7 @@ import { dropTargetFor, hitTest, type DropTarget } from '../layout/drop'
 import { MAX_PILL_W, MAX_ROOT_TEXT_W, MAX_TEXT_W, MIN_PILL_W, ROW_LEAD, ROW_PAD, metricsFor, nodeMetrics, outlineWidths, setMediaSize } from '../layout/measure'
 import { stripEmbeds } from '../model/inline'
 import { branchColor, themeById } from '../theme'
-import { isDescendant, ordinalOf, subtreeIds } from '../model/doc'
+import { isDescendant, nodeTypeOf, ordinalOf, subtreeIds } from '../model/doc'
 import { mediaFiles } from '../model/ingest'
 import { outlineSwipeAction } from './mobile'
 
@@ -31,7 +31,7 @@ export interface StageApi {
   moveNode(id: NodeId, x: number, y: number): void
   moveBranch(id: NodeId, dx: number, dy: number): void
   setAlign(id: NodeId, align: Align): void
-  setSize(id: NodeId, size: 1 | 2 | 3 | undefined): void
+  setNodeType(id: NodeId, type: NodeType): void
   setBranch(id: NodeId, branch: number): void
   /** Outline rows a level in or out — the bar's buttons for Tab and ⇧Tab on touch. */
   indent(id: NodeId): void
@@ -65,9 +65,6 @@ export interface StageApi {
   // obsidian: list kinds — `1.` items and `- [ ]` tasks, as the file has them
   /** Tick or untick a task's box. */
   toggleTask(id: NodeId): void
-  setOrdered(id: NodeId, ordered: boolean): void
-  /** On: an open box; off: the box goes, the text stays. */
-  setTask(id: NodeId, on: boolean): void
   /** A #tag chip was clicked: the host searches the vault. */
   openTag: (tag: string) => void
   /** One of the map's own colour slots (branch index 8 + slot). */
@@ -810,18 +807,16 @@ export function Stage({
             top={top}
             bottom={bottom}
             stageWidth={stageW}
-            node={{ isRoot: barId === doc.rootId, align: n.align ?? 'center', size: n.size, lines: metricsFor(doc, barId, kind, box.depth).lines.length, branch: n.branch ?? null, ordered: !!n.ordered, task: n.task != null }}
+            node={{ isRoot: barId === doc.rootId, align: n.align ?? 'center', type: nodeTypeOf(n), lines: metricsFor(doc, barId, kind, box.depth).lines.length, branch: n.branch ?? null }}
             branches={themeById(themeId).branches}
             palette={palette}
             onFormat={(f) => void applyFormat(f, stageRef.current?.ownerDocument)}
             onAlign={(a) => api.setAlign(barId, a)}
-            onSize={(z) => api.setSize(barId, z)}
+            onType={(type) => api.setNodeType(barId, type)}
             onBranch={(i) => api.setBranch(barId, i)}
             onPalette={(slot, hex) => api.setPalette(slot, hex)}
             onNewColour={(slot, hex) => api.addOwnColour(barId, slot, hex)}
             onRemoveColour={(slot) => api.removeOwnColour(slot)}
-            onOrdered={() => api.setOrdered(barId, !n.ordered)}
-            onTask={() => api.setTask(barId, n.task == null)}
             outline={kind === 'outline'}
             canIndent={barId !== doc.rootId && siblingIndex > 0}
             canOutdent={barId !== doc.rootId && !!parent?.parent}

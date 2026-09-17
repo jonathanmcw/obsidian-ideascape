@@ -1,5 +1,5 @@
 import type { DocLook } from './types'
-import type { Align, IODoc, IONode, NodeId } from './types.ts'
+import type { Align, IODoc, IONode, NodeId, NodeType, NodeTypeState } from './types.ts'
 
 export const uid = (): string => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4)
 
@@ -163,6 +163,37 @@ export function setTask(doc: IODoc, id: NodeId, task: string | undefined): IODoc
   const d = clone(doc)
   if (task == null) delete d.nodes[id].task
   else d.nodes[id].task = task
+  return d
+}
+
+/** The canonical type a node already has, or `mixed` for deliberately preserved Markdown such as
+ *  `- [ ] ## task` or `1. [x] step`. Merely opening a mixed node never normalises it. */
+export function nodeTypeOf(node: IONode): NodeTypeState {
+  const roles = Number(node.size != null) + Number(!!node.ordered) + Number(node.task != null)
+  if (roles > 1) return 'mixed'
+  if (node.size) return `h${node.size}` as NodeType
+  if (node.ordered) return 'numbered'
+  if (node.task != null) return 'checklist'
+  return 'text'
+}
+
+/** Choose one portable node type. Completion is kept when a mixed or checklist node is explicitly made a
+ *  checklist; every other role is cleared. The root is not a list item, so it accepts text and headings only. */
+export function setNodeType(doc: IODoc, id: NodeId, type: NodeType): IODoc {
+  const node = doc.nodes[id]
+  const listType = type === 'numbered' || type === 'checklist'
+  if (!node || (id === doc.rootId && listType) || nodeTypeOf(node) === type) return doc
+  const d = clone(doc)
+  const next = d.nodes[id]
+  const task = node.task
+  delete next.size
+  delete next.ordered
+  delete next.task
+  if (type === 'h1') next.size = 1
+  else if (type === 'h2') next.size = 2
+  else if (type === 'h3') next.size = 3
+  else if (type === 'numbered') next.ordered = true
+  else if (type === 'checklist') next.task = task ?? ' '
   return d
 }
 

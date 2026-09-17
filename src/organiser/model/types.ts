@@ -1,5 +1,10 @@
 export type NodeId = string
 
+/** The one canonical Markdown role the editor offers for a node. Imported Markdown can carry more than one role;
+ *  that is reported as `mixed` and kept byte-for-byte until the person deliberately chooses a canonical type. */
+export type NodeType = 'text' | 'h1' | 'h2' | 'h3' | 'numbered' | 'checklist'
+export type NodeTypeState = NodeType | 'mixed'
+
 /** A single idea. The same node is drawn in all three shapes — only its
  *  geometry and chrome change, which is what makes the Shift possible. */
 export interface IONode {

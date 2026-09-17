@@ -1,6 +1,6 @@
 import type * as React from 'react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import type { Align } from '../model/types'
+import type { Align, NodeType, NodeTypeState } from '../model/types'
 import { FORMAT_LABEL, type Format } from './format'
 import { chord } from './keys'
 import { IconAlign, IconCheck, IconCheckbox, IconChevron, IconIndent, IconMore, IconNewLine, IconNumbered, IconOutdent } from './Icons'
@@ -12,13 +12,10 @@ import { isPhoneTouch } from './mobile'
 interface NodeState {
   isRoot: boolean
   align: Align
-  size: 1 | 2 | 3 | undefined
+  type: NodeTypeState
   /** Lines as laid out — alignment only means something from the second one. */
   lines: number
   branch: number | null
-  /** obsidian: the two list kinds a node can be — `1.` and `- [ ]` in the file. */
-  ordered: boolean
-  task: boolean
 }
 
 interface Props {
@@ -36,7 +33,7 @@ interface Props {
   palette: string[]
   onFormat: (f: Format) => void
   onAlign: (a: Align) => void
-  onSize: (z: 1 | 2 | 3 | undefined) => void
+  onType: (type: NodeType) => void
   onBranch: (i: number) => void
   /** Change one of the map's own colour slots (the picker, as it moves). */
   onPalette: (slot: number, hex: string) => void
@@ -44,8 +41,6 @@ interface Props {
   onNewColour: (slot: number, hex: string) => void
   /** Empty a slot; branches wearing it go back to the theme. */
   onRemoveColour: (slot: number) => void
-  onOrdered: () => void
-  onTask: () => void
   /** Outline rows can move a level in or out from the bar — for touch, where Tab does not exist. */
   outline: boolean
   canIndent: boolean
@@ -66,15 +61,15 @@ const FORMATS: Format[] = ['bold', 'italic', 'underline', 'strike', 'highlight',
 /** On a touch screen the bar is wider and the screen narrower: the everyday formats stay, the rest fold into a menu. */
 const TOUCH_FORMATS: Format[] = ['bold', 'italic', 'underline', 'link']
 const TOUCH_MORE: Format[] = ['strike', 'highlight', 'code']
-const PHONE_FORMATS: Format[] = ['bold', 'italic']
-const PHONE_MORE: Format[] = ['underline', 'link', 'strike', 'highlight', 'code']
-const PHONE_OUTLINE_FORMATS: Format[] = ['bold']
-const PHONE_OUTLINE_MORE: Format[] = ['italic', ...PHONE_MORE]
-const SIZES: [1 | 2 | 3 | undefined, string, string, string][] = [
-  [undefined, 'Aa', 'Body text', '⌥⌘0'],
-  [3, 'H3', 'Heading 3', '⌥⌘3'],
-  [2, 'H2', 'Heading 2', '⌥⌘2'],
-  [1, 'H1', 'Heading 1', '⌥⌘1'],
+const PHONE_FORMATS: Format[] = ['bold']
+const PHONE_MORE: Format[] = ['italic', 'underline', 'link', 'strike', 'highlight', 'code']
+const TYPES: [NodeType, string, string, string][] = [
+  ['text', 'Aa', 'Text', '⌥⌘0'],
+  ['h1', 'H1', 'Heading 1', '⌥⌘1'],
+  ['h2', 'H2', 'Heading 2', '⌥⌘2'],
+  ['h3', 'H3', 'Heading 3', '⌥⌘3'],
+  ['numbered', '', 'Numbered', '⇧⌘7'],
+  ['checklist', '', 'Checklist', '⌘Enter'],
 ]
 const ALIGNS: [Align, string, string][] = [
   ['left', 'Align left', '⇧⌘L'],
@@ -99,7 +94,7 @@ interface Tip {
   left: number
 }
 
-type Menu = null | 'size' | 'colour' | 'arrange' | 'more'
+type Menu = null | 'type' | 'colour' | 'more'
 
 const IconPlus = () => (
   <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
@@ -185,19 +180,25 @@ const Chevron = () => (
   </svg>
 )
 
+const TypeMark = ({ type, fallback }: { type: NodeTypeState; fallback: string }) => {
+  if (type === 'numbered') return <IconNumbered />
+  if (type === 'checklist') return <IconCheckbox />
+  return <span>{fallback}</span>
+}
+
 /** obsidian: the floating bar above the node being typed. One row: the inline formats,
- *  then two dropdowns — text size and branch colour — and alignment once the text wraps.
+ *  then two dropdowns — canonical node type and branch colour — and alignment once the text wraps.
  *  Only while editing: the map stays clean while you move around, and there is never a
  *  question of what a style change means for several selected nodes. Pointer-down is
  *  swallowed so the node keeps its focus and text selection; the click then applies. */
-export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, palette, onFormat, onAlign, onSize, onBranch, onPalette, onNewColour, onRemoveColour, onOrdered, onTask, outline, canIndent, canOutdent, canMoveUp, canMoveDown, onIndent, onOutdent, onMoveUp, onMoveDown, onNewLine, onDone }: Props) {
+export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, palette, onFormat, onAlign, onType, onBranch, onPalette, onNewColour, onRemoveColour, outline, canIndent, canOutdent, canMoveUp, canMoveDown, onIndent, onOutdent, onMoveUp, onMoveDown, onNewLine, onDone }: Props) {
   const ref = useRef<HTMLDivElement>(null)
   const coarse = useCoarsePointer()
   const phoneDevice = typeof document !== 'undefined' && document.body.classList.contains('is-phone')
   const docked = isPhoneTouch(coarse, stageWidth, phoneDevice)
   const [menu, setMenu] = useState<Menu>(null)
-  const primaryFormats = docked ? (outline ? PHONE_OUTLINE_FORMATS : PHONE_FORMATS) : coarse ? TOUCH_FORMATS : FORMATS
-  const moreFormats = docked ? (outline ? PHONE_OUTLINE_MORE : PHONE_MORE) : TOUCH_MORE
+  const primaryFormats = docked ? PHONE_FORMATS : coarse ? TOUCH_FORMATS : FORMATS
+  const moreFormats = docked ? PHONE_MORE : TOUCH_MORE
   // The slot whose colour is being picked, when the colour menu shows the picker.
   const [picking, setPicking] = useState<number | null>(null)
   const [dx, setDx] = useState(0)
@@ -205,8 +206,11 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
   // hovers, the tip over it — both measured, since the stage clips whatever sticks out.
   const [room, setRoom] = useState(BAR_H + BAR_GAP + TIP_H + TIP_GAP)
   const tipH = useRef(TIP_H)
-  const below = !docked && top < room
-  const size = SIZES.find(([z]) => z === node.size) ?? SIZES[0]
+  const typeMenuRoom = BAR_H + BAR_GAP + (node.isRoot ? 4 : 6) * 27 + 10
+  const below = !docked && top < (menu === 'type' ? typeMenuRoom : room)
+  const type = TYPES.find(([value]) => value === node.type)
+  const typeMark = type?.[1] ?? (docked ? 'Mix' : 'Mixed')
+  const typeLabel = type?.[2] ?? 'Mixed Markdown'
   const tone = toneOf(branches)
   const byHue = sortByHue(branches)
   const current = node.branch
@@ -335,18 +339,58 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
         </div>
       )}
       {/* The open menu sits on the far side of the bar from the node, so it never covers the text. */}
-      {menu === 'size' && (
-        <div className="nt-menu" role="menu">
-          {SIZES.map(([z, , label, keys]) => (
-            <button key={label} type="button" tabIndex={-1} role="menuitemradio" className={node.size === z ? 'is-on' : ''} aria-checked={node.size === z} onClick={() => { onSize(z); setMenu(null) }}>
-              <span>{label}</span>
+      {menu === 'type' && (
+        <div className={`nt-menu nt-type-menu${docked ? ' is-phone' : ''}`} role="menu" aria-label="Node type">
+          {TYPES.filter(([value]) => !node.isRoot || (value !== 'numbered' && value !== 'checklist')).map(([value, mark, label, keys]) => (
+            <button key={value} type="button" tabIndex={-1} role="menuitemradio" className={node.type === value ? 'is-on' : ''} aria-checked={node.type === value} onClick={() => { onType(value); setMenu(null) }}>
+              <span className="nt-type-choice"><TypeMark type={value} fallback={mark} /><span>{label}</span></span>
               <span className="nt-hint">{chord(keys)}</span>
             </button>
           ))}
         </div>
       )}
-      {menu === 'more' && (
-        <div className={`nt-row nt-palette${docked ? ' nt-phone-more' : ''}`} role="menu">
+      {menu === 'more' && docked && (
+        <div className="nt-phone-more" role="menu" aria-label="More editing options">
+          <div className="nt-phone-group nt-phone-format" role="group" aria-label="Formatting">
+            {moreFormats.map((f) => (
+              <button key={f} type="button" tabIndex={-1} role="menuitem" className={`fmt fmt-${f}`} onClick={() => { onFormat(f); setMenu(null) }}>
+                <FormatIcon f={f} />
+                <Name>{FORMAT_LABEL[f].title}</Name>
+              </button>
+            ))}
+          </div>
+          <div className="nt-phone-group nt-phone-align" role="group" aria-label="Alignment">
+            {ALIGNS.map(([a, label]) => (
+              <button key={a} type="button" tabIndex={-1} role="menuitemradio" className={node.align === a ? 'is-on' : ''} aria-checked={node.align === a} onClick={() => { onAlign(a); setMenu(null) }}>
+                <IconAlign align={a} />
+                <Name>{label}</Name>
+              </button>
+            ))}
+          </div>
+          {outline && (
+            <div className="nt-phone-group nt-phone-arrange" role="group" aria-label="Arrange node">
+              <button type="button" tabIndex={-1} role="menuitem" className="nt-move-up" disabled={!canMoveUp} onClick={() => { onMoveUp(); setMenu(null) }}>
+                <IconChevron />
+                <Name>Move up</Name>
+              </button>
+              <button type="button" tabIndex={-1} role="menuitem" className="nt-move-down" disabled={!canMoveDown} onClick={() => { onMoveDown(); setMenu(null) }}>
+                <IconChevron />
+                <Name>Move down</Name>
+              </button>
+              <button type="button" tabIndex={-1} role="menuitem" disabled={!canOutdent} onClick={() => { onOutdent(); setMenu(null) }}>
+                <IconOutdent />
+                <Name>Outdent</Name>
+              </button>
+              <button type="button" tabIndex={-1} role="menuitem" disabled={!canIndent} onClick={() => { onIndent(); setMenu(null) }}>
+                <IconIndent />
+                <Name>Indent</Name>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+      {menu === 'more' && !docked && (
+        <div className="nt-row nt-palette" role="menu">
           {coarse && (
             <button type="button" tabIndex={-1} role="menuitem" onClick={() => { onNewLine(); setMenu(null) }}>
               <IconNewLine />
@@ -359,44 +403,6 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
               <Name>{FORMAT_LABEL[f].title}</Name>
             </button>
           ))}
-          {docked && ALIGNS.map(([a, label]) => (
-            <button key={a} type="button" tabIndex={-1} role="menuitemradio" className={node.align === a ? 'is-on' : ''} aria-checked={node.align === a} onClick={() => { onAlign(a); setMenu(null) }}>
-              <IconAlign align={a} />
-              <Name>{label}</Name>
-            </button>
-          ))}
-          {docked && !node.isRoot && (
-            <>
-              <button type="button" tabIndex={-1} role="menuitemcheckbox" className={node.ordered ? 'is-on' : ''} aria-checked={node.ordered} onClick={() => { onOrdered(); setMenu(null) }}>
-                <IconNumbered />
-                <Name>Numbered item</Name>
-              </button>
-              <button type="button" tabIndex={-1} role="menuitemcheckbox" className={node.task ? 'is-on' : ''} aria-checked={node.task} onClick={() => { onTask(); setMenu(null) }}>
-                <IconCheckbox />
-                <Name>Checkbox</Name>
-              </button>
-            </>
-          )}
-        </div>
-      )}
-      {menu === 'arrange' && docked && outline && (
-        <div className="nt-phone-arrange" role="menu" aria-label="Arrange node">
-          <button type="button" tabIndex={-1} role="menuitem" className="nt-move-up" disabled={!canMoveUp} onClick={() => { onMoveUp(); setMenu(null) }}>
-            <IconChevron />
-            <span>Up</span>
-          </button>
-          <button type="button" tabIndex={-1} role="menuitem" className="nt-move-down" disabled={!canMoveDown} onClick={() => { onMoveDown(); setMenu(null) }}>
-            <IconChevron />
-            <span>Down</span>
-          </button>
-          <button type="button" tabIndex={-1} role="menuitem" disabled={!canOutdent} onClick={() => { onOutdent(); setMenu(null) }}>
-            <IconOutdent />
-            <span>Outdent</span>
-          </button>
-          <button type="button" tabIndex={-1} role="menuitem" disabled={!canIndent} onClick={() => { onIndent(); setMenu(null) }}>
-            <IconIndent />
-            <span>Indent</span>
-          </button>
         </div>
       )}
       {menu === 'colour' && !node.isRoot && picking != null && (
@@ -457,10 +463,10 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
       {/* While a colour is being picked the bar is just that: the swatches and the slider. */}
       {picking == null && (
       <div className="nt-row nt-main">
-        {/* What the node is: its text size and its branch colour. */}
-        <button type="button" tabIndex={-1} className={`nt-drop${menu === 'size' ? ' is-on' : ''}`} aria-haspopup="menu" aria-expanded={menu === 'size'} onClick={() => toggle('size')}>
-          <span>{size[1]}</span>
-          <Name tip="Text size" keys="⌥⌘0–3">{`Text size: ${size[2]}`}</Name>
+        {/* The node's one canonical Markdown role, and its independent branch colour. */}
+        <button type="button" tabIndex={-1} className={`nt-drop nt-type-drop${menu === 'type' ? ' is-on' : ''}`} aria-haspopup="menu" aria-expanded={menu === 'type'} onClick={() => toggle('type')}>
+          <TypeMark type={node.type} fallback={typeMark} />
+          <Name tip="Node type" keys="⌥⌘0–3">{`Node type: ${typeLabel}`}</Name>
           <Chevron />
         </button>
         {!node.isRoot && (
@@ -480,10 +486,10 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
             </Name>
           </button>
         ))}
-        {coarse && docked && outline && (
-          <button type="button" tabIndex={-1} className={`nt-drop nt-arrange-drop${menu === 'arrange' ? ' is-on' : ''}`} aria-haspopup="menu" aria-expanded={menu === 'arrange'} onClick={() => toggle('arrange')}>
-            <span>Move</span>
-            <Chevron />
+        {docked && (
+          <button type="button" tabIndex={-1} onClick={() => { onNewLine(); setMenu(null) }}>
+            <IconNewLine />
+            <Name>New line</Name>
           </button>
         )}
         {coarse && (
@@ -500,20 +506,6 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
             <Name tip={label} keys={keys}>{`${label} — ${chord(keys)}`}</Name>
           </button>
         ))}
-        {!docked && !node.isRoot && (
-          <>
-            <span className="nt-sep" />
-            {/* The two list kinds a node can be. */}
-            <button type="button" tabIndex={-1} className={node.ordered ? 'is-on' : ''} aria-pressed={node.ordered} onClick={onOrdered}>
-              <IconNumbered />
-              <Name tip="Numbered item" keys="⇧⌘7">{`Numbered item — ${chord('⇧⌘7')}`}</Name>
-            </button>
-            <button type="button" tabIndex={-1} className={node.task ? 'is-on' : ''} aria-pressed={node.task} onClick={onTask}>
-              <IconCheckbox />
-              <Name tip="Checkbox" keys="⌘Enter">{`Checkbox — ${chord('⌘Enter')} ticks it`}</Name>
-            </button>
-          </>
-        )}
         {coarse && !docked && outline && (
           <>
             <span className="nt-sep" />
