@@ -7,6 +7,7 @@ import { IconAlign, IconCheck, IconCheckbox, IconIndent, IconMore, IconNumbered,
 import { ColourPicker } from './ColourPicker'
 import { hueOf as hueOfHex, sortByHue, toneOf, withHue } from '../colour'
 import { CUSTOM_SLOTS } from '../theme'
+import { isPhoneTouch } from './mobile'
 
 interface NodeState {
   isRoot: boolean
@@ -57,6 +58,8 @@ const FORMATS: Format[] = ['bold', 'italic', 'underline', 'strike', 'highlight',
 /** On a touch screen the bar is wider and the screen narrower: the everyday formats stay, the rest fold into a menu. */
 const TOUCH_FORMATS: Format[] = ['bold', 'italic', 'underline', 'link']
 const TOUCH_MORE: Format[] = ['strike', 'highlight', 'code']
+const PHONE_FORMATS: Format[] = ['bold', 'italic']
+const PHONE_MORE: Format[] = ['underline', 'link', 'strike', 'highlight', 'code']
 const SIZES: [1 | 2 | 3 | undefined, string, string, string][] = [
   [undefined, 'Aa', 'Body text', '⌥⌘0'],
   [3, 'H3', 'Heading 3', '⌥⌘3'],
@@ -96,14 +99,22 @@ const IconPlus = () => (
 
 /** True on a touch screen: bigger targets, fewer buttons, and the actions that keys usually cover. */
 function useCoarsePointer(): boolean {
-  const query = () => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
+  const query = () =>
+    (typeof document !== 'undefined' && document.body.classList.contains('is-mobile')) ||
+    (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches)
   const [coarse, setCoarse] = useState(query)
   useEffect(() => {
     if (typeof matchMedia !== 'function') return
     const mq = matchMedia('(pointer: coarse)')
-    const on = () => setCoarse(mq.matches)
+    const on = () => setCoarse(query())
     mq.addEventListener('change', on)
-    return () => mq.removeEventListener('change', on)
+    const body = typeof document !== 'undefined' ? document.body : null
+    const mo = body ? new MutationObserver(on) : null
+    if (body) mo?.observe(body, { attributes: true, attributeFilter: ['class'] })
+    return () => {
+      mq.removeEventListener('change', on)
+      mo?.disconnect()
+    }
   }, [])
   return coarse
 }
@@ -172,6 +183,8 @@ const Chevron = () => (
 export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, palette, onFormat, onAlign, onSize, onBranch, onPalette, onNewColour, onRemoveColour, onOrdered, onTask, outline, onIndent, onOutdent, onDone }: Props) {
   const ref = useRef<HTMLDivElement>(null)
   const coarse = useCoarsePointer()
+  const phoneDevice = typeof document !== 'undefined' && document.body.classList.contains('is-phone')
+  const docked = isPhoneTouch(coarse, stageWidth, phoneDevice)
   const [menu, setMenu] = useState<Menu>(null)
   // The slot whose colour is being picked, when the colour menu shows the picker.
   const [picking, setPicking] = useState<number | null>(null)
@@ -180,7 +193,7 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
   // hovers, the tip over it — both measured, since the stage clips whatever sticks out.
   const [room, setRoom] = useState(BAR_H + BAR_GAP + TIP_H + TIP_GAP)
   const tipH = useRef(TIP_H)
-  const below = top < room
+  const below = !docked && top < room
   const size = SIZES.find(([z]) => z === node.size) ?? SIZES[0]
   const tone = toneOf(branches)
   const byHue = sortByHue(branches)
@@ -195,11 +208,11 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
   // Keep the whole bar inside the stage: measure, then nudge sideways as little as needed.
   useLayoutEffect(() => {
     const el = ref.current
-    if (!el || !stageWidth) return
+    if (!el || !stageWidth || docked) return
     const half = el.offsetWidth / 2 + 6
     const want = Math.min(Math.max(x, half), Math.max(half, stageWidth - half))
     setDx(Math.round(want - x))
-  }, [x, stageWidth, menu, picking, node.lines, node.isRoot, coarse, outline])
+  }, [x, stageWidth, menu, picking, node.lines, node.isRoot, coarse, docked, outline])
   // The tip: a control's name and keys, once the pointer has rested on it. One at a time, never while a menu is open.
   const [tip, setTip] = useState<Tip | null>(null)
   const tipRef = useRef<HTMLDivElement>(null)
@@ -288,8 +301,8 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
   return (
     <div
       ref={ref}
-      className={`node-toolbar${below ? ' is-below' : ''}`}
-      style={{ left: x + dx, top: below ? bottom : top }}
+      className={`node-toolbar${docked ? ' is-docked' : below ? ' is-below' : ''}`}
+      style={docked ? undefined : { left: x + dx, top: below ? bottom : top }}
       role="toolbar"
       onPointerDown={(e) => {
         swallow(e)
@@ -304,7 +317,7 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
       onDoubleClick={(e) => e.stopPropagation()}
     >
       {tip && (
-        <div ref={tipRef} className="nt-tip" style={{ left: tip.left }} aria-hidden="true">
+        <div ref={tipRef} className={`nt-tip${tip.keys ? '' : ' no-keys'}`} style={{ left: tip.left }} aria-hidden="true">
           <span>{tip.label}</span>
           {tip.keys && <kbd>{chord(tip.keys)}</kbd>}
         </div>
@@ -321,13 +334,43 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
         </div>
       )}
       {menu === 'more' && (
-        <div className="nt-row nt-palette" role="menu">
-          {TOUCH_MORE.map((f) => (
+        <div className={`nt-row nt-palette${docked ? ' nt-phone-more' : ''}`} role="menu">
+          {(docked ? PHONE_MORE : TOUCH_MORE).map((f) => (
             <button key={f} type="button" tabIndex={-1} role="menuitem" className={`fmt fmt-${f}`} onClick={() => { onFormat(f); setMenu(null) }}>
               <FormatIcon f={f} />
               <Name>{FORMAT_LABEL[f].title}</Name>
             </button>
           ))}
+          {docked && ALIGNS.map(([a, label]) => (
+            <button key={a} type="button" tabIndex={-1} role="menuitemradio" className={node.align === a ? 'is-on' : ''} aria-checked={node.align === a} onClick={() => { onAlign(a); setMenu(null) }}>
+              <IconAlign align={a} />
+              <Name>{label}</Name>
+            </button>
+          ))}
+          {docked && !node.isRoot && (
+            <>
+              <button type="button" tabIndex={-1} role="menuitemcheckbox" className={node.ordered ? 'is-on' : ''} aria-checked={node.ordered} onClick={() => { onOrdered(); setMenu(null) }}>
+                <IconNumbered />
+                <Name>Numbered item</Name>
+              </button>
+              <button type="button" tabIndex={-1} role="menuitemcheckbox" className={node.task ? 'is-on' : ''} aria-checked={node.task} onClick={() => { onTask(); setMenu(null) }}>
+                <IconCheckbox />
+                <Name>Checkbox</Name>
+              </button>
+            </>
+          )}
+          {docked && outline && (
+            <>
+              <button type="button" tabIndex={-1} role="menuitem" onClick={() => { onOutdent(); setMenu(null) }}>
+                <IconOutdent />
+                <Name>Move out a level</Name>
+              </button>
+              <button type="button" tabIndex={-1} role="menuitem" onClick={() => { onIndent(); setMenu(null) }}>
+                <IconIndent />
+                <Name>Move in a level</Name>
+              </button>
+            </>
+          )}
         </div>
       )}
       {menu === 'colour' && !node.isRoot && picking != null && (
@@ -387,7 +430,7 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
       )}
       {/* While a colour is being picked the bar is just that: the swatches and the slider. */}
       {picking == null && (
-      <div className="nt-row">
+      <div className="nt-row nt-main">
         {/* What the node is: its text size and its branch colour. */}
         <button type="button" tabIndex={-1} className={`nt-drop${menu === 'size' ? ' is-on' : ''}`} aria-haspopup="menu" aria-expanded={menu === 'size'} onClick={() => toggle('size')}>
           <span>{size[1]}</span>
@@ -403,7 +446,7 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
         )}
         <span className="nt-sep" />
         {/* Inline formatting of the selected text. */}
-        {(coarse ? TOUCH_FORMATS : FORMATS).map((f) => (
+        {(docked ? PHONE_FORMATS : coarse ? TOUCH_FORMATS : FORMATS).map((f) => (
           <button key={f} type="button" tabIndex={-1} className={`fmt fmt-${f}`} onClick={() => onFormat(f)}>
             <FormatIcon f={f} />
             <Name tip={FORMAT_LABEL[f].title} keys={FORMAT_LABEL[f].keys}>
@@ -414,18 +457,18 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
         {coarse && (
           <button type="button" tabIndex={-1} className={menu === 'more' ? 'is-on' : ''} aria-haspopup="menu" aria-expanded={menu === 'more'} onClick={() => toggle('more')}>
             <IconMore />
-            <Name>More formatting</Name>
+            <Name>{docked ? 'More editing options' : 'More formatting'}</Name>
           </button>
         )}
-        <span className="nt-sep" />
-        {/* How the text sits in the node — always offered; it shows once the text wraps. */}
-        {ALIGNS.map(([a, label, keys]) => (
+        {!docked && <span className="nt-sep" />}
+        {/* How the text sits in the node — always offered on desktop; the phone moves it under More. */}
+        {!docked && ALIGNS.map(([a, label, keys]) => (
           <button key={a} type="button" tabIndex={-1} className={node.align === a ? 'is-on' : ''} aria-pressed={node.align === a} onClick={() => onAlign(a)}>
             <IconAlign align={a} />
             <Name tip={label} keys={keys}>{`${label} — ${chord(keys)}`}</Name>
           </button>
         ))}
-        {!node.isRoot && (
+        {!docked && !node.isRoot && (
           <>
             <span className="nt-sep" />
             {/* The two list kinds a node can be. */}
@@ -439,7 +482,7 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
             </button>
           </>
         )}
-        {coarse && outline && (
+        {coarse && !docked && outline && (
           <>
             <span className="nt-sep" />
             <button type="button" tabIndex={-1} onClick={onOutdent}>

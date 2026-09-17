@@ -68,6 +68,7 @@ const EMPTY_PALETTE: string[] = []
 import { Toolbar } from './ui/Toolbar'
 import { ExportSheet } from './ui/ExportSheet'
 import { ShortcutsSheet } from './ui/ShortcutsSheet'
+import { viewportOcclusion } from './ui/mobile'
 import { Inspector } from './ui/Inspector'
 import { GRID, Stage, type Camera, type StageApi } from './ui/Stage'
 
@@ -244,6 +245,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
   // obsidian: the outline column needs the stage width at layout time, so it is state, not only a ref.
   const [stageW, setStageW] = useState(0)
   const [bottomInset, setBottomInset] = useState(0)
+  const [keyboardInset, setKeyboardInset] = useState(0)
   const [paneW, setPaneW] = useState(0)
   /** The pane is narrow (a phone, or a split that tight): the document panel becomes a sheet over the whole width.
    *  Judged from the pane, which the panel does not change; the stage would be squeezed to nothing by the very
@@ -642,6 +644,26 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
     return () => ro.disconnect()
   }, [])
 
+  // iOS may leave the map at its layout height while the software keyboard shrinks the visual viewport. Measure
+  // the covered part instead of assuming a keyboard height; hardware keyboards and iPads then naturally read 0.
+  useEffect(() => {
+    const el = appRef.current
+    if (!el) return
+    const win = el.ownerDocument.defaultView ?? window
+    const viewport = win.visualViewport
+    if (!viewport) return
+    const measure = () => setKeyboardInset(viewportOcclusion(el.getBoundingClientRect().bottom, viewport.offsetTop, viewport.height))
+    measure()
+    viewport.addEventListener('resize', measure)
+    viewport.addEventListener('scroll', measure)
+    win.addEventListener('resize', measure)
+    return () => {
+      viewport.removeEventListener('resize', measure)
+      viewport.removeEventListener('scroll', measure)
+      win.removeEventListener('resize', measure)
+    }
+  }, [])
+
   // Obsidian's status bar and the phone's navigation bar lie over the stage without resizing it, so their coming
   // and going reaches no observer above. The window's own events and a theme change are when that happens.
   useEffect(() => {
@@ -667,6 +689,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       const b = frame.boxes[id]
       if (!rect.width || !b) return
       const pad = 90
+      const visibleHeight = Math.max(0, rect.height - keyboardInset)
       const sx = leftOf(b, prefs.shape) * camera.z + camera.x
       const sy = (b.y - b.h / 2) * camera.z + camera.y
       const sw = b.w * camera.z
@@ -678,20 +701,24 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
         else if (sx + sw > rect.width - pad) dx = rect.width - pad - (sx + sw)
       }
       if (sy < pad) dy = pad - sy
-      else if (sy + sh > rect.height - pad) dy = rect.height - pad - (sy + sh)
+      else if (sy + sh > visibleHeight - pad) dy = visibleHeight - pad - (sy + sh)
       if (!dx && !dy) return
       if (focusId && prefs.shape !== 'outline') {
         // Focus mode follows the keyboard: a node that left the comfortable
         // zone is brought to the centre, not merely nudged back over the edge.
         const cx = (leftOf(b, prefs.shape) + b.w / 2) * camera.z
         const cy = b.y * camera.z
-        animateCamera({ ...camera, x: rect.width / 2 - cx, y: rect.height / 2 - cy }, 360)
+        animateCamera({ ...camera, x: rect.width / 2 - cx, y: visibleHeight / 2 - cy }, 360)
         return
       }
       animateCamera({ ...camera, x: camera.x + dx, y: prefs.shape === 'outline' ? clampOutlineY(camera.y + dy) : camera.y + dy }, 260)
     },
-    [clampOutlineY, animateCamera, camera, focusId, frame, prefs.shape],
+    [clampOutlineY, animateCamera, camera, focusId, frame, keyboardInset, prefs.shape],
   )
+
+  useEffect(() => {
+    if (keyboardInset > 0 && edit?.id) ensureVisible(edit.id)
+  }, [edit?.id, ensureVisible, keyboardInset])
 
   /* -------------------- the Shift -------------------- */
 
@@ -1579,7 +1606,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
     <div
       ref={appRef}
       className={`app${prefs.inspectorOpen ? ' inspector-open' : ''}${narrow ? ' is-narrow' : ''}${medium ? ' is-medium' : ''}${compact ? ' is-compact' : ''}`}
-      style={{ '--io-bottom-inset': `${bottomInset}px` } as React.CSSProperties}
+      style={{ '--io-bottom-inset': `${bottomInset}px`, '--io-keyboard-inset': `${keyboardInset}px` } as React.CSSProperties}
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => {
         const f = e.dataTransfer.files[0]

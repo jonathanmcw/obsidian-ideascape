@@ -58,9 +58,6 @@ test("Markdown export: a multi-line node stays one item, and literal markers sta
   const texts = (x: IODoc) => walk(x, x.rootId).slice(1).map(({ id, depth }) => [depth, x.nodes[id]!.text, x.nodes[id]!.task]);
   assert.deepEqual(texts(back), [[1, "Packing\n- passport\n- charger", undefined], [2, "# not a heading\nends with ^word", undefined], [1, "[x] not a task, a literal", undefined]]);
   assert.doesNotMatch(md, /\^[a-z0-9]{6,}/, "no block ids in an export");
-  const headed = toMarkdown(d, "headings");
-  assert.match(headed, /\n## Packing\n\n\\- passport\n\\- charger\n/);
-  assert.doesNotMatch(headed, /^- /m, "no line of a heading's text turns into a list item");
 });
 
 test("OPML export: control characters are dropped and tabs kept, so the file always parses", () => {

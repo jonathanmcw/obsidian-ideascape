@@ -4,4 +4,6 @@ node_modules/
 *.map
 data.json
 .DS_Store
+__pycache__/
+*.pyc
 demo-vault/

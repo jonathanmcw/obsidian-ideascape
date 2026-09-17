@@ -6,11 +6,9 @@ import { frameFor, leftOf, linkPath, treePath } from '../layout/index.ts'
 import { branchColor, themeById } from '../theme.ts'
 import { CHECK_W, MEDIA_GAP, ROW_LEAD, metricsFor } from '../layout/measure.ts'
 
-/** Markdown, as a nested list. The transcript's research landed here: a map is
- *  routinely deeper than six levels, headings cap at H6, and a nested list is
- *  what Obsidian / Logseq / Workflowy all read back as an outline. Headings are
- *  offered as an option for people writing a document out of a map. */
-export function toMarkdown(doc: IODoc, style: 'list' | 'headings' = 'list'): string {
+/** Markdown, as a nested list. Maps are routinely deeper than six levels, headings cap at H6, and a nested list
+ *  is the representation Obsidian, Logseq and Workflowy all read back as an outline without flattening it. */
+export function toMarkdown(doc: IODoc): string {
   const rows = walk(doc, doc.rootId)
   const lines: string[] = []
 
@@ -24,15 +22,6 @@ export function toMarkdown(doc: IODoc, style: 'list' | 'headings' = 'list'): str
   }
   /** A heading's further lines, as paragraphs under it. */
   const body = (rest: string[]) => rest.map((l) => (l.trim() ? guardCaret(escapeRootLine(l)) : ''))
-
-  if (style === 'headings') {
-    for (const { id, depth } of rows) {
-      const [head, ...rest] = (doc.nodes[id].text || 'Untitled').split('\n')
-      if (depth < 6) lines.push(`${'#'.repeat(depth + 1)} ${guardCaret(head)}`, ...(rest.length ? ['', ...body(rest)] : []), '')
-      else lines.push(...item(id, '  '.repeat(depth - 6)))
-    }
-    return lines.join('\n').trim() + '\n'
-  }
 
   const [rootHead, ...rootRest] = (doc.nodes[doc.rootId].text || doc.name).split('\n')
   lines.push(`# ${guardCaret(rootHead)}`, ...(rootRest.length ? ['', ...body(rootRest)] : []), '')

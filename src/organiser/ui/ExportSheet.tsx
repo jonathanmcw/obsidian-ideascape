@@ -16,35 +16,37 @@ interface Props {
   onClose: () => void
 }
 
-/** One format to export. The row's own action is a real button filling the row; anything else that belongs to
- *  the row, such as the Markdown style toggle, sits beside that button rather than inside it. */
+/** One format to export. The row's action is a real button filling the row. */
 function Row({
   onClick,
   disabled,
-  aside,
   children,
 }: {
   onClick: () => void
   disabled?: boolean
-  /** Controls that belong to the row but are not the row's own action, such as the Markdown style toggle.
-   *  They sit beside the button rather than inside it: a control nested in a button is neither valid nor
-   *  reliably reachable. */
-  aside?: React.ReactNode
   children: React.ReactNode
 }) {
+  const [interaction, setInteraction] = useState<'hovered' | 'active' | null>(null)
   return (
-    <div className="export-row">
-      <button className="export-hit" disabled={disabled} onClick={onClick}>
+    <div className={`export-row${disabled ? ' is-disabled' : interaction ? ` is-${interaction}` : ''}`}>
+      <button
+        className="export-hit"
+        disabled={disabled}
+        onClick={onClick}
+        onPointerEnter={(event) => setInteraction(event.pointerType === 'touch' ? null : 'hovered')}
+        onPointerLeave={() => setInteraction(null)}
+        onPointerDown={() => setInteraction('active')}
+        onPointerUp={(event) => setInteraction(event.pointerType === 'touch' ? null : 'hovered')}
+        onPointerCancel={() => setInteraction(null)}
+      >
         {children}
       </button>
-      {aside}
     </div>
   )
 }
 
 export function ExportSheet({ doc, kind, themeId, nodeStyle, palette, resolveEmbed, onClose }: Props) {
   const shape = kind === 'canvas' ? 'map-free' : kind === 'org' ? 'map-org' : kind
-  const [mdStyle, setMdStyle] = useState<'list' | 'headings'>('list')
   const [busy, setBusy] = useState<string | null>(null)
   const [problem, setProblem] = useState<string | null>(null)
   const name = slug(doc.name)
@@ -72,7 +74,7 @@ export function ExportSheet({ doc, kind, themeId, nodeStyle, palette, resolveEmb
 
   return (
     <div className="scrim" onMouseDown={onClose}>
-      <div ref={dialog} tabIndex={-1} style={{ outline: 'none' }} className="sheet" onMouseDown={(e) => e.stopPropagation()} role="dialog" aria-label="Export">
+      <div ref={dialog} tabIndex={-1} style={{ outline: 'none' }} className="sheet" onMouseDown={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Export">
         <div className="sheet-head">
           <h2>Export “{doc.name}”</h2>
           <button className="icon-btn" onClick={onClose} title="Close">
@@ -89,26 +91,11 @@ export function ExportSheet({ doc, kind, themeId, nodeStyle, palette, resolveEmb
             </span>
           </Row>
 
-          <Row
-            onClick={() => save(`${name}.md`, toMarkdown(doc, mdStyle), 'text/markdown')}
-            aside={
-              <span className="export-toggle" role="group" aria-label="Markdown style">
-                {(['list', 'headings'] as const).map((st) => (
-                  <button key={st} className={mdStyle === st ? 'is-on' : ''} aria-pressed={mdStyle === st} onClick={() => setMdStyle(st)}>
-                    {st === 'list' ? 'Nested list' : 'Headings'}
-                  </button>
-                ))}
-              </span>
-            }
-          >
+          <Row onClick={() => save(`${name}.md`, toMarkdown(doc), 'text/markdown')}>
             <span className="export-ext">.md</span>
             <span>
               <b>Markdown</b>
-              <small>
-                {mdStyle === 'list'
-                  ? 'A nested list with every level kept, to open in Obsidian, Logseq or Workflowy. Positions, colours and free links stay in the map.'
-                  : 'Headings to depth 6, then nested lists. Good for writing a document out of a map.'}
-              </small>
+              <small>A nested list with every level kept, to open in Obsidian, Logseq or Workflowy. Positions, colours and free links stay in the map.</small>
             </span>
           </Row>
 

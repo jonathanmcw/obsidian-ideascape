@@ -2,7 +2,7 @@
 
 ![A Lisbon weekend built from the keyboard: Tab and Enter add nodes, ⌘B and ⌘I style them, ⌘↵ adds checkboxes, ⇧⌘7 numbers a list, ⌘. folds a branch, ⌥⌘F focuses on it, and ⌘2 and ⌘1 switch between outline and map. Each key shows in the corner as it is pressed.](docs/showcase.gif)
 
-Create and edit mind maps in Obsidian without leaving the keyboard. Tab adds a child, Enter adds a sibling, arrows navigate, and typing edits the selected node. Switch the same map to a structured outline when you need a linear view, then return to the map with one shortcut.
+Build mind maps at the speed of an outliner, without leaving the keyboard. Tab adds a child, Enter adds a sibling, arrows navigate, and typing edits the selected node. Switch the same note between map and outline views with one shortcut; underneath, it stays a readable Markdown list.
 
 ## What it does
 
@@ -32,12 +32,11 @@ Create and edit mind maps in Obsidian without leaving the keyboard. Tab adds a c
 
 ## Install
 
-Ideascape 0.9 is a beta. Until it's listed in Obsidian's community plugins, install it one of two ways:
+Ideascape 0.9 is a beta. Install it from **Settings → Community plugins → Browse**: search for **Ideascape**, select **Install**, then turn it on.
 
-- **With BRAT:** install the [BRAT](https://github.com/TfTHacker/obsidian42-brat) plugin, choose **Add beta plugin**, and enter `jonathanmcw/obsidian-ideascape`.
-- **By hand:** download `main.js`, `manifest.json` and `styles.css` from the [latest release](https://github.com/jonathanmcw/obsidian-ideascape/releases/latest) into `<your vault>/.obsidian/plugins/ideascape/`, then turn on **Ideascape** in **Settings → Community plugins**.
+[View Ideascape in the Obsidian Community directory](https://community.obsidian.md/plugins/ideascape).
 
-Once it's listed, find it in **Settings → Community plugins → Browse**.
+For pre-release builds, install [BRAT](https://github.com/TfTHacker/obsidian42-brat), choose **Add beta plugin**, and enter `jonathanmcw/obsidian-ideascape`. To install by hand, download `main.js`, `manifest.json` and `styles.css` from the [latest release](https://github.com/jonathanmcw/obsidian-ideascape/releases/latest) into `<your vault>/.obsidian/plugins/ideascape/`.
 
 Found a bug, or have an idea? [Open an issue](https://github.com/jonathanmcw/obsidian-ideascape/issues).
 

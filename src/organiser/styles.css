@@ -110,6 +110,9 @@
   --inspector-w: 224px;
   --toolbar-h: 52px;
   --radius: 10px;
+  /* Obsidian Canvas mobile benchmark: 40px controls with 24px glyphs. */
+  --mobile-control-size: 40px;
+  --mobile-control-icon: 24px;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -637,8 +640,7 @@
 .io-root .trust .link {
   margin-left: auto;
   color: var(--accent);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  border-bottom: 1px solid currentColor;
 }
 
 /* ---------------------------- stage ---------------------------- */
@@ -751,7 +753,6 @@
   align-items: center;
   padding-right: 12px;
   border: 1px solid transparent;
-  border-radius: 999px;
   background: transparent;
   overflow: visible;
   cursor: default;
@@ -1298,8 +1299,6 @@
   gap: 3px;
 }
 
-/* The multicol sits inside the scroller, not on it: columns given a fixed height overflow sideways into
-   extra columns instead of scrolling down. */
 .io-root .sk-body {
   flex: 1 1 auto;
   min-height: 0;
@@ -1307,19 +1306,35 @@
   padding: 12px 20px 0;
 }
 .io-root .sk-cols {
-  columns: 3;
-  column-gap: 24px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  align-items: start;
+}
+.io-root .sk-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
 }
 @container (max-width: 760px) {
-  .io-root .sk-cols { columns: 2; }
+  .io-root .sk-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .io-root .sk-col:last-child {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+  }
 }
 @container (max-width: 520px) {
-  .io-root .sk-cols { columns: 1; }
+  .io-root .sk-cols { grid-template-columns: minmax(0, 1fr); }
+  .io-root .sk-col:last-child {
+    grid-column: auto;
+    display: flex;
+  }
 }
-/* padding, not margin: margins next to a column break are dropped, which would throw out the sums above */
 .io-root .sk-cols section {
-  break-inside: avoid;
-  padding-bottom: 14px;
+  min-width: 0;
 }
 .io-root .sk-cols h3 {
   margin: 0 0 6px;
@@ -1338,9 +1353,6 @@
   grid-template-columns: minmax(var(--sk-key-w), max-content) minmax(0, 1fr);
   gap: 3px 8px;
   align-items: center;
-}
-.io-root .sk-cols dl > div {
-  display: contents;
 }
 .io-root .sk-cols dt {
   display: flex;
@@ -1409,7 +1421,7 @@
   white-space: nowrap;
 }
 .io-root .sk-link:hover {
-  text-decoration: underline;
+  border-bottom: 1px solid currentColor;
 }
 
 .io-root .sheet-head {
@@ -1442,9 +1454,7 @@
 .io-root .export-row {
   display: flex;
   align-items: center;
-  gap: 14px;
   width: 100%;
-  padding-right: 14px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface-2);
@@ -1456,7 +1466,7 @@
   gap: 14px;
   flex: 1;
   min-width: 0;
-  padding: 12px 0 12px 14px;
+  padding: 12px 14px;
   text-align: start;
   font: inherit;
   color: inherit;
@@ -1466,14 +1476,15 @@
   border-radius: 12px;
   cursor: pointer;
 }
-.io-root .export-row:has(.export-hit:hover:not(:disabled)) {
+.io-root .export-row.is-hovered,
+.io-root .export-row:focus-within:not(.is-disabled) {
   border-color: var(--accent);
   box-shadow: var(--shadow-1);
 }
-.io-root .export-row:has(.export-hit:active:not(:disabled)) {
+.io-root .export-row.is-active {
   transform: scale(0.995);
 }
-.io-root .export-row:has(.export-hit:disabled) {
+.io-root .export-row.is-disabled {
   opacity: 0.5;
 }
 .io-root .export-hit:disabled {
@@ -1498,6 +1509,8 @@
   font-size: 11.5px;
   line-height: 1.4;
   color: var(--ink-2);
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .io-root .export-ext {
@@ -1510,27 +1523,6 @@
   background: var(--surface);
   border: 1px solid var(--line-strong);
   border-radius: 7px;
-}
-
-.io-root .export-toggle {
-  display: flex;
-  flex: none;
-  padding: 2px;
-  gap: 2px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-}
-.io-root .export-toggle button {
-  padding: 4px 8px;
-  font-size: 11px;
-  color: var(--ink-2);
-  border-radius: 6px;
-}
-.io-root .export-toggle button.is-on {
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-weight: 500;
 }
 
 .io-root .sheet-note {
@@ -1781,6 +1773,62 @@
   .io-root .inspector {
     padding-bottom: max(env(safe-area-inset-bottom), var(--io-bottom-inset, 0px));
   }
+  .io-root .scrim {
+    padding: 12px max(10px, env(safe-area-inset-right)) calc(12px + max(env(safe-area-inset-bottom), var(--io-bottom-inset, 0px))) max(10px, env(safe-area-inset-left));
+  }
+  .io-root .sheet,
+  .io-root .sheet.wide {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 14px;
+  }
+  .io-root .sheet-head {
+    min-width: 0;
+    padding: 10px 10px 10px 14px;
+  }
+  .io-root .sheet-head h2 {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .io-root .sheet-head .icon-btn {
+    flex: none;
+    width: 44px;
+    height: 44px;
+  }
+  .io-root .sheet-body {
+    overflow-x: hidden;
+    gap: 8px;
+    padding: 10px;
+  }
+  .io-root .export-row {
+    flex-wrap: wrap;
+    gap: 0;
+    min-width: 0;
+    padding-right: 0;
+  }
+  .io-root .export-hit {
+    flex: 1 0 100%;
+    width: 100%;
+    min-width: 0;
+    gap: 10px;
+    padding: 12px;
+  }
+  .io-root .export-hit > span:nth-child(2) {
+    overflow-wrap: anywhere;
+  }
+  .io-root .sk-sheet .sheet-head {
+    flex-wrap: wrap;
+  }
+  .io-root .sk-filter {
+    order: 3;
+    flex: 1 0 100%;
+  }
+  .io-root .sheet-note.sk-note {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
   .io-root .trust {
     font-size: 12px;
     padding: 8px 12px;
@@ -1789,6 +1837,32 @@
   .io-root .trust .link {
     margin-left: 0;
   }
+}
+
+/* Match Obsidian Canvas on the real mobile shell (and desktop mobile emulation). Apple recommends 44pt as the
+   default iOS target; Canvas uses 40px for these secondary viewport controls, comfortably above its 28pt minimum. */
+body.is-mobile .io-root .corner {
+  right: max(12px, env(safe-area-inset-right));
+}
+body.is-mobile .io-root .zoom,
+body.is-mobile .io-root .history {
+  border-radius: calc(var(--mobile-control-size) / 2);
+}
+body.is-mobile .io-root .zoom button,
+body.is-mobile .io-root .history button,
+body.is-mobile .io-root .help {
+  width: var(--mobile-control-size);
+  height: var(--mobile-control-size);
+}
+body.is-mobile .io-root .zoom button {
+  font-size: 20px;
+}
+body.is-mobile .io-root .history button svg {
+  width: var(--mobile-control-icon);
+  height: var(--mobile-control-icon);
+}
+body.is-mobile .io-root .help {
+  font-size: 16px;
 }
 
 @keyframes io-rail-in {
@@ -1858,13 +1932,6 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .io-root * {
-    animation-duration: 0.01ms !important;
-    transition-duration: 120ms !important;
-  }
-}
-
 /* ---------------- obsidian additions ---------------- */
 /* The root pill's own border rules outranked the selection ring. */
 .io-root .node.as-pill.is-root.is-selected {
@@ -1883,14 +1950,14 @@
 /* Inline Markdown inside a node */
 .io-root .node-label b { font-weight: 700; }
 .io-root .node-label i { font-style: italic; }
-.io-root .node-label u { text-decoration: underline; text-underline-offset: 2px; }
-.io-root .node-label s { text-decoration: line-through; opacity: 0.7; }
+.io-root .node-label u { text-decoration-line: underline; text-underline-offset: 2px; }
+.io-root .node-label s { text-decoration-line: line-through; opacity: 0.7; }
 .io-root .node-label mark { background: color-mix(in srgb, var(--branch-3, #d3a45c) 38%, transparent); color: inherit; border-radius: 3px; padding: 0 2px; }
 .io-root .node-label code { font: 500 0.92em ui-monospace, SFMono-Regular, Menlo, monospace; background: color-mix(in srgb, var(--ink) 8%, transparent); border-radius: 4px; padding: 0 3px; }
-.io-root .node-label a.node-link { color: var(--accent); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); cursor: pointer; }
+.io-root .node-label a.node-link { color: var(--accent); text-decoration-line: none; border-bottom: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); cursor: pointer; }
 .io-root .node-label a.node-link:hover { border-bottom-color: var(--accent); }
 /* obsidian: a #tag is a chip, as in Obsidian's reading view; measure.ts pads its width by 6px to match. */
-.io-root .node-label a.node-tag { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); border-radius: 999px; padding: 0 3px; text-decoration: none; cursor: pointer; }
+.io-root .node-label a.node-tag { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); border-radius: 999px; padding: 0 3px; text-decoration-line: none; cursor: pointer; }
 .io-root .node-label a.node-tag:hover { background: color-mix(in srgb, var(--accent) 24%, transparent); }
 
 /* obsidian: lists. The number and the checkbox sit ahead of the text, on its first line,
@@ -1926,7 +1993,7 @@
 .io-root .node-check::after { content: ''; position: absolute; inset: -7px; }
 .io-root .node-check:hover { border-color: var(--accent); }
 .io-root .node-check.is-done { background: var(--branch, var(--accent)); border-color: transparent; color: #fff; }
-.io-root .node.is-done .node-label:not([contenteditable='true']) { color: var(--ink-3); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--ink-3) 70%, transparent); }
+.io-root .node.is-done .node-label:not([contenteditable='true']) { color: var(--ink-3); text-decoration-line: line-through; text-decoration-color: color-mix(in srgb, var(--ink-3) 70%, transparent); }
 .io-root .node.is-done .node-label:not([contenteditable='true']) a.node-tag { color: var(--ink-3); }
 /* Floating formatting bar while editing */
 /* obsidian: the toolbar above the node in hand (.node-bar is the colour stripe inside a pill). Anchored to the node's top centre;
@@ -2005,7 +2072,7 @@
 .io-root .node-toolbar.is-below .nt-tip { bottom: auto; top: calc(100% + 6px); }
 .io-root .node-toolbar .nt-tip kbd { padding: 2px 5px; background: var(--surface-2); color: var(--ink-2); }
 /* a tip with no keys is just the name */
-.io-root .node-toolbar .nt-tip:not(:has(kbd)) { padding-right: 8px; }
+.io-root .node-toolbar .nt-tip.no-keys { padding-right: 8px; }
 /* while editing, the label shows the effect, not the markers */
 .io-root .node-label[contenteditable='true'] a.node-link { pointer-events: none; }
 /* Free links show in both layouts of the Map now */
@@ -2022,7 +2089,7 @@
 .io-root .theme-card.is-on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); color: var(--ink); }
 /* the theme in effect while the map follows the default: shown, not chosen */
 .io-root .theme-card.is-auto { border-style: dashed; border-color: var(--line-strong); color: var(--ink); }
-.io-root .inspector-link { padding: 0; font: inherit; color: var(--accent); text-decoration: underline; text-underline-offset: 2px; background: none; border: 0; cursor: pointer; text-align: start; }
+.io-root .inspector-link { padding: 0; font: inherit; color: var(--accent); text-decoration-line: underline; text-underline-offset: 2px; background: none; border: 0; cursor: pointer; text-align: start; }
 .io-root .inspector-link:hover { color: var(--ink); }
 .io-root .inspector-foot { margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--line); }
 .io-root .theme-preview { display: flex; gap: 4px; align-items: center; justify-content: center; height: 34px; border-radius: 6px; border: 1px solid; }
@@ -2141,9 +2208,64 @@
   .io-root .node-toolbar .nt-drop { min-width: 48px; }
   .io-root .node-toolbar .nt-menu button { height: 38px; }
   .io-root .node-toolbar .nt-done { color: var(--accent); }
-  .io-root .history button { width: 36px; height: 34px; }
-  .io-root .zoom button { width: 36px; height: 34px; }
+  .io-root .history button { width: var(--mobile-control-size); height: var(--mobile-control-size); }
+  .io-root .zoom button { width: var(--mobile-control-size); height: var(--mobile-control-size); }
 }
+
+  /* A phone editor uses a stable dock above the software keyboard. The primary row stays small; More opens the
+     remaining formatting, alignment and list actions above it. A touch iPad keeps the floating contextual bar. */
+  .io-root .node-toolbar.is-docked {
+    left: max(8px, env(safe-area-inset-left));
+    right: max(8px, env(safe-area-inset-right));
+    top: auto;
+    bottom: calc(8px + max(var(--io-keyboard-inset, 0px), var(--io-bottom-inset, 0px), env(safe-area-inset-bottom)));
+    width: auto;
+    transform: none;
+    flex-direction: column;
+    padding: 4px;
+    border-radius: 12px;
+  }
+  .io-root .node-toolbar.is-docked .nt-main {
+    flex-wrap: nowrap;
+    justify-content: center;
+    max-width: none;
+  }
+  .io-root .node-toolbar.is-docked .nt-main > button {
+    flex: 0 1 44px;
+    min-width: 40px;
+  }
+  .io-root .node-toolbar.is-docked .nt-main > .nt-drop {
+    flex-basis: 54px;
+  }
+  .io-root .node-toolbar.is-docked .nt-phone-more {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(100% + 6px);
+    display: grid;
+    grid-template-columns: repeat(5, minmax(44px, 1fr));
+    gap: 4px;
+    padding: 6px;
+    border: 1px solid var(--line-strong);
+    border-radius: 12px;
+    background: var(--surface);
+    box-shadow: var(--shadow-2);
+  }
+  .io-root .node-toolbar.is-docked .nt-phone-more button {
+    width: 100%;
+    height: 42px;
+  }
+  .io-root .node-toolbar.is-docked > .nt-menu,
+  .io-root .node-toolbar.is-docked > .nt-col,
+  .io-root .node-toolbar.is-docked > .nt-editor {
+    align-self: center;
+    width: min(100%, 360px);
+    max-width: 100%;
+    margin-bottom: 4px;
+  }
+  .io-root .node-toolbar.is-docked > .nt-editor {
+    width: 100%;
+  }
 
 /* Bar style: a straight stripe wants a squarer pill — clipped by a 17px radius it became a
    crescent. It outranks the per-node radius, which comes in as --node-radius. */
@@ -2238,4 +2360,18 @@
   transition: transform 150ms cubic-bezier(0.2, 0.9, 0.25, 1), width var(--morph), height var(--morph), padding-left var(--morph),
     border-radius var(--morph), background-color 200ms ease, border-color 200ms ease, box-shadow 180ms ease,
     opacity 220ms ease, filter 220ms ease;
+}
+
+/* Motion reduction must outrank the component transitions above without priority flags. Repeating the root class is
+   intentional specificity: it keeps this accessibility override effective even for deeply qualified controls. */
+@media (prefers-reduced-motion: reduce) {
+  .io-root.io-root.io-root.io-root.io-root *,
+  .io-root.io-root.io-root.io-root.io-root *::before,
+  .io-root.io-root.io-root.io-root.io-root *::after {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 1ms;
+    transition-delay: 0ms;
+    scroll-behavior: auto;
+  }
 }

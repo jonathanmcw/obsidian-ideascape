@@ -39,6 +39,10 @@ export function ShortcutsSheet({ onClose, onTour, mac: macProp }: Props) {
   const [query, setQuery] = useState('')
   const filtering = query.trim() !== ''
   const groups = useMemo(() => (filtering ? filterGroups(SEARCHABLE, query) : GROUPS), [filtering, query])
+  const columns = useMemo(() => {
+    const size = Math.ceil(groups.length / 3)
+    return size ? [groups.slice(0, size), groups.slice(size, size * 2), groups.slice(size * 2)] : []
+  }, [groups])
 
   // Keys go to the sheet while it is open, not to the map behind the scrim; the filter takes them first.
   const dialog = useRef<HTMLDivElement>(null)
@@ -154,20 +158,24 @@ export function ShortcutsSheet({ onClose, onTour, mac: macProp }: Props) {
         <div className="sk-body">
           {groups.length ? (
             <div className="sk-cols">
-              {groups.map((g) => (
-                <section key={g.title}>
-                  <h3>{g.title}</h3>
-                  <dl>
-                    {g.rows.map((row) => (
-                      <div key={row.label}>
-                        <dt>
-                          <Keys row={row} mac={mac} />
-                        </dt>
-                        <dd>{row.label}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </section>
+              {columns.map((column, index) => (
+                <div className="sk-col" key={index}>
+                  {column.map((g) => (
+                    <section key={g.title}>
+                      <h3>{g.title}</h3>
+                      <dl>
+                        {g.rows.map((row) => (
+                          <Fragment key={row.label}>
+                            <dt>
+                              <Keys row={row} mac={mac} />
+                            </dt>
+                            <dd>{row.label}</dd>
+                          </Fragment>
+                        ))}
+                      </dl>
+                    </section>
+                  ))}
+                </div>
               ))}
             </div>
           ) : (

@@ -25,6 +25,8 @@ jobs:
 
       - run: npm run build
 
+      - run: npm run verify:release
+
       - name: Check the tag matches the manifest
         run: |
           version=$(node -p "require('./manifest.json').version")

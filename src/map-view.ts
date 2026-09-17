@@ -12,6 +12,7 @@ import { setSaveHandler } from "./organiser/model/exporters";
 import { exportPath, linkAction, obsidianOpenFiles } from "./host-logic.ts";
 import type MapPlugin from "./main.ts";
 import { PLUGIN_ID, PLUGIN_NAME } from "./brand.ts";
+import { claimMapTouch } from "./organiser/ui/mobile.ts";
 
 export const MAP_VIEW_TYPE = PLUGIN_ID;
 
@@ -209,12 +210,31 @@ export class MapView extends TextFileView {
     this.contentEl.addClass("io-host");
     const host = this.contentEl.createDiv("io-root");
     host.tabIndex = 0;
-    host.addEventListener("pointerdown", () => {
+    host.addEventListener("pointerdown", event => {
+      const target = event.target as Element | null;
+      if (target?.closest?.(".stage")) claimMapTouch(event);
       // Keys go to the map unless the person is typing into one of its own fields.
       const a = activeDocument.activeElement;
       const typing = !!a?.instanceOf(HTMLElement) && host.contains(a) && (a.isContentEditable || a.tagName === "INPUT" || a.tagName === "TEXTAREA");
       if (!typing) host.focus({ preventScroll: true });
       this.claimExports();
+    });
+    // Obsidian's mobile shell listens above the view for horizontal touch gestures to reveal the sidebars. Canvas
+    // owns a drag once it starts on its surface; Ideascape does the same while leaving gestures outside the stage
+    // untouched. Pointer events drive the map, while touch events cover the iOS shell's own gesture listener.
+    const claimStagePointer = (event: PointerEvent) => {
+      const target = event.target as Element | null;
+      if (target?.closest?.(".stage")) claimMapTouch(event);
+    };
+    const claimStageTouch = (event: TouchEvent) => {
+      const target = event.target as Element | null;
+      if (target?.closest?.(".stage")) event.stopPropagation();
+    };
+    (["pointermove", "pointerup", "pointercancel"] as const).forEach(type => host.addEventListener(type, claimStagePointer));
+    (["touchstart", "touchmove", "touchend", "touchcancel"] as const).forEach(type => host.addEventListener(type, claimStageTouch));
+    this.register(() => {
+      (["pointermove", "pointerup", "pointercancel"] as const).forEach(type => host.removeEventListener(type, claimStagePointer));
+      (["touchstart", "touchmove", "touchend", "touchcancel"] as const).forEach(type => host.removeEventListener(type, claimStageTouch));
     });
     this.hostEl = host;
     this.rootRef = { current: host };
