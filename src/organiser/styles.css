@@ -106,7 +106,6 @@
 .io-root {
   --morph-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --morph: 450ms var(--morph-ease);
-  --rail-w: 232px;
   --inspector-w: 224px;
   --toolbar-h: 52px;
   --radius: 10px;
@@ -129,7 +128,6 @@
 }
 /* iOS Safari's address bar comes and goes; 100% follows the larger of the two
    and leaves the bottom controls under it. dvh follows the visible height. */
-
 
 .io-root {
   background: var(--bg);
@@ -176,14 +174,8 @@
   overflow: hidden;
   transition: grid-template-columns 260ms var(--morph-ease);
 }
-.io-root .app.rail-open {
-  grid-template-columns: var(--rail-w) minmax(0, 1fr);
-}
 .io-root .app.inspector-open {
   grid-template-columns: 0 minmax(0, 1fr) var(--inspector-w);
-}
-.io-root .app.rail-open.inspector-open {
-  grid-template-columns: var(--rail-w) minmax(0, 1fr) var(--inspector-w);
 }
 .io-root .inspector {
   grid-column: 3;
@@ -200,121 +192,10 @@
   visibility: hidden;
 }
 
-/* Both tracks are named explicitly. The rail unmounts when it is collapsed, and
-   without this the main column would be auto-placed into the first (0-width)
-   track and the whole app would vanish. */
-.io-root .rail {
-  grid-column: 1;
-}
+/* The main column is placed explicitly: auto-placed, it would land in the first,
+   0-width track and the whole app would vanish. */
 .io-root .main {
   grid-column: 2;
-}
-
-/* ---------------------------- rail ---------------------------- */
-
-.io-root .rail {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  overflow: hidden;
-  background: var(--rail);
-  border-right: 1px solid var(--line);
-}
-
-.io-root .rail-head {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  height: var(--toolbar-h);
-  padding: 0 8px 0 16px;
-  flex: none;
-}
-
-.io-root .rail-title {
-  flex: 1;
-  font-weight: 600;
-  font-size: 12.5px;
-  letter-spacing: 0.02em;
-  color: var(--ink-2);
-  text-transform: uppercase;
-}
-
-.io-root .rail-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 4px 8px 12px;
-}
-
-.io-root .rail-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 6px 0 10px;
-  border-radius: 8px;
-  cursor: default;
-  color: var(--ink-2);
-  transition: background 120ms ease, color 120ms ease;
-}
-.io-root .rail-item:hover {
-  background: color-mix(in srgb, var(--ink) 6%, transparent);
-  color: var(--ink);
-}
-.io-root .rail-item.is-active {
-  background: var(--surface);
-  color: var(--ink);
-  font-weight: 500;
-  box-shadow: var(--shadow-1);
-}
-
-.io-root .rail-name {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.io-root .rail-ext {
-  font-size: 11px;
-  color: var(--ink-3);
-  opacity: 0;
-  transition: opacity 120ms ease;
-}
-.io-root .rail-item.is-active .rail-ext,
-.io-root .rail-item:hover .rail-ext {
-  opacity: 1;
-}
-
-.io-root .rail-del {
-  opacity: 0;
-}
-.io-root .rail-item:hover .rail-del {
-  opacity: 1;
-}
-
-.io-root .rail-rename {
-  flex: 1;
-  min-width: 0;
-  font: inherit;
-  color: var(--ink);
-  background: var(--surface);
-  border: 1px solid var(--accent);
-  border-radius: 6px;
-  padding: 3px 6px;
-  outline: none;
-}
-
-.io-root .rail-foot {
-  flex: none;
-  padding: 10px 16px 14px;
-  font-size: 11px;
-  color: var(--ink-3);
-  border-top: 1px solid var(--line);
-}
-.io-root .rail-foot kbd {
-  padding: 2px 4px;
-  border-bottom-width: 1px;
 }
 
 /* ---------------------------- main ---------------------------- */
@@ -363,7 +244,6 @@
   min-width: 0;
 }
 
-
 .io-root .doc-name-btn {
   font-weight: 600;
   font-size: 13px;
@@ -393,14 +273,6 @@
   padding: 4px 8px;
   outline: none;
   width: 200px;
-}
-
-.io-root .badge {
-  font: 500 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
-  color: var(--ink-3);
-  border: 1px solid var(--line-strong);
-  border-radius: 5px;
-  padding: 3px 5px;
 }
 
 /* Three tracks of its own: an empty one, the toggle, Focus and Tidy. The two outer tracks share
@@ -510,12 +382,6 @@
   justify-content: flex-end;
   gap: 8px;
 }
-.io-root .toolbar-mode {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: none;
-}
 
 .io-root .toolbar-right {
   display: flex;
@@ -537,11 +403,6 @@
   width: 26px;
   height: 26px;
 }
-.io-root .icon-btn.xs {
-  width: 20px;
-  height: 20px;
-  font-size: 11px;
-}
 .io-root .icon-btn:hover:not(:disabled) {
   background: color-mix(in srgb, var(--ink) 8%, transparent);
   color: var(--ink);
@@ -558,10 +419,6 @@
   cursor: default;
 }
 
-.io-root .menu-wrap {
-  position: relative;
-}
-
 .io-root .menu {
   position: absolute;
   right: 0;
@@ -574,40 +431,6 @@
   box-shadow: var(--shadow-3);
   z-index: 20;
   animation: io-pop-in 160ms var(--morph-ease);
-}
-
-.io-root .menu-label {
-  padding: 6px 10px 4px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-
-.io-root .menu-item {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  width: 100%;
-  padding: 7px 10px;
-  border-radius: 8px;
-  font-size: 13px;
-  text-align: start;
-  transition: background 120ms ease;
-}
-.io-root .menu-item:hover {
-  background: color-mix(in srgb, var(--ink) 7%, transparent);
-}
-.io-root .menu-item.is-on {
-  color: var(--accent);
-  font-weight: 500;
-}
-
-.io-root .menu-sep {
-  height: 1px;
-  margin: 5px 8px;
-  background: var(--line);
 }
 
 .io-root .swatches {
@@ -623,26 +446,6 @@
 .io-root .check {
   width: 14px;
   color: var(--accent);
-}
-
-/* ------------------------------- trust strip ------------------------------- */
-
-.io-root .trust {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: none;
-  padding: 9px 16px;
-  font-size: 12.5px;
-  color: var(--ink-2);
-  background: var(--surface-2);
-  border-bottom: 1px dashed var(--line-strong);
-  animation: io-slide-down 320ms var(--morph-ease);
-}
-.io-root .trust .link {
-  margin-left: auto;
-  color: var(--accent);
-  border-bottom: 1px solid currentColor;
 }
 
 /* ---------------------------- stage ---------------------------- */
@@ -971,21 +774,6 @@
   font-style: normal;
 }
 
-.io-root .node-count {
-  position: absolute;
-  right: 6px;
-  top: 50%;
-  transform: translateY(-50%);
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 9px;
-  background: color-mix(in srgb, var(--branch) 20%, transparent);
-  color: var(--ink);
-  font: 600 11px/18px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'PingFang TC', 'Noto Sans TC', sans-serif;
-  text-align: center;
-}
-
 .io-root .node-linkchip {
   position: absolute;
   right: 8px;
@@ -1022,7 +810,6 @@
   background: var(--accent);
   color: var(--surface);
 }
-
 
 /* ---------------------------- overlays ---------------------------- */
 
@@ -1152,7 +939,6 @@
   transform: scale(1.06);
   box-shadow: var(--shadow-2);
 }
-
 
 .io-root .hud {
   position: absolute;
@@ -1608,12 +1394,6 @@
   border-bottom-width: 1px;
 }
 
-.io-root .inspector-empty {
-  margin: 18px 0 0;
-  font-size: 12.5px;
-  color: var(--ink-3);
-}
-
 .io-root .seg-tiles {
   display: flex;
   gap: 2px;
@@ -1642,26 +1422,6 @@
   box-shadow: var(--shadow-1);
 }
 
-.io-root .swatch-grid {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 5px;
-}
-
-.io-root .swatch {
-  height: 22px;
-  border-radius: 6px;
-  border: 1.5px solid transparent;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 12%, transparent);
-  transition: transform 120ms var(--morph-ease), box-shadow 120ms ease;
-}
-.io-root .swatch:hover {
-  transform: scale(1.12);
-}
-.io-root .swatch.is-on {
-  box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--accent);
-}
-
 /* ---------------------------- narrow viewports ---------------------------- */
 
 /* The toolbar holds four things that all want to stay whole. In order of what
@@ -1684,32 +1444,12 @@
    sheet above. Judged from the pane (`.is-medium`, `.is-narrow`), not the window, so a split pane behaves like a
    small window and a full-width panel never changes the answer. */
 .io-root .app.is-medium,
-.io-root .app.is-medium.rail-open,
-.io-root .app.is-narrow,
-.io-root .app.is-narrow.rail-open {
+.io-root .app.is-narrow {
   grid-template-columns: 0 minmax(0, 1fr);
 }
 .io-root .app.is-medium.inspector-open,
-.io-root .app.is-medium.rail-open.inspector-open,
-.io-root .app.is-narrow.inspector-open,
-.io-root .app.is-narrow.rail-open.inspector-open {
+.io-root .app.is-narrow.inspector-open {
   grid-template-columns: 0 minmax(0, 1fr) var(--inspector-w);
-}
-.io-root .app.is-medium .rail,
-.io-root .app.is-narrow .rail {
-  position: absolute;
-  left: 0;
-  /* Below the toolbar, not over it: otherwise the overlay hides the very button that closes it. */
-  top: var(--toolbar-h);
-  bottom: 0;
-  width: var(--rail-w);
-  z-index: 30;
-  box-shadow: var(--shadow-3);
-  animation: io-rail-in 240ms var(--morph-ease);
-}
-.io-root .app.is-medium .rail-head,
-.io-root .app.is-narrow .rail-head {
-  height: 40px;
 }
 
 /* A tight toolbar — the pane is narrow, or a side panel takes most of it (`.is-compact`, from the stage's width).
@@ -1731,9 +1471,6 @@
 .io-root .app.is-compact .toolbar {
   gap: 5px;
   padding: 0 8px;
-}
-.io-root .app.is-compact .doc-name .badge {
-  display: none;
 }
 .io-root .app.is-compact .doc-name-btn {
   max-width: 120px;
@@ -1771,7 +1508,6 @@
     /* The home indicator sits under the same corner when no navigation bar was measured. */
     bottom: calc(14px + max(env(safe-area-inset-bottom), var(--io-bottom-inset, 0px)));
   }
-  .io-root .rail,
   .io-root .inspector {
     padding-bottom: max(env(safe-area-inset-bottom), var(--io-bottom-inset, 0px));
   }
@@ -1830,14 +1566,6 @@
   .io-root .sheet-note.sk-note {
     align-items: flex-start;
     flex-wrap: wrap;
-  }
-  .io-root .trust {
-    font-size: 12px;
-    padding: 8px 12px;
-    flex-wrap: wrap;
-  }
-  .io-root .trust .link {
-    margin-left: 0;
   }
 }
 
@@ -2113,18 +1841,9 @@ body.is-mobile .io-root .app.is-editing .corner .help {
 .io-root .theme-card.is-on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); color: var(--ink); }
 /* the theme in effect while the map follows the default: shown, not chosen */
 .io-root .theme-card.is-auto { border-style: dashed; border-color: var(--line-strong); color: var(--ink); }
-.io-root .inspector-link { padding: 0; font: inherit; color: var(--accent); text-decoration-line: underline; text-underline-offset: 2px; background: none; border: 0; cursor: pointer; text-align: start; }
-.io-root .inspector-link:hover { color: var(--ink); }
-.io-root .inspector-foot { margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--line); }
 .io-root .theme-preview { display: flex; gap: 4px; align-items: center; justify-content: center; height: 34px; border-radius: 6px; border: 1px solid; }
 .io-root .theme-preview i { display: block; width: 10px; height: 10px; border-radius: 50%; }
 .io-root .theme-name { padding: 0 2px; font-weight: 600; }
-.io-root .inspector-toggle { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 13px; color: var(--ink); cursor: pointer; }
-.io-root .inspector-toggle input { accent-color: var(--accent); margin: 0; }
-
-/* obsidian: heading sizes inside the inspector */
-.io-root .size-seg { margin-bottom: 10px; }
-.io-root .size-seg button { font-weight: 600; }
 
 /* obsidian: media under a node's text */
 .io-root .node.has-media { flex-direction: column; justify-content: center; align-items: stretch; }
@@ -2224,7 +1943,7 @@ body.is-mobile .io-root .app.is-editing .corner .help {
   .io-root .node.is-miss, .io-root .node.is-dim { opacity: 0.55; }
 }
 @media (prefers-reduced-transparency: reduce) {
-  .io-root .find, .io-root .crumb, .io-root .toast, .io-root .hud, .io-root .edit-toolbar { backdrop-filter: none; background: var(--surface); }
+  .io-root .find, .io-root .crumb, .io-root .toast, .io-root .hud { backdrop-filter: none; background: var(--surface); }
 }
 
 /* obsidian: touch screens — targets the HIG's 44pt-ish, the row wraps instead of overflowing */
@@ -2400,8 +2119,6 @@ body.is-mobile .io-root .app.is-editing .corner .help {
 .io-root .palette-slot.is-empty { background: transparent; border: 1.5px dashed var(--line-strong); color: var(--ink-3); font-size: 15px; line-height: 1; box-shadow: none; }
 .io-root .palette-slot.is-empty:hover { border-color: var(--accent); color: var(--accent); }
 .io-root .palette-slot.is-open { box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--accent); }
-.io-root .palette-editor { margin: 4px 0 8px; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
-.io-root .palette-editor-foot { display: flex; justify-content: space-between; margin-top: 8px; }
 .io-root .inspector-input { width: 100%; height: 28px; padding: 0 8px; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: 7px; outline: none; }
 .io-root .inspector-input:focus { border-color: var(--accent); }
 .io-root .seg-tiles.is-disabled { opacity: 0.5; }

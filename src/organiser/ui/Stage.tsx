@@ -359,7 +359,7 @@ export function Stage({
       return
     }
     const el = e.target as HTMLElement
-    if (el.closest('.node') || el.closest('.edit-toolbar')) return
+    if (el.closest('.node') || el.closest('.node-toolbar')) return
     capture(e.currentTarget as HTMLElement, e.pointerId)
     // obsidian: a plain drag on empty space selects; panning is scroll, pinch, ⌥/Space-drag or the middle button.
     if (e.button === 1 || e.altKey || spaceRef.current || e.pointerType === 'touch') {
