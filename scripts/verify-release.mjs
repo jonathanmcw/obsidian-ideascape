@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { readFileSync, statSync } from "node:fs";
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
+/** Git, when this is a checkout with tags; "" anywhere else (a tarball, a sandbox), where the tag check is skipped. */
+const git = args => { try { return execFileSync("git", args, { cwd: new URL("..", import.meta.url), encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }); } catch { return ""; } };
 const json = path => JSON.parse(read(path));
 
 const manifest = json("manifest.json");
@@ -18,6 +21,16 @@ assert.equal(
   manifest.minAppVersion,
   "versions.json must map the release to manifest.minAppVersion",
 );
+
+// A version that already carries a tag has already been published under that number: Obsidian only updates a
+// vault when the number goes up, so releasing it again reaches nobody. The tag pointing at the commit being
+// released is the one case that is fine — that is what the release workflow checks out.
+const tagged = git(["tag", "--list", manifest.version]).trim();
+if (tagged) {
+  const head = git(["rev-parse", "HEAD^{commit}"]).trim();
+  const atTag = git(["rev-parse", `${manifest.version}^{commit}`]).trim();
+  assert.equal(atTag, head, `${manifest.version} is already tagged at ${atTag.slice(0, 7)}: bump the version before releasing`);
+}
 
 const readme = read("README.md");
 assert.match(readme, /https:\/\/community\.obsidian\.md\/plugins\/ideascape/, "README must link to the live Community listing");

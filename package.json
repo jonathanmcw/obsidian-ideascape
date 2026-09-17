@@ -1,6 +1,6 @@
 {
   "name": "obsidian-ideascape",
-  "version": "0.9.3",
+  "version": "0.9.4",
   "description": "Create keyboard-first mind maps and outlines that stay as ordinary Markdown notes.",
   "main": "main.js",
   "type": "module",
