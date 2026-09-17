@@ -24,6 +24,8 @@ trap cleanup EXIT
 
 find_cli() {
   if [ -n "${OBSIDIAN_CLI:-}" ] && [ -x "$OBSIDIAN_CLI" ]; then printf '%s\n' "$OBSIDIAN_CLI"; return; fi
+  # However it was installed: on PATH (which is where Obsidian's own installer puts it), or in the app bundle.
+  if command -v obsidian >/dev/null 2>&1; then command -v obsidian; return; fi
   if [ -x /usr/local/bin/obsidian ]; then printf '%s\n' /usr/local/bin/obsidian; return; fi
   if [ -x /Applications/Obsidian.app/Contents/MacOS/obsidian-cli ]; then
     printf '%s\n' /Applications/Obsidian.app/Contents/MacOS/obsidian-cli; return
