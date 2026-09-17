@@ -127,6 +127,7 @@
     const webContents = electron.getCurrentWebContents();
     while (recording) {
       const started = performance.now();
+      document.querySelectorAll(".tooltip").forEach(element => element.remove());
       const rect = host.getBoundingClientRect();
       const image = await webContents.capturePage({
         x: Math.round(rect.x),
@@ -145,13 +146,15 @@
     await sleep(900);
     api().reveal(visibleLeaf.view.doc.rootId);
     await typeNode("addChild", "Where to stay", { keys: ["Tab"], label: "Add child", hold: 1100 });
-    await typeNode("addSibling", "What to eat");
+    await sleep(380);
+    await typeNode("addSibling", "What to eat", { keys: ["Enter"], label: "Add sibling", hold: 1050 });
     await fit();
     api().zoomBy(0.84);
     await sleep(350);
 
     await typeNode("addChild", "Pastéis de Belém");
-    showKey(["⌘", "↵"], "Make checklist", 1250);
+    await fit(500);
+    showKey(["⌘", "Enter"], "Make checklist", 1250);
     api().toggleTask();
     await sleep(620);
     await typeNode("addSibling", "Bifana");
