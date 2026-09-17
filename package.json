@@ -1,6 +1,6 @@
 {
   "name": "obsidian-ideascape",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "Build mind maps with intuitive keyboard actions, shortcuts, and an outline view.",
   "main": "main.js",
   "private": true,
