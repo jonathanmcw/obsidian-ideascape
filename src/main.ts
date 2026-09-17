@@ -114,6 +114,15 @@ export default class MapPlugin extends Plugin {
       this.addCommand({ id: `map-align-${al}`, name: `Align node text ${label}`, checkCallback: c => this.withMap(c, a => a.align(al)) });
     for (const [z, label] of [[undefined, "body"], [1, "heading 1"], [2, "heading 2"], [3, "heading 3"]] as const)
       this.addCommand({ id: `map-size-${z ?? 0}`, name: `Set node type: ${label}`, checkCallback: c => this.withMap(c, a => a.size(z)) });
+    // Every chord the view's own Scope binds has a command behind it, so it can be given different keys in
+    // Settings → Hotkeys — or reached from the palette by someone who never learned the chord.
+    this.addCommand({ id: "map-edit-all", name: "Edit the selected node with its text selected", checkCallback: c => this.withMap(c, a => a.editAll()) });
+    for (const f of ["bold", "italic", "underline"] as const)
+      this.addCommand({ id: `map-format-${f}`, name: `Toggle ${f} in the node being edited`, checkCallback: c => this.withMap(c, a => a.format(f)) });
+    this.addCommand({ id: "map-zoom-in", name: "Zoom the map in", checkCallback: c => this.withMap(c, a => a.zoomBy(1.2)) });
+    this.addCommand({ id: "map-zoom-out", name: "Zoom the map out", checkCallback: c => this.withMap(c, a => a.zoomBy(1 / 1.2)) });
+    for (const [dir, delta] of [["up", -1], ["down", 1]] as const)
+      this.addCommand({ id: `map-reorder-${dir}`, name: `Move the selected node ${dir} among its siblings`, checkCallback: c => this.withMap(c, a => a.reorder(delta)) });
     for (const [dir, dx, dy] of [["left", -8, 0], ["right", 8, 0], ["up", 0, -8], ["down", 0, 8]] as const)
       this.addCommand({ id: `map-nudge-${dir}`, name: `Nudge selected branch ${dir} (free layout)`, checkCallback: c => this.withMap(c, a => a.nudge(dx, dy)) });
     this.registerEvent(this.app.workspace.on("file-menu", (menu, file) => {
