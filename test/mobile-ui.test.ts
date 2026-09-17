@@ -95,6 +95,7 @@ test("mobile UI: More inserts a line break without changing Return's sibling act
   const toolbar = readFileSync(new URL("../src/organiser/ui/NodeBar.tsx", import.meta.url), "utf8");
   assert.match(toolbar, /<IconNewLine\s*\/>/);
   assert.match(toolbar, /<Name>New line<\/Name>/);
+  assert.match(toolbar, /More editing options[\s\S]*<IconNewLine\s*\/>[\s\S]*<Name>New line<\/Name>/, "More precedes New line in the phone dock");
   assert.doesNotMatch(toolbar, /nt-arrange-drop/, "Move is no longer a second menu in the primary dock");
 });
 

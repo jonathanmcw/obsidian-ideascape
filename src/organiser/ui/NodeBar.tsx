@@ -486,16 +486,16 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
             </Name>
           </button>
         ))}
-        {docked && (
-          <button type="button" tabIndex={-1} onClick={() => { onNewLine(); setMenu(null) }}>
-            <IconNewLine />
-            <Name>New line</Name>
-          </button>
-        )}
         {coarse && (
           <button type="button" tabIndex={-1} className={menu === 'more' ? 'is-on' : ''} aria-haspopup="menu" aria-expanded={menu === 'more'} onClick={() => toggle('more')}>
             <IconMore />
             <Name>{docked ? 'More editing options' : 'More formatting'}</Name>
+          </button>
+        )}
+        {docked && (
+          <button type="button" tabIndex={-1} onClick={() => { onNewLine(); setMenu(null) }}>
+            <IconNewLine />
+            <Name>New line</Name>
           </button>
         )}
         {!docked && <span className="nt-sep" />}
