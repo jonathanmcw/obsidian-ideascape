@@ -1,4 +1,4 @@
-// keycast: the key-hint pill in docs/showcase.gif. A floating panel that names the key just pressed, for screen
+// keycast: the key-hint pill in docs/showcase-clean.gif. A floating panel that names the key just pressed, for screen
 // recordings made by a script that drives the keyboard (the plugin itself draws nothing of the kind).
 //
 // Build:  swiftc -O scripts/keycast.swift -o /tmp/keycast

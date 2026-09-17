@@ -1,6 +1,6 @@
 # Ideascape
 
-![A Lisbon weekend built from the keyboard: Tab and Enter add nodes, ⌘B and ⌘I style them, ⌘↵ adds checkboxes, ⇧⌘7 numbers a list, ⌘. folds a branch, ⌥⌘F focuses on it, and ⌘2 and ⌘1 switch between outline and map. Each key shows in the corner as it is pressed.](docs/showcase.gif)
+![A Lisbon weekend built from the keyboard: Tab and Enter add nodes, ⌘B and ⌘I style them, ⌘↵ adds checkboxes, ⇧⌘7 numbers a list, ⌘. folds a branch, ⌥⌘F focuses on it, and ⌘2 and ⌘1 switch between outline and map. Each key shows in the corner as it is pressed.](docs/showcase-clean.gif)
 
 Build mind maps at the speed of an outliner, without leaving the keyboard. Tab adds a child, Enter adds a sibling, arrows navigate, and typing edits the selected node. Switch the same note between map and outline views with one shortcut; underneath, it stays a readable Markdown list.
 

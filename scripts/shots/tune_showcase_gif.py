@@ -8,7 +8,7 @@ This helper keeps that workflow intact, but smooths two recording artifacts:
 - repeated lower-right keycast flashes that distract from the map
 
 Usage:
-  python3 scripts/shots/tune_showcase_gif.py /path/to/raw-showcase.gif docs/showcase.gif
+  python3 scripts/shots/tune_showcase_gif.py /path/to/raw-showcase.gif docs/showcase-clean.gif
 """
 
 from __future__ import annotations
