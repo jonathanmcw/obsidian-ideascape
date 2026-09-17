@@ -137,7 +137,7 @@ export function ShortcutsSheet({ onClose, onTour, mac: macProp }: Props) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <button className="icon-btn" onClick={onClose} title="Close" aria-label="Close">
+          <button className="icon-btn" onClick={onClose} aria-label="Close">
             <IconClose />
           </button>
         </div>
@@ -184,7 +184,7 @@ export function ShortcutsSheet({ onClose, onTour, mac: macProp }: Props) {
         </div>
 
         <p className="sheet-note sk-note">
-          <span>Commands can be given your own keys in Settings › Hotkeys.</span>
+          <span>Commands can be given your own keys in Settings → Hotkeys.</span>
           {onTour && (
             <button
               className="sk-link"

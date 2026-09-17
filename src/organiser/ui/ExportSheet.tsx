@@ -77,7 +77,7 @@ export function ExportSheet({ doc, kind, themeId, nodeStyle, palette, resolveEmb
       <div ref={dialog} tabIndex={-1} style={{ outline: 'none' }} className="sheet" onMouseDown={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Export">
         <div className="sheet-head">
           <h2>Export “{doc.name}”</h2>
-          <button className="icon-btn" onClick={onClose} title="Close">
+          <button className="icon-btn" onClick={onClose} aria-label="Close">
             <IconClose />
           </button>
         </div>

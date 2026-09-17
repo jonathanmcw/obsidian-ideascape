@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildCustomTheme } from "../src/organiser/theme.ts";
+import { buildCustomTheme, readableOn } from "../src/organiser/theme.ts";
 
 const lum = (hex: string) => {
   const m = /^#(..)(..)(..)$/.exec(hex)!;
@@ -41,4 +41,10 @@ test("theme: where both ways out of the stage would do, the accent takes the sho
   const shown = t.vars["--accent"]!;
   assert.ok(lum(shown) > lum("#6e6e6e"), `the accent went lighter, not darker (got ${shown})`);
   assert.ok(contrast(shown, "#6a6a6a") >= 2.4, "and it clears the floor");
+});
+
+test("theme: a done checkbox's tick stays readable on a pale branch colour", () => {
+  assert.equal(readableOn("#3b6fd4"), "#fff", "a mid blue keeps white");
+  assert.equal(readableOn("#e5c07b"), "#1a1a1a", "a pale yellow takes a dark tick");
+  assert.equal(readableOn("var(--ink-3)"), "#fff", "an unresolved colour keeps the old white");
 });

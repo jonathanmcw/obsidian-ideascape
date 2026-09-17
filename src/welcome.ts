@@ -1,4 +1,4 @@
-import { Modal, type App, type EventRef } from "obsidian";
+import { Modal, Platform, type App, type EventRef } from "obsidian";
 import { PLUGIN_NAME } from "./brand";
 import { MAP_FORMATS } from "./organiser/model/markdown";
 import { chord, macKeys } from "./organiser/ui/keys";
@@ -24,8 +24,10 @@ export interface Slide {
   alt: string;
 }
 
-/** Three slides: what a map is, the two views, and how a note becomes a map. Start, on the last, opens the tour. */
-export function slides(mac = macKeys()): Slide[] {
+/** Three slides: what a map is, the two views, and how a note becomes a map. Start, on the last, opens the tour.
+ *  On a phone or tablet the words name what is there to touch: the view switch and a note's menu, not keys and a
+ *  right-click. */
+export function slides(mac = macKeys(), touch = false): Slide[] {
   const k = (keys: string) => chord(keys, mac);
   return [
     {
@@ -36,13 +38,13 @@ export function slides(mac = macKeys()): Slide[] {
     },
     {
       title: "One note, two views",
-      body: `${k("⌘1")} shows the map and ${k("⌘2")} the outline. Fold, focus and find work in both, and both edit the same note.`,
+      body: `${touch ? "Map and Outline, at the top of the view, switch between them" : `${k("⌘1")} shows the map and ${k("⌘2")} the outline`}. Fold, focus and find work in both, and both edit the same note.`,
       image: { dark: outlineDark, light: outlineLight },
       alt: "The same Kyoto weekend as an outline, with a coloured bar marking each branch",
     },
     {
       title: "Turn a note into a map",
-      body: `Right-click any note and choose Open as a map. Its heading becomes the centre and its lists become branches. Notes with the ${MAP_FORMATS[0].key} property open as maps on their own.`,
+      body: `${touch ? "Open any note's menu" : "Right-click any note"} and choose Open as a map. Its heading becomes the centre and its lists become branches. Notes with the ${MAP_FORMATS[0].key} property open as maps on their own.`,
       image: { dark: convertDark, light: convertLight },
       alt: "The file menu on a note in the file explorer, with Open as a map among its items and the Kyoto map behind",
     },
@@ -52,7 +54,7 @@ export function slides(mac = macKeys()): Slide[] {
 /** Shown once, the first time the plugin is turned on. Arrow keys and the dots move between slides; Start, on the
  *  last slide, opens the tour. It writes nothing until that button is pressed. */
 export class WelcomeModal extends Modal {
-  private readonly slides = slides();
+  private readonly slides = slides(macKeys(), Platform.isMobile);
   private index = 0;
   private shot!: HTMLImageElement;
   private panel!: HTMLElement;

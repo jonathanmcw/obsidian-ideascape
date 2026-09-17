@@ -449,7 +449,7 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
                   }}
                 >
                   <i className="nt-dot" style={{ background: hex }} />
-                  <Name>{on ? `Own colour ${slot + 1} — click again to change it` : `Own colour ${slot + 1}`}</Name>
+                  <Name>{on ? `Own colour ${slot + 1} — choose again to change it` : `Own colour ${slot + 1}`}</Name>
                 </button>
               ) : (
                 <button key={slot} type="button" tabIndex={-1} role="menuitem" className={`nt-empty${picking === slot ? ' is-picking' : ''}`} onClick={() => openPicker(slot)}>

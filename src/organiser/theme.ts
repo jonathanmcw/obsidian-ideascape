@@ -338,6 +338,14 @@ export function applyTheme(root: HTMLElement, id: string) {
 
 /** A node's branch colour: one of the theme's eight, or one of the map's own (indices 8 and up,
  *  from `palette`); a custom slot that is empty falls back to the theme colour at that place. */
+/** White or near-black, whichever stands out more on a colour: the tick in a done checkbox sits on the branch colour,
+ *  and a pale one (a yellow, a custom pastel) loses a white tick. Anything but a #rrggbb keeps white. */
+export function readableOn(color: string): string {
+  if (!HEX_RE.test(color)) return '#fff'
+  const l = luminance(hexToRgb(color))
+  return contrast(l, 1) >= contrast(l, luminance([26, 26, 26])) ? '#fff' : '#1a1a1a'
+}
+
 export function branchColor(themeId: string, branch: number | null, palette?: readonly string[]): string {
   if (branch == null) return 'var(--ink-3)'
   if (branch >= 8) {

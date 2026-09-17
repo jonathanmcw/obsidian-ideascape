@@ -10,7 +10,7 @@ import { leftOf, linkPath, snapX, treePath } from '../layout'
 import { dropTargetFor, hitTest, type DropTarget } from '../layout/drop'
 import { MAX_PILL_W, MAX_ROOT_TEXT_W, MAX_TEXT_W, MIN_PILL_W, ROW_LEAD, ROW_PAD, metricsFor, nodeMetrics, outlineTextAvailable, setMediaSize } from '../layout/measure'
 import { stripEmbeds } from '../model/inline'
-import { branchColor, themeById } from '../theme'
+import { branchColor, readableOn, themeById } from '../theme'
 import { isDescendant, nodeTypeOf, ordinalOf, subtreeIds } from '../model/doc'
 import { mediaFiles } from '../model/ingest'
 import { outlineSwipeAction } from './mobile'
@@ -499,6 +499,24 @@ export function Stage({
     if (d.kind === 'node' && d.moved) setSettleKey((k) => k + 1)
   }
 
+  // Escape takes a gesture back the way a lost pointer does: a dragged node eases home, a resize or a branch being
+  // pulled out commits nothing, a selection box or a pan stops where it is. Caught before the map's own Escape,
+  // which would otherwise clear the selection while the drag carried on under the pointer.
+  const cancelGestureRef = useRef(cancelGesture)
+  cancelGestureRef.current = cancelGesture
+  useEffect(() => {
+    const doc = hostRef.current?.ownerDocument ?? document
+    const onKey = (e: KeyboardEvent) => {
+      const d = dragRef.current
+      if (e.key !== 'Escape' || !d || d.kind === 'pinch') return
+      e.preventDefault()
+      e.stopPropagation()
+      cancelGestureRef.current(-1)
+    }
+    doc.addEventListener('keydown', onKey, true)
+    return () => doc.removeEventListener('keydown', onKey, true)
+  }, [hostRef])
+
   const onPointerUp = (e: React.PointerEvent) => {
     pointers.current.delete(e.pointerId)
     const d = dragRef.current
@@ -649,7 +667,7 @@ export function Stage({
       }}
       onPointerDown={onPointerDownStage}
       onContextMenu={(e) => {
-        if ((e.target as HTMLElement).closest('.node, .edit-toolbar, input, button')) return
+        if ((e.target as HTMLElement).closest('.node, .node-toolbar, input, button')) return
         e.preventDefault()
         api.contextMenu(e.nativeEvent, null)
       }}
@@ -1191,6 +1209,7 @@ const NodeView = memo(function NodeView({
         ['--node-radius' as string]: `${radius}px`,
         ['--i' as string]: stagger,
         ['--branch' as string]: branchColor(themeId, n.branch, palette),
+        ...(n.task != null ? { ['--branch-ink' as string]: readableOn(branchColor(themeId, n.branch, palette)) } : {}),
         ['--align' as string]: align,
         ['--depth' as string]: box.depth,
         ['--dir' as string]: box.dir,

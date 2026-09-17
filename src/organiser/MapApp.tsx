@@ -1779,10 +1779,10 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
               <div className="zoom" role="group" aria-label="Zoom">
                 {/* Through zoomBy, the same path the keys take: the middle of the stage stays put instead of the
                     map sliding away under the pointer. */}
-                <button onClick={() => zoomBy(1.2)} title={`Zoom in — ${chord('⌥⌘=')}`}>
+                <button onClick={() => zoomBy(1.2)} aria-label={`Zoom in — ${chord('⌥⌘=')}`} data-tooltip-position="left">
                   +
                 </button>
-                <button onClick={() => zoomBy(1 / 1.2)} title={`Zoom out — ${chord('⌥⌘-')}`}>
+                <button onClick={() => zoomBy(1 / 1.2)} aria-label={`Zoom out — ${chord('⌥⌘-')}`} data-tooltip-position="left">
                   −
                 </button>
               </div>
@@ -1791,16 +1791,16 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
                 typed into — on a touch screen, taking back an empty node Enter just made — and the undo would then take back
                 the change before it. */}
             <div className="history" role="group" aria-label="History" onPointerDown={(e) => e.preventDefault()} onMouseDown={(e) => e.preventDefault()}>
-              <button onClick={undo} disabled={!(s.history.past.length > 0 && historyTick >= 0)} aria-label={`Undo — ${chord('⌘Z')}`}>
+              <button onClick={undo} disabled={!(s.history.past.length > 0 && historyTick >= 0)} aria-label={`Undo — ${chord('⌘Z')}`} data-tooltip-position="left">
                 <IconUndo size={15} />
               </button>
               {s.history.future.length > 0 && historyTick >= 0 && (
-                <button onClick={redo} aria-label={`Redo — ${chord('⇧⌘Z')}`}>
+                <button onClick={redo} aria-label={`Redo — ${chord('⇧⌘Z')}`} data-tooltip-position="left">
                   <IconRedo size={15} />
                 </button>
               )}
             </div>
-            <button className="help" onClick={() => setShowKeys(true)} title="Shortcuts — ?">
+            <button className="help" onClick={() => setShowKeys(true)} aria-label="Shortcuts — ?" data-tooltip-position="left">
               ?
             </button>
           </div>
@@ -1879,6 +1879,9 @@ function crumbText(text: string | undefined): string {
 /** obsidian: the note's name in the canvas's top-left corner, like Obsidian's inline title; click to rename. */
 function DocTitle({ name, onRename }: { name: string; onRename: (name: string) => void | Promise<void> }) {
   const [editing, setEditing] = useState(false)
+  // Esc leaves through blur like Enter, marked as a cancel: whether the field's removal also sends a blur is then
+  // beside the point, and a typed name is never saved on the way out.
+  const cancelled = useRef(false)
   return (
     <div className="doc-name">
       {editing ? (
@@ -1888,12 +1891,16 @@ function DocTitle({ name, onRename }: { name: string; onRename: (name: string) =
           defaultValue={name}
           onBlur={(e) => {
             const next = e.currentTarget.value.trim()
-            if (next && next !== name) void onRename(next)
+            if (!cancelled.current && next && next !== name) void onRename(next)
+            cancelled.current = false
             setEditing(false)
           }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') e.currentTarget.blur()
-            if (e.key === 'Escape') setEditing(false)
+            if (e.key === 'Escape') {
+              cancelled.current = true
+              e.currentTarget.blur()
+            }
             e.stopPropagation()
           }}
         />

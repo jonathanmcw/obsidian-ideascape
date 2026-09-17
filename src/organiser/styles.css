@@ -382,8 +382,10 @@
 }
 
 .io-root .doc-name-input {
-  font: 600 14px inherit;
+  /* the button's size and weight, so clicking the name to rename it does not change how it reads */
   font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--ink);
   background: var(--surface-2);
   border: 1px solid var(--accent);
@@ -1205,7 +1207,7 @@
   place-items: center;
   /* obsidian: more room at the bottom, where the app's status bar sits over the view */
   padding: 24px 24px 48px;
-  background: color-mix(in srgb, var(--ink) 32%, transparent);
+  background: rgba(0, 0, 0, 0.32);
   backdrop-filter: blur(3px);
   animation: io-fade-in 160ms ease;
 }
@@ -1612,7 +1614,7 @@
   color: var(--ink-3);
 }
 
-.io-root .seg-mini {
+.io-root .seg-tiles {
   display: flex;
   gap: 2px;
   padding: 3px;
@@ -1620,7 +1622,7 @@
   border: 1px solid var(--line);
   border-radius: 9px;
 }
-.io-root .seg-mini button {
+.io-root .seg-tiles button {
   flex: 1;
   display: grid;
   place-items: center;
@@ -1630,11 +1632,11 @@
   font-size: 12px;
   transition: background 120ms ease, color 120ms ease;
 }
-.io-root .seg-mini button:hover {
+.io-root .seg-tiles button:hover {
   color: var(--ink);
   background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
-.io-root .seg-mini button.is-on {
+.io-root .seg-tiles button.is-on {
   background: var(--surface);
   color: var(--accent);
   box-shadow: var(--shadow-1);
@@ -2012,7 +2014,7 @@ body.is-mobile .io-root .app.is-editing .corner .help {
 /* a finger-sized target around a 15px box */
 .io-root .node-check::after { content: ''; position: absolute; inset: -7px; }
 .io-root .node-check:hover { border-color: var(--accent); }
-.io-root .node-check.is-done { background: var(--branch, var(--accent)); border-color: transparent; color: #fff; }
+.io-root .node-check.is-done { background: var(--branch, var(--accent)); border-color: transparent; color: var(--branch-ink, #fff); }
 .io-root .node.is-done .node-label:not([contenteditable='true']) { color: var(--ink-3); text-decoration-line: line-through; text-decoration-color: color-mix(in srgb, var(--ink-3) 70%, transparent); }
 .io-root .node.is-done .node-label:not([contenteditable='true']) a.node-tag { color: var(--ink-3); }
 /* Floating formatting bar while editing */
@@ -2055,7 +2057,6 @@ body.is-mobile .io-root .app.is-editing .corner .help {
 .io-root .node-toolbar button:hover { background: var(--surface-2); color: var(--ink); }
 .io-root .node-toolbar button.is-on { background: var(--accent-soft); color: var(--accent); }
 .io-root .node-toolbar .nt-sep { width: 1px; height: 16px; margin: 0 3px; background: var(--line); }
-.io-root .node-toolbar .size { width: auto; min-width: 26px; padding: 0 6px; font: 600 11px/1 inherit; font-family: inherit; }
 .io-root .node-toolbar .nt-dot { display: block; width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18); }
 .io-root .node-toolbar .nt-palette { padding: 2px 3px; }
 .io-root .node-toolbar .nt-palette button { width: 24px; }
@@ -2205,8 +2206,10 @@ body.is-mobile .io-root .app.is-editing .corner .help {
 .io-root .node.is-miss { opacity: 0.38; }
 
 /* ---------- accessibility: hit slop, focus, contrast modes ---------- */
-/* The knob and the resize handle keep their small look but take a 24px+ pointer target. */
+/* The knob, the resize handle and the outline's fold toggle keep their small look but take a 24px+ pointer target.
+   The toggle's reach stops short of the branch bar beside it, which still selects the row. */
 .io-root .node-knob::before { content: ''; position: absolute; inset: -6px; border-radius: 50%; }
+.io-root .node-disc::before { content: ''; position: absolute; inset: -4px; }
 .io-root .node-resize::before { content: ''; position: absolute; top: 0; bottom: 0; left: -8px; right: -8px; }
 .io-root .node:focus { outline: none; } /* the selection ring is the focus indicator: the focused node is always the selected one */
 .io-root input:focus-visible,
@@ -2370,7 +2373,7 @@ body.is-mobile .io-root .app.is-editing .corner .help {
 .io-root .cp-row { display: flex; align-items: center; gap: 8px; }
 .io-root .cp-swatch { display: block; flex: none; width: 20px; height: 20px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18); }
 /* small buttons: a filled primary and a quiet destructive one */
-.io-root .btn { height: 26px; padding: 0 10px; border-radius: 7px; font: 600 12px inherit; font-family: inherit; color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--line); cursor: pointer; transition: background 120ms ease, color 120ms ease; }
+.io-root .btn { height: 26px; padding: 0 10px; border-radius: 7px; font-family: inherit; font-size: 12px; font-weight: 600; color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--line); cursor: pointer; transition: background 120ms ease, color 120ms ease; }
 .io-root .btn:hover { color: var(--ink); border-color: var(--line-strong); }
 .io-root .btn.is-primary { color: #fff; background: var(--accent); border-color: transparent; }
 .io-root .btn.is-primary:hover { color: #fff; filter: brightness(1.08); }
@@ -2399,17 +2402,17 @@ body.is-mobile .io-root .app.is-editing .corner .help {
 .io-root .palette-slot.is-open { box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--accent); }
 .io-root .palette-editor { margin: 4px 0 8px; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
 .io-root .palette-editor-foot { display: flex; justify-content: space-between; margin-top: 8px; }
-.io-root .inspector-input { width: 100%; height: 28px; padding: 0 8px; font: 500 13px inherit; font-family: inherit; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: 7px; outline: none; }
+.io-root .inspector-input { width: 100%; height: 28px; padding: 0 8px; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: 7px; outline: none; }
 .io-root .inspector-input:focus { border-color: var(--accent); }
-.io-root .seg-mini.is-disabled { opacity: 0.5; }
-.io-root .seg-mini button:disabled { cursor: default; }
+.io-root .seg-tiles.is-disabled { opacity: 0.5; }
+.io-root .seg-tiles button:disabled { cursor: default; }
 /* the custom theme's own Edit button sits in its card's corner, over the preview — a sibling of the card, not inside it */
 .io-root .theme-card-wrap { position: relative; display: grid; }
 .io-root .theme-edit { position: absolute; top: 9px; right: 9px; width: 22px; height: 22px; display: grid; place-items: center; padding: 0; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-2); box-shadow: var(--shadow-1); }
 .io-root .theme-edit:hover { color: var(--accent); border-color: var(--accent); }
 .io-root .theme-edit svg { display: block; }
 /* four options in a 224px panel: two rows */
-.io-root .seg-mini.wide.grid-2 { display: grid; grid-template-columns: 1fr 1fr; }
+.io-root .seg-tiles.wide.grid-2 { display: grid; grid-template-columns: 1fr 1fr; }
 
 /* obsidian: the Document panel's full-width segmented control (the toolbar's, stretched) */
 .io-root .seg.seg-full { display: flex; width: 100%; }

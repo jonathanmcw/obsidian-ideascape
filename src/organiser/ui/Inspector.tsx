@@ -162,7 +162,7 @@ export function Inspector({ themeId, themePinned, defaultThemeId, nodeStyle, sha
                   </button>
                   {/* The custom theme is the one you can change: its editor opens from the card itself. */}
                   {custom && (
-                    <button type="button" className="theme-edit" onClick={() => setEditingTheme(true)} aria-label="Edit the custom theme" title="Edit the custom theme">
+                    <button type="button" className="theme-edit" onClick={() => setEditingTheme(true)} aria-label="Edit the custom theme">
                       <IconPencil />
                     </button>
                   )}
@@ -269,7 +269,7 @@ function CustomThemeEditor({ def, onChange }: { def: CustomThemeDef; onChange: (
       </section>
       <section>
         <h3>Start from</h3>
-        <div className="seg-mini wide grid-2" role="group">
+        <div className="seg-tiles wide grid-2" role="group">
           {THEMES.map((t) => (
             <button key={t.id} className={def.base === t.id ? 'is-on' : ''} onClick={() => onChange({ ...def, base: t.id })} aria-pressed={def.base === t.id}>
               {t.name}
