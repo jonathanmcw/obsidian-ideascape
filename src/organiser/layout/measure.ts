@@ -249,6 +249,12 @@ export const ROW_GAP = 4
 export const INDENT = 22
 /** Room for the disclosure triangle + colour dot at the head of an outline row. */
 export const ROW_LEAD = 34
+const MIN_OUTLINE_ROW_W = ROW_LEAD + 112
+/** Keep deep outlines inside the document column. Before the app supplies a row width (tests and utilities), use
+ *  the ordinary fixed indent. */
+export function outlineIndent(depth: number): number {
+  return outlineRowW > 0 ? Math.min(depth * INDENT, Math.max(0, outlineRowW - MIN_OUTLINE_ROW_W)) : depth * INDENT
+}
 /** obsidian: a task's checkbox, drawn at the head of the text, and the gap after it. */
 export const CHECK_W = 15
 const CHECK_GAP = 7
@@ -290,10 +296,12 @@ export interface NodePlace {
   isRoot: boolean
   ordinal: number | null
   linked: boolean
+  /** Outline indentation consumes this much of the shared document width. */
+  depth?: number
 }
 
-export function metricsFor(doc: IODoc, id: NodeId, shape: LayoutKind): NodeMetrics {
-  const place = { isRoot: id === doc.rootId, ordinal: ordinalOf(doc, id), linked: shape === 'outline' && doc.links.some((l) => l.from === id || l.to === id) }
+export function metricsFor(doc: IODoc, id: NodeId, shape: LayoutKind, depth = 0): NodeMetrics {
+  const place = { isRoot: id === doc.rootId, ordinal: ordinalOf(doc, id), linked: shape === 'outline' && doc.links.some((l) => l.from === id || l.to === id), depth }
   return nodeMetrics(doc.nodes[id], place, shape)
 }
 
@@ -334,15 +342,18 @@ export function nodeMetrics(n: IONode, place: NodePlace, shape: LayoutKind): Nod
   }
 
   if (outline) {
-    const media = mediaBoxes(embeds, Math.min(360, outlineTextW))
+    const indent = outlineIndent(place.depth ?? 0)
+    const textAvailable = Math.max(120, outlineTextW - indent)
+    const rowAvailable = Math.max(ROW_LEAD + 80, outlineRowW - indent)
+    const media = mediaBoxes(embeds, Math.min(360, textAvailable))
     const mediaH = media.reduce((h, m) => h + m.h + MEDIA_GAP, 0)
-    const lines = wrapLines(text, fontWeight, fontSize, outlineTextW - lead.w, measureFor(fontWeight, fontSize))
+    const lines = wrapLines(text, fontWeight, fontSize, Math.max(40, textAvailable - lead.w), measureFor(fontWeight, fontSize))
     const textW = Math.max(...lines.map((l) => lineWidth(l, text, fontWeight, fontSize, measureFor(fontWeight, fontSize))))
     // The outline is the only shape that shows free links, as a count chip —
     // so it's the only shape that has to leave room for one.
     const links = place.linked ? 44 : 0
     return {
-      w: Math.max(ROW_LEAD + lead.w + textW + 14 + links, outlineRowW),
+      w: Math.max(ROW_LEAD + lead.w + textW + 14 + links, rowAvailable),
       h: lines.length * lineH + ROW_PAD * 2 + mediaH,
       fontSize,
       fontWeight,

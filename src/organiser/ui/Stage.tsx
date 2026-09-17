@@ -796,7 +796,7 @@ export function Stage({
             top={top}
             bottom={bottom}
             stageWidth={stageW}
-            node={{ isRoot: barId === doc.rootId, align: n.align ?? 'center', size: n.size, lines: metricsFor(doc, barId, kind).lines.length, branch: n.branch ?? null, ordered: !!n.ordered, task: n.task != null }}
+            node={{ isRoot: barId === doc.rootId, align: n.align ?? 'center', size: n.size, lines: metricsFor(doc, barId, kind, box.depth).lines.length, branch: n.branch ?? null, ordered: !!n.ordered, task: n.task != null }}
             branches={themeById(themeId).branches}
             palette={palette}
             onFormat={(f) => void applyFormat(f, stageRef.current?.ownerDocument)}
@@ -1072,7 +1072,7 @@ const NodeView = memo(function NodeView({
   api,
 }: NodeProps) {
   const outline = kind === 'outline'
-  const m = nodeMetrics(n, { isRoot, ordinal, linked: links > 0 }, kind)
+  const m = nodeMetrics(n, { isRoot, ordinal, linked: links > 0, depth: box.depth }, kind)
   const align: Align = outline ? 'left' : n.align ?? 'center'
   const padX = isRoot ? 22 : 16
   const padY = isRoot ? 12 : 8
@@ -1258,7 +1258,7 @@ const NodeView = memo(function NodeView({
           fontSize: m.fontSize,
           lineHeight: `${m.lineH}px`,
           fontWeight: m.fontWeight,
-          ...(editing ? { whiteSpace: 'pre-wrap' as const, maxWidth: outline ? outlineWidths().textW - lead.w : n.width ? Math.max(40, n.width - padX * 2 - lead.w) : Math.round((isRoot ? MAX_ROOT_TEXT_W : MAX_TEXT_W) * (m.fontSize / 14)) } : {}),
+          ...(editing ? { whiteSpace: 'pre-wrap' as const, maxWidth: outline ? Math.max(40, outlineWidths().textW - box.x - lead.w) : n.width ? Math.max(40, n.width - padX * 2 - lead.w) : Math.round((isRoot ? MAX_ROOT_TEXT_W : MAX_TEXT_W) * (m.fontSize / 14)) } : {}),
         }}
         contentEditable={editing}
         suppressContentEditableWarning

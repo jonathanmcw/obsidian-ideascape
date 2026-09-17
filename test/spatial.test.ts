@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { fromMarkdownMap } from "../src/organiser/model/markdown.ts";
 import { addChild, addLink, moveTo, ordinalOf, setCollapsed, setOrdered, setSide, setText } from "../src/organiser/model/doc.ts";
 import { frameFor, keepBoxes } from "../src/organiser/layout/index.ts";
-import { metricsFor, nodeMetrics } from "../src/organiser/layout/measure.ts";
+import { MAX_ROW_TEXT_W, ROW_LEAD, metricsFor, nodeMetrics, setOutlineWidths } from "../src/organiser/layout/measure.ts";
 import { arrowMove, type ArrowDir } from "../src/organiser/layout/nav.ts";
 import { columnUnder, dropTargetFor, hitTest } from "../src/organiser/layout/drop.ts";
 import type { IODoc, LayoutKind } from "../src/organiser/model/types.ts";
@@ -74,6 +74,26 @@ test("arrows, Outline: ↑ and ↓ walk the visible rows; ← folds or goes to t
   assert.deepEqual(arrows(folded, "outline", "a"), { left: "Trip", right: "fold Lisbon", up: "Trip", down: "Porto" });
   // ⇧↑/↓ extend a row at a time; ⇧←/→ mean nothing in a list.
   assert.deepEqual(arrows(d, "outline", "a1", true), { left: "stays", right: "stays", up: "Lisbon", down: "Belem" });
+});
+
+test("layout, Outline: indentation never pushes a phone-width row past the right margin", () => {
+  const width = 360;
+  setOutlineWidths(width - ROW_LEAD - 40, width);
+  try {
+    let doc: IODoc = trip();
+    let parent = "a1";
+    for (let depth = 0; depth < 20; depth++) {
+      const [next, child] = addChild(doc, parent, `Deep ${depth}`);
+      doc = next;
+      parent = child;
+    }
+    const frame = frameFor(doc, "outline");
+    for (const box of Object.values(frame.boxes)) {
+      assert.ok(box.x + box.w <= width, `depth ${box.depth} ends at ${box.x + box.w}px`);
+    }
+  } finally {
+    setOutlineWidths(MAX_ROW_TEXT_W, 0);
+  }
 });
 
 test("drop, Map: over a node the dragged branch becomes its child", () => {

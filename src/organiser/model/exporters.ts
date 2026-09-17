@@ -250,7 +250,7 @@ export async function toPNG(
     const x = leftOf(box, shape)
     const y = box.y - box.h / 2
     // The very lines the screen shows: same measurer, same widths, same wrapping.
-    const m = metricsFor(doc, id, shape)
+    const m = metricsFor(doc, id, shape, box.depth)
     const rich = parseInline(n.text || 'Untitled')
     const cursor = { at: 0 }
     // text lines then media, centred as one block — the same stack the node lays out

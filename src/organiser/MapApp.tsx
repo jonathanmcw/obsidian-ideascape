@@ -68,7 +68,7 @@ const EMPTY_PALETTE: string[] = []
 import { Toolbar } from './ui/Toolbar'
 import { ExportSheet } from './ui/ExportSheet'
 import { ShortcutsSheet } from './ui/ShortcutsSheet'
-import { viewportOcclusion } from './ui/mobile'
+import { stageResizeOffset, stageViewportBand, visibilityNudge, viewportOcclusion } from './ui/mobile'
 import { Inspector } from './ui/Inspector'
 import { GRID, Stage, type Camera, type StageApi } from './ui/Stage'
 
@@ -246,6 +246,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
   const [stageW, setStageW] = useState(0)
   const [bottomInset, setBottomInset] = useState(0)
   const [keyboardInset, setKeyboardInset] = useState(0)
+  const [stageViewport, setStageViewport] = useState({ top: 0, bottom: 0 })
   const [paneW, setPaneW] = useState(0)
   /** The pane is narrow (a phone, or a split that tight): the document panel becomes a sheet over the whole width.
    *  Judged from the pane, which the panel does not change; the stage would be squeezed to nothing by the very
@@ -271,6 +272,8 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
   const [historyTick, setHistoryTick] = useState(0)
   const stageRef = useRef<HTMLDivElement>(null)
   const appRef = useRef<HTMLDivElement>(null)
+  const shapeRef = useRef(prefs.shape)
+  shapeRef.current = prefs.shape
   const timers = useRef<number[]>([])
   const camTimer = useRef<number>()
 
@@ -484,13 +487,13 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
    *  top margin and the last row at the bottom one, and a short outline does not scroll at all. */
   const clampOutlineY = useCallback(
     (y: number) => {
-      const h = stageSize.current.height
+      const h = keyboardInset > 0 && stageViewport.bottom > 0 ? stageViewport.bottom : stageSize.current.height
       const { minY, maxY } = frame.bounds
       const top = OUTLINE_TOP - minY
       const bottom = h - OUTLINE_TOP - maxY
       return !h || bottom >= top ? top : Math.min(top, Math.max(bottom, y))
     },
-    [frame.bounds],
+    [frame.bounds, keyboardInset, stageViewport.bottom],
   )
   // Rows come and go (typing, folding): keep the outline within its document.
   useEffect(() => {
@@ -638,7 +641,8 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       // A stage squeezed to nothing (the panel over it on a phone) keeps its last real width, so "narrow" holds.
       if (width > 0) setStageW(width)
       setBottomInset(bottomInsetFor(el))
-      setCamera((c) => ({ ...c, x: c.x + dx / 2, y: c.y + dy / 2 }))
+      const offset = stageResizeOffset(shapeRef.current, dx, dy)
+      setCamera((c) => ({ ...c, x: c.x + offset.x, y: c.y + offset.y }))
     })
     ro.observe(el)
     return () => ro.disconnect()
@@ -652,7 +656,19 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
     const win = el.ownerDocument.defaultView ?? window
     const viewport = win.visualViewport
     if (!viewport) return
-    const measure = () => setKeyboardInset(viewportOcclusion(el.getBoundingClientRect().bottom, viewport.offsetTop, viewport.height))
+    let raf = 0
+    const measure = () => {
+      win.cancelAnimationFrame(raf)
+      raf = win.requestAnimationFrame(() => {
+        const rootBox = el.getBoundingClientRect()
+        const stageBox = stageRef.current?.getBoundingClientRect()
+        setKeyboardInset(viewportOcclusion(rootBox.bottom, viewport.offsetTop, viewport.height))
+        if (stageBox) {
+          const band = stageViewportBand(stageBox.top, stageBox.bottom, viewport.offsetTop, viewport.height)
+          setStageViewport((current) => (current.top === band.top && current.bottom === band.bottom ? current : band))
+        }
+      })
+    }
     measure()
     viewport.addEventListener('resize', measure)
     viewport.addEventListener('scroll', measure)
@@ -661,6 +677,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       viewport.removeEventListener('resize', measure)
       viewport.removeEventListener('scroll', measure)
       win.removeEventListener('resize', measure)
+      win.cancelAnimationFrame(raf)
     }
   }, [])
 
@@ -688,32 +705,42 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       const rect = stageSize.current
       const b = frame.boxes[id]
       if (!rect.width || !b) return
-      const pad = 90
-      const visibleHeight = Math.max(0, rect.height - keyboardInset)
+      const visibleTop = keyboardInset > 0 ? stageViewport.top : 0
+      const visibleBottom = keyboardInset > 0 && stageViewport.bottom > 0 ? stageViewport.bottom : rect.height
+      if (visibleBottom <= visibleTop) return
+      const outline = prefs.shape === 'outline'
+      const topPad = outline ? 16 : 90
+      const bottomPad = outline ? 72 : 90
+      if (outline) {
+        setCamera((current) => {
+          const nodeTop = (b.y - b.h / 2) * current.z + current.y
+          const nodeBottom = (b.y + b.h / 2) * current.z + current.y
+          const dy = visibilityNudge(nodeTop, nodeBottom, visibleTop, visibleBottom, topPad, bottomPad)
+          const y = clampOutlineY(current.y + dy)
+          return y === current.y ? current : { ...current, y }
+        })
+        return
+      }
       const sx = leftOf(b, prefs.shape) * camera.z + camera.x
       const sy = (b.y - b.h / 2) * camera.z + camera.y
       const sw = b.w * camera.z
       const sh = b.h * camera.z
       let dx = 0
-      let dy = 0
-      if (prefs.shape !== 'outline') {
-        if (sx < pad) dx = pad - sx
-        else if (sx + sw > rect.width - pad) dx = rect.width - pad - (sx + sw)
-      }
-      if (sy < pad) dy = pad - sy
-      else if (sy + sh > visibleHeight - pad) dy = visibleHeight - pad - (sy + sh)
+      if (sx < topPad) dx = topPad - sx
+      else if (sx + sw > rect.width - topPad) dx = rect.width - topPad - (sx + sw)
+      const dy = visibilityNudge(sy, sy + sh, visibleTop, visibleBottom, topPad, bottomPad)
       if (!dx && !dy) return
-      if (focusId && prefs.shape !== 'outline') {
+      if (focusId) {
         // Focus mode follows the keyboard: a node that left the comfortable
         // zone is brought to the centre, not merely nudged back over the edge.
         const cx = (leftOf(b, prefs.shape) + b.w / 2) * camera.z
         const cy = b.y * camera.z
-        animateCamera({ ...camera, x: rect.width / 2 - cx, y: visibleHeight / 2 - cy }, 360)
+        animateCamera({ ...camera, x: rect.width / 2 - cx, y: (visibleTop + visibleBottom) / 2 - cy }, 360)
         return
       }
-      animateCamera({ ...camera, x: camera.x + dx, y: prefs.shape === 'outline' ? clampOutlineY(camera.y + dy) : camera.y + dy }, 260)
+      animateCamera({ ...camera, x: camera.x + dx, y: camera.y + dy }, 260)
     },
-    [clampOutlineY, animateCamera, camera, focusId, frame, keyboardInset, prefs.shape],
+    [clampOutlineY, animateCamera, camera, focusId, frame, keyboardInset, prefs.shape, stageViewport],
   )
 
   useEffect(() => {

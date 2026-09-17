@@ -1,6 +1,6 @@
 import type { IODoc, LayoutKind, MapLayout, NodeId, Shape } from '../model/types.ts'
 import { rootSides, walk } from '../model/doc.ts'
-import { INDENT, ROW_GAP, metricsFor } from './measure.ts'
+import { ROW_GAP, metricsFor, outlineIndent } from './measure.ts'
 
 export interface Box {
   /** Centre for map/canvas; left edge for outline rows. Always vertical centre. */
@@ -233,8 +233,9 @@ export function outlineLayout(doc: IODoc, rootId: NodeId = doc.rootId): Frame {
   // obsidian: rows are stacked by their measured height (a wrapped row is taller), with a small gap.
   let y = 0
   for (const { id, depth } of rows) {
-    const m = metricsFor(doc, id, 'outline')
-    boxes[id] = { x: depth * INDENT, y: y + m.h / 2, w: m.w, h: m.h, depth, dir: 0 }
+    const indent = outlineIndent(depth)
+    const m = metricsFor(doc, id, 'outline', depth)
+    boxes[id] = { x: indent, y: y + m.h / 2, w: m.w, h: m.h, depth, dir: 0 }
     order.push(id)
     y += m.h + ROW_GAP
   }
