@@ -81,6 +81,15 @@ test("mobile UI: corner controls match Obsidian Canvas's 40px controls and 24px 
   assert.match(css, /\.nt-phone-arrange[^}]*grid-template-columns:\s*repeat\(4, 44px\)/, "Arrange stays grouped inside More");
 });
 
+test("mobile UI: the corner's controls keep Obsidian Canvas's 40px size on a phone", () => {
+  const css = readFileSync(new URL("../src/organiser/styles.css", import.meta.url), "utf8");
+  assert.match(
+    css,
+    /body\.is-mobile \.io-root \.zoom button,\s*body\.is-mobile \.io-root \.history button,\s*body\.is-mobile \.io-root \.help \{[^}]*width:\s*var\(--mobile-control-size\)/s,
+    "zoom, history and help are sized together — splitting the list once left the zoom and undo buttons at 0px",
+  );
+});
+
 test("mobile UI: editing separates history from the keyboard dock and hides unrelated controls", () => {
   const css = readFileSync(new URL("../src/organiser/styles.css", import.meta.url), "utf8");
   assert.match(css, /body\.is-mobile \.io-root \.app\.is-editing \.corner\s*\{[^}]*top:\s*12px;[^}]*bottom:\s*auto;/s);

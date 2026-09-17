@@ -1631,15 +1631,14 @@ body.is-mobile .io-root .history {
 }
 body.is-mobile .io-root .zoom button,
 body.is-mobile .io-root .history button,
+body.is-mobile .io-root .help {
+  width: var(--mobile-control-size);
+  height: var(--mobile-control-size);
+}
 /* A phone shows the note's name in Obsidian's own header, and the root node carries it again: a third copy would
    cost 40px of map. Renaming stays where a phone does it, in the note's menu. */
 body.is-phone .io-root .doc-name {
   display: none;
-}
-
-body.is-mobile .io-root .help {
-  width: var(--mobile-control-size);
-  height: var(--mobile-control-size);
 }
 body.is-mobile .io-root .zoom button {
   font-size: 20px;
