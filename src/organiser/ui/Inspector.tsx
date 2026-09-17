@@ -38,7 +38,7 @@ interface Props {
 }
 
 const IconPencil = () => (
-  <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+  <svg className="io-icon" width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
     <path d="M10.5 2.5l3 3L6 13H3v-3z" />
     <path d="M9 4l3 3" />
   </svg>
@@ -52,7 +52,7 @@ const STYLES: { value: NodeStyle; label: string }[] = [
 ]
 
 const IconInfo = () => (
-  <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+  <svg className="io-icon" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
     <circle cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" strokeWidth="1.5" />
     <path d="M8 7.2v4M8 4.8v.2" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
   </svg>

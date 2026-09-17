@@ -120,7 +120,7 @@ function useCoarsePointer(): boolean {
 }
 
 function FormatIcon({ f }: { f: Format }) {
-  const p = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+  const p = { className: 'io-icon', fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
   switch (f) {
     case 'bold':
       return (
