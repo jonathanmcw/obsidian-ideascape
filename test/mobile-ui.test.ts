@@ -61,3 +61,9 @@ test("mobile UI: corner controls match Obsidian Canvas's 40px controls and 24px 
   assert.match(css, /--mobile-control-icon:\s*24px/);
   assert.match(css, /grid-template-columns:\s*repeat\(6/, "More fits in two compact rows instead of three");
 });
+
+test("mobile UI: editing separates history from the keyboard dock and hides unrelated controls", () => {
+  const css = readFileSync(new URL("../src/organiser/styles.css", import.meta.url), "utf8");
+  assert.match(css, /body\.is-mobile \.io-root \.app\.is-editing \.corner\s*\{[^}]*top:\s*12px;[^}]*bottom:\s*auto;/s);
+  assert.match(css, /\.app\.is-editing \.corner \.zoom,[\s\S]*\.app\.is-editing \.corner \.help\s*\{\s*display:\s*none;/);
+});

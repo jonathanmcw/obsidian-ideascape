@@ -1864,6 +1864,17 @@ body.is-mobile .io-root .history button svg {
 body.is-mobile .io-root .help {
   font-size: 16px;
 }
+/* Editing has its own bottom dock. Keep only history visible and pin it above the document's first row, where it
+   cannot compete with the keyboard, the dock, or the expanded More panel. */
+body.is-mobile .io-root .app.is-editing .corner {
+  top: 12px;
+  bottom: auto;
+  z-index: 21;
+}
+body.is-mobile .io-root .app.is-editing .corner .zoom,
+body.is-mobile .io-root .app.is-editing .corner .help {
+  display: none;
+}
 
 @keyframes io-rail-in {
   from {

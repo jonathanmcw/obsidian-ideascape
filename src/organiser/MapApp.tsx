@@ -1632,7 +1632,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
   return (
     <div
       ref={appRef}
-      className={`app${prefs.inspectorOpen ? ' inspector-open' : ''}${narrow ? ' is-narrow' : ''}${medium ? ' is-medium' : ''}${compact ? ' is-compact' : ''}`}
+      className={`app${prefs.inspectorOpen ? ' inspector-open' : ''}${narrow ? ' is-narrow' : ''}${medium ? ' is-medium' : ''}${compact ? ' is-compact' : ''}${edit ? ' is-editing' : ''}`}
       style={{ '--io-bottom-inset': `${bottomInset}px`, '--io-keyboard-inset': `${keyboardInset}px` } as React.CSSProperties}
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => {
