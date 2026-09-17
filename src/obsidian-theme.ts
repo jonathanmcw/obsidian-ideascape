@@ -38,9 +38,12 @@ function read(doc: Document): HostColours {
     const colours: HostColours = {
       name: "Obsidian",
       dark,
+      // Obsidian's own Canvas paints its field and its cards in --background-primary and tells them apart with a
+      // border; its wells, tracks and hovers sit on --background-secondary. Read the same way round, the map's
+      // chrome stops looking like a band of sidebar across the note, and a hover is visible in a light theme.
       stage: css("--background-primary", base.vars["--stage"]),
-      surface: css("--background-secondary", base.vars["--surface"]),
-      surface2: css("--background-secondary-alt", css("--background-secondary", base.vars["--surface-2"])),
+      surface: css("--background-primary", base.vars["--surface"]),
+      surface2: css("--background-secondary", base.vars["--surface-2"]),
       line: css("--background-modifier-border", base.vars["--line"]),
       lineStrong: css("--background-modifier-border-hover", base.vars["--line-strong"]),
       ink: css("--text-normal", base.vars["--ink"]),

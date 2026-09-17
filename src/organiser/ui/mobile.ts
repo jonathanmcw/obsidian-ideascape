@@ -45,10 +45,11 @@ export function visibilityNudge(
   return 0
 }
 
-/** Where a node taller than the usable band settles while it is typed into. Whatever edge it keeps, the answer must
- *  be stable: once applied, asking again returns 0, or every keystroke moves the camera. */
-export function oversizedNudge(nodeTop: number, nodeBottom: number, top: number, bottom: number): number {
-  return top - nodeTop
+/** Where a node taller than the usable band settles while it is typed into: its bottom edge, just above the keyboard,
+ *  which is where the next line appears. The start of the text scrolls out of sight, and typing stays visible.
+ *  Stable by construction — once applied, asking again returns 0, or every keystroke would move the camera. */
+export function oversizedNudge(_nodeTop: number, nodeBottom: number, _top: number, bottom: number): number {
+  return bottom - nodeBottom
 }
 
 /** Apple Notes' list gesture: a deliberate horizontal swipe changes nesting. A mostly vertical movement remains
