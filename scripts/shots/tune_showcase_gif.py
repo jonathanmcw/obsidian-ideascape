@@ -4,7 +4,7 @@
 The checked-in demo is recorded from Obsidian plus an external keycast panel.
 This helper keeps that workflow intact, but smooths two recording artifacts:
 
-- an amber cast along the left edge of the capture
+- a bright, warm strip of desktop showing through the left edge of the capture
 - repeated lower-right keycast flashes that distract from the map
 
 Usage:
@@ -23,7 +23,12 @@ from pathlib import Path
 from PIL import Image, ImageSequence
 
 
-LEFT_EDGE_PX = 124
+LEFT_EDGE_STAGE_TOP = 100
+LEFT_EDGE_CORE_PX = 68
+LEFT_EDGE_END_PX = 86
+LEFT_EDGE_FOREGROUND_START = 46
+LEFT_EDGE_FOREGROUND_END = 72
+LEFT_EDGE_BACKGROUND = (24, 24, 23)
 KEYCAST_ROI = (590, 500, 840, 606)
 EARLY_KEYCAST_PATCH = (558, 532, 835, 600)
 KEYCAST_BRIGHT_THRESHOLD = 500
@@ -49,28 +54,40 @@ def load_frames(path: Path) -> tuple[list[Image.Image], list[int]]:
     return frames, durations
 
 
-def damp_left_amber(frame: Image.Image) -> None:
+def luma(pixel: tuple[int, int, int, int]) -> float:
+    r, g, b, _ = pixel
+    return 0.30 * r + 0.59 * g + 0.11 * b
+
+
+def clean_left_capture_edge(frame: Image.Image) -> None:
+    """Replace the exposed desktop strip while preserving bright UI text drawn over it.
+
+    The strip is not just an orange tint: it contains a static column of another window. Colour correction alone
+    leaves that brighter shape visible on a phone. Low-contrast pixels in the strip are blended back to the stage
+    background; text and icons stay. The stage colour is fixed in this recording: sampling it per row would turn a
+    node or connector crossing that row into a horizontal bar at the edge.
+    """
     pixels = frame.load()
     width, height = frame.size
-    edge = min(LEFT_EDGE_PX, width)
-    for y in range(82, height):
+    edge = min(LEFT_EDGE_END_PX, width)
+
+    for y in range(LEFT_EDGE_STAGE_TOP, height):
         for x in range(edge):
             r, g, b, a = pixels[x, y]
             if a == 0:
                 continue
 
-            amber = r > b + 6 and g > b and r >= g - 10
-            if not amber:
-                continue
-
-            edge_strength = (edge - x) / edge
-            strength = 0.96 * edge_strength
-            luma = int(0.30 * r + 0.59 * g + 0.11 * b)
-            neutral = max(10, int(luma * 0.60))
+            edge_strength = 1.0 if x < LEFT_EDGE_CORE_PX else (edge - x) / (edge - LEFT_EDGE_CORE_PX)
+            value = luma((r, g, b, a))
+            foreground = min(
+                1.0,
+                max(0.0, (value - LEFT_EDGE_FOREGROUND_START) / (LEFT_EDGE_FOREGROUND_END - LEFT_EDGE_FOREGROUND_START)),
+            )
+            strength = edge_strength * (1.0 - foreground)
             pixels[x, y] = (
-                int(r * (1 - strength) + neutral * strength),
-                int(g * (1 - strength) + neutral * strength),
-                int(b * (1 - strength) + neutral * strength),
+                int(r * (1 - strength) + LEFT_EDGE_BACKGROUND[0] * strength),
+                int(g * (1 - strength) + LEFT_EDGE_BACKGROUND[1] * strength),
+                int(b * (1 - strength) + LEFT_EDGE_BACKGROUND[2] * strength),
                 a,
             )
 
@@ -170,7 +187,7 @@ def main() -> None:
 
     frames, durations = load_frames(args.source)
     for frame in frames:
-        damp_left_amber(frame)
+        clean_left_capture_edge(frame)
     kept, hidden = calm_keycasts(frames)
     save_gif(frames, durations, args.output)
     print(f"wrote {args.output} ({len(frames)} frames, {sum(durations) / 1000:.2f}s)")
