@@ -2266,6 +2266,39 @@ body.is-mobile .io-root .app.is-editing .corner .help {
     width: 100%;
     height: 40px;
   }
+  .io-root .node-toolbar.is-docked .nt-phone-arrange {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 6px);
+    transform: translateX(-50%);
+    display: grid;
+    grid-template-columns: repeat(4, minmax(52px, 1fr));
+    gap: 4px;
+    width: min(calc(100% - 8px), 320px);
+    padding: 6px;
+    border: 1px solid var(--line-strong);
+    border-radius: 12px;
+    background: var(--surface);
+    box-shadow: var(--shadow-2);
+  }
+  .io-root .node-toolbar.is-docked .nt-phone-arrange button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    width: 100%;
+    height: 52px;
+    border-radius: 8px;
+    font-size: 10.5px;
+    color: var(--ink-2);
+  }
+  .io-root .node-toolbar.is-docked .nt-phone-arrange button:disabled {
+    opacity: 0.32;
+    cursor: default;
+  }
+  .io-root .node-toolbar.is-docked .nt-phone-arrange .nt-move-up svg { transform: rotate(-90deg); }
+  .io-root .node-toolbar.is-docked .nt-phone-arrange .nt-move-down svg { transform: rotate(90deg); }
   .io-root .node-toolbar.is-docked > .nt-menu,
   .io-root .node-toolbar.is-docked > .nt-col,
   .io-root .node-toolbar.is-docked > .nt-editor {

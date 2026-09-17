@@ -864,6 +864,11 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
     commitEdit: leaveEdit,
     indent: (id) => moveLevel(id, false),
     outdent: (id) => moveLevel(id, true),
+    reorder: (id, delta) => {
+      const before = s.doc
+      restructure(s, id, (d) => reorder(d, id, delta))
+      settle(before)
+    },
     toggleCollapse: (id) => commit(toggleCollapse(withEdit(doc), id)),
     reparent: (id, parent, index, side) => {
       let d = reparent(withEdit(doc), id, parent, index)

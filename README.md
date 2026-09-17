@@ -65,6 +65,8 @@ Found a bug, or have an idea? [Open an issue](https://github.com/jonathanmcw/obs
 | ? | All shortcuts, with a filter |
 | ⌘/ | Document panel: theme and node style |
 | ⌘Z · ⇧⌘Z | Undo · redo |
+| Swipe right · left (Outline) | Indent · outdent a row |
+| Drag a row (Outline) | Reorder it, or drop it onto another row to nest the branch |
 
 On Windows and Linux, use Ctrl for ⌘.
 

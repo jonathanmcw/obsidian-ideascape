@@ -80,8 +80,12 @@ export const GROUPS: ShortcutGroup[] = [
     ],
   },
   {
-    title: 'Mouse',
+    title: 'Pointer and touch',
     rows: [
+      { keys: [['swipe right']], label: 'Indent outline row', words: ['touch', 'nest', 'mobile'], mouse: true },
+      { keys: [['swipe left']], label: 'Outdent outline row', words: ['touch', 'unindent', 'mobile'], mouse: true },
+      { keys: [['drag outline row']], label: 'Reorder or nest branch', words: ['touch', 'move', 'mobile', 'drop'], mouse: true },
+      { keys: [['Move menu']], label: 'Arrange while typing', words: ['touch', 'indent', 'outdent', 'reorder'], mouse: true },
       { keys: [['double-click']], label: 'Edit node', words: ['rename'], mouse: true },
       { keys: [['drag +']], label: 'Pull out a new idea', words: ['handle', 'knob', 'child'], mouse: true },
       { keys: [['drag node']], label: 'Move or reparent', words: ['reorder', 'drop'], mouse: true },

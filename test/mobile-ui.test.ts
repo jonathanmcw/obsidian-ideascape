@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   claimMapTouch,
   isPhoneTouch,
+  outlineSwipeAction,
   stageResizeOffset,
   stageViewportBand,
   visibilityNudge,
@@ -44,6 +45,13 @@ test("mobile UI: an edited outline row moves only when the keyboard would cover 
   assert.equal(visibilityNudge(4, 44, 0, 300, 16, 72), 12);
 });
 
+test("mobile UI: horizontal outline swipes change nesting without stealing vertical reordering", () => {
+  assert.equal(outlineSwipeAction(52, 8), "indent");
+  assert.equal(outlineSwipeAction(-52, 8), "outdent");
+  assert.equal(outlineSwipeAction(30, 2), null, "short drags do not restructure the tree");
+  assert.equal(outlineSwipeAction(60, 52), null, "a diagonal or vertical drag remains a reorder gesture");
+});
+
 test("mobile UI: a touch gesture in the map is kept from Obsidian's sidebar swipe", () => {
   let stopped = 0;
   const touch = { pointerType: "touch", stopPropagation: () => stopped++ };
@@ -60,6 +68,7 @@ test("mobile UI: corner controls match Obsidian Canvas's 40px controls and 24px 
   assert.match(css, /--mobile-control-size:\s*40px/);
   assert.match(css, /--mobile-control-icon:\s*24px/);
   assert.match(css, /grid-template-columns:\s*repeat\(6/, "More fits in two compact rows instead of three");
+  assert.match(css, /\.nt-phone-arrange[^}]*grid-template-columns:\s*repeat\(4/, "Arrange keeps four structural actions together");
 });
 
 test("mobile UI: editing separates history from the keyboard dock and hides unrelated controls", () => {

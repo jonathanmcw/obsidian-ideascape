@@ -13,6 +13,7 @@ import { stripEmbeds } from '../model/inline'
 import { branchColor, themeById } from '../theme'
 import { isDescendant, ordinalOf, subtreeIds } from '../model/doc'
 import { mediaFiles } from '../model/ingest'
+import { outlineSwipeAction } from './mobile'
 
 export interface Camera {
   x: number
@@ -35,6 +36,7 @@ export interface StageApi {
   /** Outline rows a level in or out — the bar's buttons for Tab and ⇧Tab on touch. */
   indent(id: NodeId): void
   outdent(id: NodeId): void
+  reorder(id: NodeId, delta: number): void
   createChild(parent: NodeId, at?: number, pos?: { x: number; y: number }): void
   linkNodes(from: NodeId, to: NodeId): void
   setCamera(c: Camera): void
@@ -125,6 +127,8 @@ type Drag =
       alone: boolean
       /** Already selected when the press began — a tap then means "edit". */
       wasSelected: boolean
+      /** Touch outlines reserve a horizontal swipe for indent/outdent. */
+      touch: boolean
       /** Part of a multi-selection: the whole selection travels. */
       multi: boolean
       target: DropTarget | null
@@ -409,7 +413,7 @@ export function Stage({
     const wasSelected = selectionRef.current === id
     const multi = selectedRef.current.size > 1 && selectedRef.current.has(id)
     if (!multi) api.select(id)
-    setDrag({ kind: 'node', id, sx: e.clientX, sy: e.clientY, moved: false, dx: 0, dy: 0, wx: w.x, wy: w.y, alone: e.altKey, wasSelected, multi, target: null })
+    setDrag({ kind: 'node', id, sx: e.clientX, sy: e.clientY, moved: false, dx: 0, dy: 0, wx: w.x, wy: w.y, alone: e.altKey, wasSelected, touch: e.pointerType === 'touch', multi, target: null })
     // Deliberately not every value read here is a dependency.
   }, [api, toWorld])
 
@@ -556,6 +560,14 @@ export function Stage({
       return
     }
     const ids = d.multi ? [d.id, ...[...selectedRef.current].filter((x) => x !== d.id)] : [d.id]
+    if (kind === 'outline' && d.touch && !d.multi) {
+      const action = outlineSwipeAction(e.clientX - d.sx, e.clientY - d.sy)
+      if (action) {
+        if (action === 'indent') api.indent(d.id)
+        else api.outdent(d.id)
+        return
+      }
+    }
     if (manual) {
       // The branch moves with its parent, which is what the drag already showed.
       // ⌥ detaches a single node from its branch.
@@ -785,6 +797,8 @@ export function Stage({
         const stageW = rect?.width ?? 0
         const stageH = rect?.height ?? 0
         if (!barId || !box || !n) return null
+        const parent = n.parent ? doc.nodes[n.parent] : undefined
+        const siblingIndex = parent?.children.indexOf(barId) ?? -1
         const cx = (kind === 'outline' ? box.x + box.w / 2 : box.x) * camera.z + camera.x
         const top = (box.y - box.h / 2) * camera.z + camera.y
         const bottom = (box.y + box.h / 2) * camera.z + camera.y
@@ -809,8 +823,14 @@ export function Stage({
             onOrdered={() => api.setOrdered(barId, !n.ordered)}
             onTask={() => api.setTask(barId, n.task == null)}
             outline={kind === 'outline'}
+            canIndent={barId !== doc.rootId && siblingIndex > 0}
+            canOutdent={barId !== doc.rootId && !!parent?.parent}
+            canMoveUp={barId !== doc.rootId && siblingIndex > 0}
+            canMoveDown={barId !== doc.rootId && !!parent && siblingIndex >= 0 && siblingIndex < parent.children.length - 1}
             onIndent={() => api.indent(barId)}
             onOutdent={() => api.outdent(barId)}
+            onMoveUp={() => api.reorder(barId, -1)}
+            onMoveDown={() => api.reorder(barId, 1)}
             onDone={() => api.commitEdit()}
           />
         )

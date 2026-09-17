@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { Align } from '../model/types'
 import { FORMAT_LABEL, type Format } from './format'
 import { chord } from './keys'
-import { IconAlign, IconCheck, IconCheckbox, IconIndent, IconMore, IconNumbered, IconOutdent } from './Icons'
+import { IconAlign, IconCheck, IconCheckbox, IconChevron, IconIndent, IconMore, IconNumbered, IconOutdent } from './Icons'
 import { ColourPicker } from './ColourPicker'
 import { hueOf as hueOfHex, sortByHue, toneOf, withHue } from '../colour'
 import { CUSTOM_SLOTS } from '../theme'
@@ -48,8 +48,14 @@ interface Props {
   onTask: () => void
   /** Outline rows can move a level in or out from the bar — for touch, where Tab does not exist. */
   outline: boolean
+  canIndent: boolean
+  canOutdent: boolean
+  canMoveUp: boolean
+  canMoveDown: boolean
   onIndent: () => void
   onOutdent: () => void
+  onMoveUp: () => void
+  onMoveDown: () => void
   /** Leave the node — for touch, where Esc and ⌘E do not exist. */
   onDone: () => void
 }
@@ -60,6 +66,8 @@ const TOUCH_FORMATS: Format[] = ['bold', 'italic', 'underline', 'link']
 const TOUCH_MORE: Format[] = ['strike', 'highlight', 'code']
 const PHONE_FORMATS: Format[] = ['bold', 'italic']
 const PHONE_MORE: Format[] = ['underline', 'link', 'strike', 'highlight', 'code']
+const PHONE_OUTLINE_FORMATS: Format[] = ['bold']
+const PHONE_OUTLINE_MORE: Format[] = ['italic', ...PHONE_MORE]
 const SIZES: [1 | 2 | 3 | undefined, string, string, string][] = [
   [undefined, 'Aa', 'Body text', '⌥⌘0'],
   [3, 'H3', 'Heading 3', '⌥⌘3'],
@@ -89,7 +97,7 @@ interface Tip {
   left: number
 }
 
-type Menu = null | 'size' | 'colour' | 'more'
+type Menu = null | 'size' | 'colour' | 'arrange' | 'more'
 
 const IconPlus = () => (
   <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
@@ -180,12 +188,14 @@ const Chevron = () => (
  *  Only while editing: the map stays clean while you move around, and there is never a
  *  question of what a style change means for several selected nodes. Pointer-down is
  *  swallowed so the node keeps its focus and text selection; the click then applies. */
-export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, palette, onFormat, onAlign, onSize, onBranch, onPalette, onNewColour, onRemoveColour, onOrdered, onTask, outline, onIndent, onOutdent, onDone }: Props) {
+export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, palette, onFormat, onAlign, onSize, onBranch, onPalette, onNewColour, onRemoveColour, onOrdered, onTask, outline, canIndent, canOutdent, canMoveUp, canMoveDown, onIndent, onOutdent, onMoveUp, onMoveDown, onDone }: Props) {
   const ref = useRef<HTMLDivElement>(null)
   const coarse = useCoarsePointer()
   const phoneDevice = typeof document !== 'undefined' && document.body.classList.contains('is-phone')
   const docked = isPhoneTouch(coarse, stageWidth, phoneDevice)
   const [menu, setMenu] = useState<Menu>(null)
+  const primaryFormats = docked ? (outline ? PHONE_OUTLINE_FORMATS : PHONE_FORMATS) : coarse ? TOUCH_FORMATS : FORMATS
+  const moreFormats = docked ? (outline ? PHONE_OUTLINE_MORE : PHONE_MORE) : TOUCH_MORE
   // The slot whose colour is being picked, when the colour menu shows the picker.
   const [picking, setPicking] = useState<number | null>(null)
   const [dx, setDx] = useState(0)
@@ -335,7 +345,7 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
       )}
       {menu === 'more' && (
         <div className={`nt-row nt-palette${docked ? ' nt-phone-more' : ''}`} role="menu">
-          {(docked ? PHONE_MORE : TOUCH_MORE).map((f) => (
+          {moreFormats.map((f) => (
             <button key={f} type="button" tabIndex={-1} role="menuitem" className={`fmt fmt-${f}`} onClick={() => { onFormat(f); setMenu(null) }}>
               <FormatIcon f={f} />
               <Name>{FORMAT_LABEL[f].title}</Name>
@@ -359,18 +369,26 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
               </button>
             </>
           )}
-          {docked && outline && (
-            <>
-              <button type="button" tabIndex={-1} role="menuitem" onClick={() => { onOutdent(); setMenu(null) }}>
-                <IconOutdent />
-                <Name>Move out a level</Name>
-              </button>
-              <button type="button" tabIndex={-1} role="menuitem" onClick={() => { onIndent(); setMenu(null) }}>
-                <IconIndent />
-                <Name>Move in a level</Name>
-              </button>
-            </>
-          )}
+        </div>
+      )}
+      {menu === 'arrange' && docked && outline && (
+        <div className="nt-phone-arrange" role="menu" aria-label="Arrange node">
+          <button type="button" tabIndex={-1} role="menuitem" className="nt-move-up" disabled={!canMoveUp} onClick={() => { onMoveUp(); setMenu(null) }}>
+            <IconChevron />
+            <span>Up</span>
+          </button>
+          <button type="button" tabIndex={-1} role="menuitem" className="nt-move-down" disabled={!canMoveDown} onClick={() => { onMoveDown(); setMenu(null) }}>
+            <IconChevron />
+            <span>Down</span>
+          </button>
+          <button type="button" tabIndex={-1} role="menuitem" disabled={!canOutdent} onClick={() => { onOutdent(); setMenu(null) }}>
+            <IconOutdent />
+            <span>Outdent</span>
+          </button>
+          <button type="button" tabIndex={-1} role="menuitem" disabled={!canIndent} onClick={() => { onIndent(); setMenu(null) }}>
+            <IconIndent />
+            <span>Indent</span>
+          </button>
         </div>
       )}
       {menu === 'colour' && !node.isRoot && picking != null && (
@@ -446,7 +464,7 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
         )}
         <span className="nt-sep" />
         {/* Inline formatting of the selected text. */}
-        {(docked ? PHONE_FORMATS : coarse ? TOUCH_FORMATS : FORMATS).map((f) => (
+        {primaryFormats.map((f) => (
           <button key={f} type="button" tabIndex={-1} className={`fmt fmt-${f}`} onClick={() => onFormat(f)}>
             <FormatIcon f={f} />
             <Name tip={FORMAT_LABEL[f].title} keys={FORMAT_LABEL[f].keys}>
@@ -454,6 +472,12 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
             </Name>
           </button>
         ))}
+        {coarse && docked && outline && (
+          <button type="button" tabIndex={-1} className={`nt-drop nt-arrange-drop${menu === 'arrange' ? ' is-on' : ''}`} aria-haspopup="menu" aria-expanded={menu === 'arrange'} onClick={() => toggle('arrange')}>
+            <span>Move</span>
+            <Chevron />
+          </button>
+        )}
         {coarse && (
           <button type="button" tabIndex={-1} className={menu === 'more' ? 'is-on' : ''} aria-haspopup="menu" aria-expanded={menu === 'more'} onClick={() => toggle('more')}>
             <IconMore />

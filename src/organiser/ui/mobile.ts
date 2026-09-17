@@ -42,6 +42,15 @@ export function visibilityNudge(
   return 0
 }
 
+/** Apple Notes' list gesture: a deliberate horizontal swipe changes nesting. A mostly vertical movement remains
+ *  available to the outline's drag-and-drop reorder interaction. */
+export function outlineSwipeAction(dx: number, dy: number, threshold = 48): 'indent' | 'outdent' | null {
+  const x = Math.abs(dx)
+  const y = Math.abs(dy)
+  if (x < threshold || x < y * 1.35) return null
+  return dx > 0 ? 'indent' : 'outdent'
+}
+
 /** Keep a one-finger map gesture inside Ideascape, instead of also feeding Obsidian's global sidebar swipe. */
 export function claimMapTouch(event: { pointerType: string; stopPropagation(): void }): boolean {
   if (event.pointerType !== 'touch') return false
