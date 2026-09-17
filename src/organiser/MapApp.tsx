@@ -36,7 +36,7 @@ import { clipboardFragment, droppedLinks, isMapFile, linkName, mapFileFragment, 
 import { applyFocus, frameFor, keepBoxes, kindFor, layoutFor, leftOf, snapX, type Box, type Frame } from './layout'
 import { arrowMove, type ArrowDir } from './layout/nav'
 import { arrangementKind, arrangementOf, nextLayout, shownLayout, tidied, withLayout } from './layout/arrange'
-import { activeLabel, applyFormat, type Format } from './ui/format'
+import { activeLabel, applyFormat, insertLineBreak, type Format } from './ui/format'
 import { renderInto } from './ui/wysiwyg'
 import { IconChevron, IconClose, IconRedo, IconUndo } from './ui/Icons'
 import { chord } from './ui/keys'
@@ -1317,7 +1317,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
           // Not typing yet: open the node, caret at the end, and break the line the same way — a seed ending
           // in a newline shows no new line, and its media would be added to the draft twice.
           if (!editing) flushSync(() => stageApi.beginEdit(sel, null, false))
-          if (s.edit?.id === sel) (rootRef.current?.ownerDocument ?? document).execCommand('insertText', false, '\n')
+          if (s.edit?.id === sel) insertLineBreak(rootRef.current?.ownerDocument ?? document)
           return
         }
         createSibling(sel)

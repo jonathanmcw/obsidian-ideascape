@@ -1,7 +1,7 @@
 // obsidian: inline formatting while editing a node. The label is a WYSIWYG contenteditable
 // (see wysiwyg.ts); bold, italic, underline and strike use the browser's own commands, the
 // rest wrap the selection in an element. Every path fires `input`, which the draft listens to.
-import { toggleInline } from './wysiwyg'
+import { toggleInline } from './wysiwyg.ts'
 
 export type Format = 'bold' | 'italic' | 'underline' | 'strike' | 'highlight' | 'code' | 'link'
 
@@ -22,6 +22,15 @@ export function activeLabel(root: Document = document): HTMLElement | null {
   const el = root.activeElement as HTMLElement | null
   // nodeType, not instanceof: an element in a popped-out window is not this window's HTMLElement.
   return el?.nodeType === 1 && el.classList.contains('node-label') && el.isContentEditable ? el : null
+}
+
+/** Insert a real Markdown line break at the caret without leaving the node. The mobile toolbar keeps the label
+ *  focused on pointer-down, so this is the touch equivalent of Shift+Enter on a physical keyboard. */
+export function insertLineBreak(root: Document = document): boolean {
+  const label = activeLabel(root)
+  if (!label) return false
+  label.ownerDocument.execCommand('insertText', false, '\n')
+  return true
 }
 
 export function applyFormat(f: Format, root: Document = document): boolean {

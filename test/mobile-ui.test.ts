@@ -11,6 +11,7 @@ import {
   viewportOcclusion,
 } from "../src/organiser/ui/mobile.ts";
 import { readFileSync } from "node:fs";
+import { insertLineBreak } from "../src/organiser/ui/format.ts";
 
 test("mobile UI: phone treatment needs both a touch device and a phone-width stage", () => {
   assert.equal(isPhoneTouch(true, 390), true);
@@ -75,4 +76,22 @@ test("mobile UI: editing separates history from the keyboard dock and hides unre
   const css = readFileSync(new URL("../src/organiser/styles.css", import.meta.url), "utf8");
   assert.match(css, /body\.is-mobile \.io-root \.app\.is-editing \.corner\s*\{[^}]*top:\s*12px;[^}]*bottom:\s*auto;/s);
   assert.match(css, /\.app\.is-editing \.corner \.zoom,[\s\S]*\.app\.is-editing \.corner \.help\s*\{\s*display:\s*none;/);
+});
+
+test("mobile UI: More inserts a line break without changing Return's sibling action", () => {
+  const calls: unknown[][] = [];
+  const owner = { execCommand: (...args: unknown[]) => { calls.push(args); return true; } };
+  const label = {
+    nodeType: 1,
+    classList: { contains: (name: string) => name === "node-label" },
+    isContentEditable: true,
+    ownerDocument: owner,
+  };
+  const root = { activeElement: label } as unknown as Document;
+  assert.equal(insertLineBreak(root), true);
+  assert.deepEqual(calls, [["insertText", false, "\n"]]);
+
+  const toolbar = readFileSync(new URL("../src/organiser/ui/NodeBar.tsx", import.meta.url), "utf8");
+  assert.match(toolbar, /<IconNewLine\s*\/>/);
+  assert.match(toolbar, /<Name>New line<\/Name>/);
 });

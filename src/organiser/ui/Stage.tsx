@@ -1,7 +1,7 @@
 import type * as React from 'react'
 import { memo, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { Align, IODoc, IONode, LayoutKind, NodeId, Shape } from '../model/types'
-import { applyFormat } from './format'
+import { applyFormat, insertLineBreak } from './format'
 import { NodeBar } from './NodeBar'
 import { RichLabel } from './RichLabel'
 import { domToMarkdown, dropText, pasteText, renderInto } from './wysiwyg'
@@ -831,6 +831,7 @@ export function Stage({
             onOutdent={() => api.outdent(barId)}
             onMoveUp={() => api.reorder(barId, -1)}
             onMoveDown={() => api.reorder(barId, 1)}
+            onNewLine={() => void insertLineBreak(stageRef.current?.ownerDocument)}
             onDone={() => api.commitEdit()}
           />
         )

@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { Align } from '../model/types'
 import { FORMAT_LABEL, type Format } from './format'
 import { chord } from './keys'
-import { IconAlign, IconCheck, IconCheckbox, IconChevron, IconIndent, IconMore, IconNumbered, IconOutdent } from './Icons'
+import { IconAlign, IconCheck, IconCheckbox, IconChevron, IconIndent, IconMore, IconNewLine, IconNumbered, IconOutdent } from './Icons'
 import { ColourPicker } from './ColourPicker'
 import { hueOf as hueOfHex, sortByHue, toneOf, withHue } from '../colour'
 import { CUSTOM_SLOTS } from '../theme'
@@ -56,6 +56,8 @@ interface Props {
   onOutdent: () => void
   onMoveUp: () => void
   onMoveDown: () => void
+  /** A soft keyboard has no Shift key: expose Shift+Enter under More without changing what Return means. */
+  onNewLine: () => void
   /** Leave the node — for touch, where Esc and ⌘E do not exist. */
   onDone: () => void
 }
@@ -188,7 +190,7 @@ const Chevron = () => (
  *  Only while editing: the map stays clean while you move around, and there is never a
  *  question of what a style change means for several selected nodes. Pointer-down is
  *  swallowed so the node keeps its focus and text selection; the click then applies. */
-export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, palette, onFormat, onAlign, onSize, onBranch, onPalette, onNewColour, onRemoveColour, onOrdered, onTask, outline, canIndent, canOutdent, canMoveUp, canMoveDown, onIndent, onOutdent, onMoveUp, onMoveDown, onDone }: Props) {
+export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, palette, onFormat, onAlign, onSize, onBranch, onPalette, onNewColour, onRemoveColour, onOrdered, onTask, outline, canIndent, canOutdent, canMoveUp, canMoveDown, onIndent, onOutdent, onMoveUp, onMoveDown, onNewLine, onDone }: Props) {
   const ref = useRef<HTMLDivElement>(null)
   const coarse = useCoarsePointer()
   const phoneDevice = typeof document !== 'undefined' && document.body.classList.contains('is-phone')
@@ -345,6 +347,12 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
       )}
       {menu === 'more' && (
         <div className={`nt-row nt-palette${docked ? ' nt-phone-more' : ''}`} role="menu">
+          {coarse && (
+            <button type="button" tabIndex={-1} role="menuitem" onClick={() => { onNewLine(); setMenu(null) }}>
+              <IconNewLine />
+              <Name>New line</Name>
+            </button>
+          )}
           {moreFormats.map((f) => (
             <button key={f} type="button" tabIndex={-1} role="menuitem" className={`fmt fmt-${f}`} onClick={() => { onFormat(f); setMenu(null) }}>
               <FormatIcon f={f} />

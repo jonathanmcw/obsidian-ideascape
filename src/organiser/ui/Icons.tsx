@@ -168,6 +168,14 @@ export const IconOutdent = ({ size }: P) => (
   </svg>
 )
 
+/** Return without leaving the node: a line break, not a new sibling. */
+export const IconNewLine = ({ size }: P) => (
+  <svg {...base(size)}>
+    <path d="M13.5 3.5v3A3.5 3.5 0 0 1 10 10H3" />
+    <path d="M5.5 7.5 3 10l2.5 2.5" />
+  </svg>
+)
+
 export const IconCheck = ({ size }: P) => (
   <svg {...base(size)}>
     <path d="M3 8.5l3.2 3.2L13 5" />
