@@ -1871,6 +1871,10 @@ body.is-mobile .io-root .app.is-editing .corner {
   bottom: auto;
   z-index: 21;
 }
+/* The find bar holds the same corner; history stands under it instead of over its Next and Close. */
+body.is-mobile .io-root .app.is-editing.is-finding .corner {
+  top: 64px;
+}
 body.is-mobile .io-root .app.is-editing .corner .zoom,
 body.is-mobile .io-root .app.is-editing .corner .help {
   display: none;
@@ -2439,13 +2443,18 @@ body.is-mobile .io-root .app.is-editing .corner .help {
 /* Motion reduction must outrank the component transitions above without priority flags. Repeating the root class is
    intentional specificity: it keeps this accessibility override effective even for deeply qualified controls. */
 @media (prefers-reduced-motion: reduce) {
-  .io-root.io-root.io-root.io-root.io-root *,
-  .io-root.io-root.io-root.io-root.io-root *::before,
-  .io-root.io-root.io-root.io-root.io-root *::after {
+  /* Six: one more than the deepest selector above, Snap to grid's settle (.stage.is-snap .nodes:not(.morphing) .node). */
+  .io-root.io-root.io-root.io-root.io-root.io-root *,
+  .io-root.io-root.io-root.io-root.io-root.io-root *::before,
+  .io-root.io-root.io-root.io-root.io-root.io-root *::after {
     animation-duration: 0.01ms;
     animation-iteration-count: 1;
     transition-duration: 1ms;
     transition-delay: 0ms;
     scroll-behavior: auto;
+  }
+  /* The HUD's animation ends transparent, so cut short it would never be seen; it simply shows until it is removed. */
+  .io-root.io-root.io-root.io-root.io-root.io-root .hud {
+    animation: none;
   }
 }

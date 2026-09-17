@@ -206,7 +206,8 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
   // hovers, the tip over it — both measured, since the stage clips whatever sticks out.
   const [room, setRoom] = useState(BAR_H + BAR_GAP + TIP_H + TIP_GAP)
   const tipH = useRef(TIP_H)
-  const typeMenuRoom = BAR_H + BAR_GAP + (node.isRoot ? 4 : 6) * 27 + 10
+  // Room for the open type menu above the node: its rows are 27px, or 38px on a touch screen (styles.css, pointer: coarse).
+  const typeMenuRoom = BAR_H + BAR_GAP + (node.isRoot ? 4 : 6) * (coarse ? 38 : 27) + 10
   const below = !docked && top < (menu === 'type' ? typeMenuRoom : room)
   const type = TYPES.find(([value]) => value === node.type)
   const typeMark = type?.[1] ?? (docked ? 'Mix' : 'Mixed')

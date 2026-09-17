@@ -83,7 +83,7 @@ test("layout, Outline: indentation never pushes a phone-width row past the right
     let doc: IODoc = trip();
     let parent = "a1";
     for (let depth = 0; depth < 20; depth++) {
-      const [next, child] = addChild(doc, parent, `Deep ${depth}`);
+      const [next, child] = addChild(doc, parent, `Deep ${depth}: a row long enough to wrap onto a second line on a phone`);
       doc = next;
       parent = child;
     }

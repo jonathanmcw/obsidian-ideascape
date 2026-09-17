@@ -37,9 +37,18 @@ export function visibilityNudge(
 ): number {
   const top = visibleTop + topPadding
   const bottom = visibleBottom - bottomPadding
+  // Nudging to one edge of a node taller than the band pushes the other edge out, and the next nudge (a keystroke
+  // that wraps a line) would push it back: such a node gets one settled position instead.
+  if (nodeBottom - nodeTop > bottom - top) return oversizedNudge(nodeTop, nodeBottom, top, bottom)
   if (nodeTop < top) return top - nodeTop
   if (nodeBottom > bottom) return bottom - nodeBottom
   return 0
+}
+
+/** Where a node taller than the usable band settles while it is typed into. Whatever edge it keeps, the answer must
+ *  be stable: once applied, asking again returns 0, or every keystroke moves the camera. */
+export function oversizedNudge(nodeTop: number, nodeBottom: number, top: number, bottom: number): number {
+  return top - nodeTop
 }
 
 /** Apple Notes' list gesture: a deliberate horizontal swipe changes nesting. A mostly vertical movement remains

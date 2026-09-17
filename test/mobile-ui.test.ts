@@ -46,6 +46,14 @@ test("mobile UI: an edited outline row moves only when the keyboard would cover 
   assert.equal(visibilityNudge(4, 44, 0, 300, 16, 72), 12);
 });
 
+test("mobile UI: a node taller than the band above the keyboard settles instead of bouncing between its edges", () => {
+  // Band 16..228 (212px) and a 300px node: whichever edge wins, applying the nudge must leave nothing to nudge.
+  for (const top of [-400, -50, 0, 100, 500]) {
+    const dy = visibilityNudge(top, top + 300, 0, 300, 16, 72);
+    assert.equal(visibilityNudge(top + dy, top + dy + 300, 0, 300, 16, 72), 0, `from ${top}`);
+  }
+});
+
 test("mobile UI: horizontal outline swipes change nesting without stealing vertical reordering", () => {
   assert.equal(outlineSwipeAction(52, 8), "indent");
   assert.equal(outlineSwipeAction(-52, 8), "outdent");
@@ -106,7 +114,7 @@ test("mobile UI: node type is one responsive chooser and checkboxes keep a squar
   assert.match(toolbar, /\['checklist', '', 'Checklist'/);
 
   const css = readFileSync(new URL("../src/organiser/styles.css", import.meta.url), "utf8");
-  assert.match(css, /grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(css, /\.is-docked > \.nt-type-menu\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/s);
   assert.match(css, /\.node-check\s*\{[^}]*width:\s*15px;[^}]*height:\s*15px;[^}]*min-width:\s*15px;[^}]*max-width:\s*15px;[^}]*aspect-ratio:\s*1;/s);
   assert.match(css, /\.node-check::after\s*\{[^}]*inset:\s*-14\.5px;/s, "the square keeps a 44px touch target");
 });

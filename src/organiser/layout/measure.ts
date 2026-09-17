@@ -52,14 +52,17 @@ let unsure = false
  */
 function measured(font: string, text: string): number {
   const s = text || ' '
-  const attempt = () => {
+  const attempt = (t = s) => {
     const m = measurer()
     if (m.isContextLost?.()) return 0
     m.font = font
-    return m.measureText(s).width
+    return m.measureText(t).width
   }
   const w = attempt()
   if (w > 0 || !/\S/.test(s)) return w
+  // Zero-width characters (a zero-width space, a joiner, a soft hyphen) are not whitespace yet truly measure 0. A
+  // canvas that still measures a letter is alive, and its 0 is kept like any width.
+  if (attempt('M') > 0) return 0
   ctx = null
   young = new Map()
   old = new Map()
@@ -97,8 +100,10 @@ export function setOutlineWidths(textW: number, rowW: number) {
   outlineTextW = Math.max(200, textW)
   outlineRowW = rowW
 }
-export function outlineWidths() {
-  return { textW: outlineTextW, rowW: outlineRowW }
+/** The width an outline row's text (and its lead: a number or a checkbox) wraps in, at an indent. The layout and the
+ *  label being typed into both use it, so a row keeps its lines while it is edited, however deep it sits. */
+export function outlineTextAvailable(indent: number): number {
+  return Math.max(MIN_OUTLINE_TEXT_W, outlineTextW - indent)
 }
 
 /** Characters that must not start a line (行頭禁則 / 避头标点). */
@@ -249,7 +254,9 @@ export const ROW_GAP = 4
 export const INDENT = 22
 /** Room for the disclosure triangle + colour dot at the head of an outline row. */
 export const ROW_LEAD = 34
+/** The narrowest a row gets at the deepest indent: its lead, the text, and the 14px after the text. */
 const MIN_OUTLINE_ROW_W = ROW_LEAD + 112
+const MIN_OUTLINE_TEXT_W = MIN_OUTLINE_ROW_W - ROW_LEAD - 14
 /** Keep deep outlines inside the document column. Before the app supplies a row width (tests and utilities), use
  *  the ordinary fixed indent. */
 export function outlineIndent(depth: number): number {
@@ -343,7 +350,7 @@ export function nodeMetrics(n: IONode, place: NodePlace, shape: LayoutKind): Nod
 
   if (outline) {
     const indent = outlineIndent(place.depth ?? 0)
-    const textAvailable = Math.max(120, outlineTextW - indent)
+    const textAvailable = outlineTextAvailable(indent)
     const rowAvailable = Math.max(ROW_LEAD + 80, outlineRowW - indent)
     const media = mediaBoxes(embeds, Math.min(360, textAvailable))
     const mediaH = media.reduce((h, m) => h + m.h + MEDIA_GAP, 0)

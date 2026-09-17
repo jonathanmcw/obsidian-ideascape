@@ -8,7 +8,7 @@ import { domToMarkdown, dropText, pasteText, renderInto } from './wysiwyg'
 import type { Box, Frame } from '../layout'
 import { leftOf, linkPath, snapX, treePath } from '../layout'
 import { dropTargetFor, hitTest, type DropTarget } from '../layout/drop'
-import { MAX_PILL_W, MAX_ROOT_TEXT_W, MAX_TEXT_W, MIN_PILL_W, ROW_LEAD, ROW_PAD, metricsFor, nodeMetrics, outlineWidths, setMediaSize } from '../layout/measure'
+import { MAX_PILL_W, MAX_ROOT_TEXT_W, MAX_TEXT_W, MIN_PILL_W, ROW_LEAD, ROW_PAD, metricsFor, nodeMetrics, outlineTextAvailable, setMediaSize } from '../layout/measure'
 import { stripEmbeds } from '../model/inline'
 import { branchColor, themeById } from '../theme'
 import { isDescendant, nodeTypeOf, ordinalOf, subtreeIds } from '../model/doc'
@@ -1274,7 +1274,7 @@ const NodeView = memo(function NodeView({
           fontSize: m.fontSize,
           lineHeight: `${m.lineH}px`,
           fontWeight: m.fontWeight,
-          ...(editing ? { whiteSpace: 'pre-wrap' as const, maxWidth: outline ? Math.max(40, outlineWidths().textW - box.x - lead.w) : n.width ? Math.max(40, n.width - padX * 2 - lead.w) : Math.round((isRoot ? MAX_ROOT_TEXT_W : MAX_TEXT_W) * (m.fontSize / 14)) } : {}),
+          ...(editing ? { whiteSpace: 'pre-wrap' as const, maxWidth: outline ? Math.max(40, outlineTextAvailable(box.x) - lead.w) : n.width ? Math.max(40, n.width - padX * 2 - lead.w) : Math.round((isRoot ? MAX_ROOT_TEXT_W : MAX_TEXT_W) * (m.fontSize / 14)) } : {}),
         }}
         contentEditable={editing}
         suppressContentEditableWarning

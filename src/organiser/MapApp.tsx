@@ -726,7 +726,10 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       const sw = b.w * camera.z
       const sh = b.h * camera.z
       let dx = 0
-      if (sx < topPad) dx = topPad - sx
+      // A node wider than the comfortable band (a long label on a phone) is centred: nudging it to either edge
+      // would push the other edge out, and the next nudge would push it back.
+      if (sw > rect.width - topPad * 2) dx = Math.round((rect.width - sw) / 2 - sx)
+      else if (sx < topPad) dx = topPad - sx
       else if (sx + sw > rect.width - topPad) dx = rect.width - topPad - (sx + sw)
       const dy = visibilityNudge(sy, sy + sh, visibleTop, visibleBottom, topPad, bottomPad)
       if (!dx && !dy) return
@@ -743,9 +746,15 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
     [clampOutlineY, animateCamera, camera, focusId, frame, keyboardInset, prefs.shape, stageViewport],
   )
 
+  // The software keyboard keeps the node being typed into in view: when editing starts, when the keyboard or the
+  // visible band changes, and when the node grows a line. Not on every camera change — ensureVisible depends on the
+  // camera, so following it would snap back each pan while typing, and loop on a node that cannot fit.
+  const ensureVisibleRef = useRef(ensureVisible)
+  ensureVisibleRef.current = ensureVisible
+  const editBox = edit?.id ? frame.boxes[edit.id] : undefined
   useEffect(() => {
-    if (keyboardInset > 0 && edit?.id) ensureVisible(edit.id)
-  }, [edit?.id, ensureVisible, keyboardInset])
+    if (keyboardInset > 0 && edit?.id) ensureVisibleRef.current(edit.id)
+  }, [edit?.id, keyboardInset, stageViewport.top, stageViewport.bottom, editBox?.h, editBox?.w])
 
   /* -------------------- the Shift -------------------- */
 
@@ -1636,7 +1645,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
   return (
     <div
       ref={appRef}
-      className={`app${prefs.inspectorOpen ? ' inspector-open' : ''}${narrow ? ' is-narrow' : ''}${medium ? ' is-medium' : ''}${compact ? ' is-compact' : ''}${edit ? ' is-editing' : ''}`}
+      className={`app${prefs.inspectorOpen ? ' inspector-open' : ''}${narrow ? ' is-narrow' : ''}${medium ? ' is-medium' : ''}${compact ? ' is-compact' : ''}${edit ? ' is-editing' : ''}${search !== null ? ' is-finding' : ''}`}
       style={{ '--io-bottom-inset': `${bottomInset}px`, '--io-keyboard-inset': `${keyboardInset}px` } as React.CSSProperties}
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => {

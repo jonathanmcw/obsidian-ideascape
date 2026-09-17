@@ -6,11 +6,13 @@ let calls = 0;
 /** While set, every canvas measures everything as 0, as a lost context does. */
 let canvasDead = false;
 let canvasesMade = 0;
+/** Characters a real canvas measures as 0 wide although they are not whitespace. */
+const ZERO_WIDTH = /[\u00AD\u200B-\u200D\u2060\uFE0F]/g;
 (globalThis as { document?: unknown }).document = {
   win: {
     createEl: () => {
       canvasesMade++;
-      return { getContext: () => ({ font: "", measureText: (t: string) => { calls++; return { width: canvasDead ? 0 : t.length * 7 }; } }) };
+      return { getContext: () => ({ font: "", measureText: (t: string) => { calls++; return { width: canvasDead ? 0 : t.replace(ZERO_WIDTH, "").length * 7 }; } }) };
     },
   },
 };
@@ -107,4 +109,16 @@ test("measuring: a canvas that stops measuring is replaced, and its zero widths 
   assert.equal(calls, 1, "the estimate was not cached");
   assert.equal(textWidth("before", 400, 14), 42, "widths from before are measured again, in case they were zeros");
   assert.equal(textWidth("   ", 400, 14), 21, "whitespace measures as it is");
+});
+
+test("measuring: text made only of zero-width characters measures 0 on a working canvas, and is kept", () => {
+  const zw = "\u200B";
+  const made = canvasesMade;
+  textWidth("kept across", 400, 14);
+  assert.equal(textWidth(zw, 400, 14), 0);
+  calls = 0;
+  assert.equal(textWidth(zw, 400, 14), 0);
+  assert.equal(textWidth("kept across", 400, 14), 77);
+  assert.equal(calls, 0, "neither the zero width nor the widths around it were measured again");
+  assert.equal(canvasesMade, made, "a working canvas is not replaced");
 });
