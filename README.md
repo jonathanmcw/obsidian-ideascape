@@ -125,7 +125,7 @@ The plugin works entirely offline. It makes no network requests, collects no dat
 
 ## Compatibility
 
-Obsidian 1.7.2 or later. Made for desktop and mobile; this beta has been tested on desktop (macOS) so far, so reports from Windows, Linux and mobile are especially welcome.
+Obsidian 1.7.2 or later. Made for desktop and mobile, and tested on macOS, iPhone, and Android phones and tablets. Reports from Windows and Linux are especially welcome.
 
 ## Development
 
