@@ -13,6 +13,7 @@ Build mind maps at the speed of an outliner, without leaving the keyboard. Tab a
 - **Formatting while you type.** Bold, italic, underline, strikethrough, highlight, code, links, headings, alignment, checkboxes and numbered items, from the keyboard or the bar above the node.
 - **Themes that fit your vault.** Follow your Obsidian theme in light or dark mode, pick Paper, Slate, Graphite or Midnight, or make your own. Each map can keep its own theme and node style.
 - **Focus on one branch.** Bring it forward and dim the rest while you work on it.
+- **On a phone or tablet.** The same maps, with a bar above the keyboard for styling, nesting and moving rows, and everything sized for a thumb.
 - **Import and export (beta).** Early support for Markdown lists, `.canvas`, OPML, notes from the file explorer, and PNG or structured-data exports is available for testing. Review the result carefully; these workflows are still being refined.
 
 <table>
@@ -27,6 +28,15 @@ Build mind maps at the speed of an outliner, without leaving the keyboard. Tab a
   <tr>
     <td><img src="docs/screenshots/06-markdown-and-map.png" alt="A map beside its Markdown source"><br><b>Plain Markdown underneath.</b> A heading, a nested list, a block id per node. The note reads anywhere.</td>
     <td><img src="docs/screenshots/05-shortcuts-dark.png" alt="The shortcuts sheet with a filter field"><br><b>Every shortcut.</b> Press <code>?</code> in a map for the sheet, with a filter and the six keys to learn first.</td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td width="25%"><img src="docs/screenshots/10-phone-map.png" alt="The tour map on an iPhone, the whole map in view"><br><b>The map, on a phone.</b> Pinch to zoom, drag to pan. The note's name stays in the corner.</td>
+    <td width="25%"><img src="docs/screenshots/11-phone-focus.png" alt="Focus mode on a phone, one branch lit and the rest dimmed"><br><b>Focus.</b> One branch forward, the rest dimmed, with the way back in the corner.</td>
+    <td width="25%"><img src="docs/screenshots/12-phone-outline.png" alt="The same map as an outline on a phone"><br><b>Outline.</b> The same note as a list, with folding, colours and checkboxes.</td>
+    <td width="25%"><img src="docs/screenshots/13-phone-editing.png" alt="Typing into a row on a phone, a bar of editing keys above the keyboard"><br><b>Typing.</b> Styling, nesting and a new line, above the keyboard rather than under a menu.</td>
   </tr>
 </table>
 
