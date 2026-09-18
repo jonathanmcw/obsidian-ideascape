@@ -212,3 +212,12 @@ test("wysiwyg: selecting all in a label takes the label's contents, and nothing 
   assert.equal(selectAllIn({ activeElement: button } as unknown as Document), false);
   assert.equal(made.cleared, 1, "a selection outside a label is left alone");
 });
+
+// Putting a highlight, a code span or a link on turns the space beside it into U+00A0, which is the browser
+// holding its own rendering still rather than a character anyone typed. The file must never be given one.
+test("wysiwyg: a non-breaking space the browser wrote is read back as the space it stands for", () => {
+  assert.equal(md(label("keep ", el("mark", "this"), " safe")), "keep ==this== safe");
+  assert.equal(md(label("a b")), "a b");
+  // Inside a code span too, where the text is written between backticks exactly as it reads.
+  assert.equal(md(label(el("code", "npm test"))), "`npm test`");
+});

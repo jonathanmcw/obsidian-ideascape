@@ -79,10 +79,16 @@ interface Piece {
   raw?: string
 }
 
+/** A space the browser wrote as a non-breaking one, read back as the space it stands for. Editing beside an
+ *  insertion turns the space next to it into U+00A0 to hold the rendering still; that is the browser keeping
+ *  its own display honest, not a character anyone typed, and the file should never be given it. Text a label
+ *  was opened with and has not been edited never reaches here — it is returned as its own source. */
+const despace = (text: string) => text.replace(/\u00a0/g, ' ')
+
 function collect(node: Node, look: Look, out: Piece[]): void {
   node.childNodes.forEach((child) => {
     if (child.nodeType === TEXT_NODE) {
-      if (child.textContent) out.push({ text: child.textContent, look })
+      if (child.textContent) out.push({ text: despace(child.textContent), look })
       return
     }
     if (child.nodeType !== ELEMENT_NODE) return
@@ -441,7 +447,22 @@ export function dropText(label: HTMLElement, x: number, y: number, text: string)
   doc.execCommand('insertText', false, text)
 }
 
-/** Wrap the selection in `tag`, or unwrap if the caret already sits inside one. */
+/** The element `tag` would be marked with while it is being placed, so it can be found again once the browser
+ *  has put it in. It never survives the call, and nothing reads it back out of the label. */
+const PLACING = 'data-placing'
+
+/** Write `html` over the selection through the browser's own command, so the change joins the undo history
+ *  ⌘Z reads inside a label. Deprecated, and the reason is the whole point: nothing else can write there. */
+function writeHTML(doc: Document, html: string): void {
+  doc.execCommand('insertHTML', false, html)
+}
+
+/** Wrap the selection in `tag`, or unwrap if the caret already sits inside one.
+ *
+ *  Both go through insertHTML rather than moving nodes about. Rearranging the DOM by hand leaves the browser's
+ *  undo history describing a label that no longer exists: ⌘Z then took back the typing and left the highlight
+ *  standing — the text went, the formatting stayed. Writing the same markup through the command puts the change
+ *  in that history beside the typing and bold, so all seven formats are taken back the same way. */
 export function toggleInline(label: HTMLElement, tag: 'mark' | 'code' | 'a', attrs: Record<string, string> = {}): void {
   const doc = label.ownerDocument
   const sel = doc.defaultView?.getSelection()
@@ -452,34 +473,39 @@ export function toggleInline(label: HTMLElement, tag: 'mark' | 'code' | 'a', att
   const anchor = common.nodeType === ELEMENT_NODE ? (common as Element) : common.parentElement
   const existing = anchor?.closest(tag)
   if (existing && label.contains(existing) && existing !== label) {
-    const parent = existing.parentNode!
-    while (existing.firstChild) parent.insertBefore(existing.firstChild, existing)
-    parent.removeChild(existing)
-    label.normalize()
+    // Unwrap: the element's own contents, written over the element itself. The contents go inside a plain span,
+    // which the browser drops again once it is in. Written bare they would be taken as text typed where the
+    // caret stands — inside the element — and come back wearing the very style being taken off. Anything the
+    // contents are already wearing is kept, which is why this is not `removeFormat`: that empties the lot, and
+    // leaves a link alone entirely.
+    const over = doc.createRange()
+    over.selectNode(existing)
+    sel.removeAllRanges()
+    sel.addRange(over)
+    writeHTML(doc, `<span>${existing.innerHTML}</span>`)
+    // No `normalize()` here: merging the text nodes afterwards is a change the command did not make, and the
+    // undo history would describe a label that no longer matches — the very fault this function was rewritten
+    // to fix. Adjacent text is gathered into one stretch when the label is read back anyway.
     inputOn(label)
     return
   }
   const el = doc.win.createEl(tag)
   for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v)
-  if (range.collapsed) {
-    el.textContent = tag === 'a' ? 'Note' : ' '
-    range.insertNode(el)
+  el.setAttribute(PLACING, '1')
+  // A caret rather than a selection gets something to stand on, which is then selected to be typed over.
+  if (range.collapsed) el.textContent = tag === 'a' ? 'Note' : ' '
+  else el.appendChild(range.cloneContents())
+  if (tag === 'a' && !attrs['data-href']) el.setAttribute('data-href', el.textContent ?? '')
+  // outerHTML rather than a string built by hand: the serializer escapes every character and keeps whatever
+  // formatting the selection already carried inside.
+  writeHTML(doc, el.outerHTML)
+  // The command leaves the caret after what it wrote; the label's text is what was being worked on, so the
+  // new element is found by the mark it was placed with and its contents selected, as before.
+  const placed = label.querySelector(`[${PLACING}]`)
+  if (placed) {
+    placed.removeAttribute(PLACING)
     const r = doc.createRange()
-    r.selectNodeContents(el)
-    sel.removeAllRanges()
-    sel.addRange(r)
-  } else {
-    try {
-      range.surroundContents(el)
-    } catch {
-      const text = range.toString()
-      range.deleteContents()
-      el.textContent = text
-      range.insertNode(el)
-    }
-    if (tag === 'a' && !attrs['data-href']) el.setAttribute('data-href', el.textContent ?? '')
-    const r = doc.createRange()
-    r.selectNodeContents(el)
+    r.selectNodeContents(placed)
     sel.removeAllRanges()
     sel.addRange(r)
   }
