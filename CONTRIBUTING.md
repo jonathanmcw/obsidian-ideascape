@@ -28,7 +28,7 @@ npm run install:vault -- /path/to/vault --enable
 The root `main.js` and `styles.css` files are generated release artifacts. Edit the files under `src/` instead of editing those outputs by hand.
 
 Three passes look at the interface rather than at the source. `npm run ui` comes with `npm run check`: it renders
-the chrome at six widths in two themes and measures it. `npm run review` photographs every surface inside the real
+the chrome in eight shells (desktop, a narrow pane, phones and tablets) in two themes and measures it. `npm run review` photographs every surface inside the real
 Obsidian for a person to look through. `npm run phone` drives and photographs a real iPhone over the cable, and is
 the only one of the three that cannot be fooled about a phone's width, its keyboard or its chrome — several of the
 mobile fixes in 0.9.5 came from measuring the device rather than reasoning about it. Each script's header says what
@@ -57,6 +57,7 @@ for a check is not plain from the check itself, say it in a comment beside it, a
 
 - Keep the change focused and explain the user problem it solves.
 - Add or update regression tests for behaviour changes, and confirm each one fails without the fix.
+- For a change a user would notice, add a line under Unreleased in [CHANGELOG.md](CHANGELOG.md).
 - Include desktop and mobile notes for interaction or layout changes.
 - Include before-and-after images for visible changes.
 - Confirm `npm run check` passes.

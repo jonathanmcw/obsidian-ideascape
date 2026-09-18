@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="none">
+  <title>Ideascape final icon</title>
+  <desc>The exact lightbulb glyph used by Obsidian's ribbon, on the Ideascape violet tile.</desc>
+  <rect id="Tile" x="16" y="16" width="480" height="480" rx="116" fill="#6E56E8"/>
+  <rect id="Inner-rim" x="20" y="20" width="472" height="472" rx="112" stroke="#B8A9FF" stroke-opacity="0.32" stroke-width="4"/>
+  <g id="Obsidian-lightbulb" transform="translate(64 64) scale(16)" stroke="#FCFBFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path id="Bulb" d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>
+    <path id="Base-upper" d="M9 18h6"/>
+    <path id="Base-lower" d="M10 22h4"/>
+  </g>
+</svg>

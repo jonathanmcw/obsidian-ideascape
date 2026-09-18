@@ -1,0 +1,83 @@
+name: Bug report
+description: Something in Ideascape went wrong, or a note came back different.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. Notes are the thing at risk here, so the question about your note matters most. If a note was changed or lost something, say so even if you are not sure Ideascape did it.
+  - type: input
+    id: ideascape-version
+    attributes:
+      label: Ideascape version
+      description: Settings → Community plugins → Ideascape.
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: input
+    id: obsidian-version
+    attributes:
+      label: Obsidian version and installer version
+      description: Settings → General shows both on desktop. On mobile there is only the app version.
+      placeholder: "1.9.12, installer 1.8.9"
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      multiple: true
+      options:
+        - macOS
+        - Windows
+        - Linux
+        - iOS
+        - iPadOS
+        - Android
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you saw. A screenshot or a short recording helps.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to make it happen again
+      placeholder: |
+        1. Open a map with …
+        2. Press …
+        3. …
+    validations:
+      required: true
+  - type: textarea
+    id: note-damage
+    attributes:
+      label: Did this change or lose anything in a note?
+      description: Say "No" if nothing in the note changed. If something did, say what was there before and what is there now.
+    validations:
+      required: true
+  - type: textarea
+    id: smallest-note
+    attributes:
+      label: Smallest note that shows it
+      description: Optional. Paste the Markdown, including the frontmatter and the %%ideascape block at the end. Take out anything private first.
+      render: markdown
+    validations:
+      required: false
+  - type: textarea
+    id: anything-else
+    attributes:
+      label: Anything else
+      description: Optional. Your theme, other plugins that touch the same note, whether it happens in a new vault.
+    validations:
+      required: false

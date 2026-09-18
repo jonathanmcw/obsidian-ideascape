@@ -1,0 +1,25 @@
+name: Feature request
+description: A problem Ideascape does not solve yet, or an idea for how it could.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What you are trying to do, and where it gets in the way.
+    validations:
+      required: true
+  - type: textarea
+    id: today
+    attributes:
+      label: What you do today
+      description: How you get round it now, in Ideascape or with something else.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: Optional. How you picture it working. Say whether it matters on desktop, on a phone, or both.
+    validations:
+      required: false

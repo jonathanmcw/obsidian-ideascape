@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="760" viewBox="0 0 1400 760" fill="none">
+  <title>Ideascape icon size and directory preview</title>
+  <rect width="1400" height="760" fill="#101011"/>
+
+  <defs>
+    <g id="ideascape-icon">
+      <rect x="16" y="16" width="480" height="480" rx="116" fill="#6E56E8"/>
+      <rect x="20" y="20" width="472" height="472" rx="112" stroke="#B8A9FF" stroke-opacity="0.32" stroke-width="4"/>
+      <g transform="translate(80 72) scale(14.666667)" stroke="#FCFBFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>
+        <path d="M9 18h6"/>
+        <path d="M10 22h4"/>
+      </g>
+    </g>
+    <g id="ideascape-icon-small">
+      <rect x="16" y="16" width="480" height="480" rx="116" fill="#6E56E8"/>
+      <rect x="20" y="20" width="472" height="472" rx="112" stroke="#B8A9FF" stroke-opacity="0.34" stroke-width="6"/>
+      <g transform="translate(77 69) scale(14.916667)" stroke="#FCFBFF" stroke-width="2.18" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>
+        <path d="M9 18h6"/>
+        <path d="M10 22h4"/>
+      </g>
+    </g>
+  </defs>
+
+  <text x="64" y="70" fill="#F0EFEB" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="30" font-weight="650">Ideascape icon</text>
+  <text x="64" y="103" fill="#888883" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18">Marketplace scale check</text>
+
+  <g transform="translate(64 148) scale(0.5)">
+    <use href="#ideascape-icon"/>
+  </g>
+  <text x="64" y="440" fill="#888883" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="16" font-weight="600">256 PX</text>
+
+  <g transform="translate(392 148) scale(0.1875)">
+    <use href="#ideascape-icon"/>
+  </g>
+  <text x="392" y="280" fill="#888883" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="16" font-weight="600">96 PX</text>
+
+  <g transform="translate(536 148) scale(0.09375)">
+    <use href="#ideascape-icon-small"/>
+  </g>
+  <text x="536" y="232" fill="#888883" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="16" font-weight="600">48 PX</text>
+
+  <text x="704" y="155" fill="#888883" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="14" font-weight="700" letter-spacing="1.5">OBSIDIAN COMMUNITY</text>
+  <rect x="704" y="178" width="632" height="180" rx="18" fill="#202021" stroke="#303032" stroke-width="2"/>
+
+  <g transform="translate(736 244) scale(0.09375)">
+    <use href="#ideascape-icon-small"/>
+  </g>
+
+  <text x="808" y="247" fill="#F0EFEB" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="27" font-weight="650">Ideascape</text>
+  <text x="808" y="282" fill="#AAA9A4" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18">Build a mind map from the keyboard. Tab adds a child,</text>
+  <text x="808" y="310" fill="#AAA9A4" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18">Enter a sibling, and typing fills it in.</text>
+
+  <line x1="64" y1="510" x2="1336" y2="510" stroke="#2C2C2D"/>
+  <text x="64" y="568" fill="#F0EFEB" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="23" font-weight="650">Design rationale</text>
+  <text x="64" y="608" fill="#AAA9A4" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18">The listing artwork now matches the Obsidian ribbon button: a plain lightbulb for quick idea capture.</text>
+  <text x="64" y="640" fill="#AAA9A4" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18">The small-size export uses a slightly heavier optical stroke so the bulb remains readable at 48 px.</text>
+</svg>
