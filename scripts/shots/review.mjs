@@ -14,6 +14,7 @@
 // and the window are put back whatever happens, and if Obsidian does go down, reopen it and run:
 //   obsidian vault=<vault> eval "code=app.emulateMobile(false)"
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -48,6 +49,31 @@ async function waitFor(file, seconds) {
     await sleep(1000);
   }
   return `gave up after ${seconds}s`;
+}
+
+/** The rig photographs whatever is installed in the vault, which is not necessarily the code in this repo. A pass
+ *  against a stale build produces pictures that look entirely correct and document the wrong thing — which is how a
+ *  set of fourteen came back showing a dock that had been resized four hours earlier. Checked, not assumed. */
+function installedIsCurrent() {
+  const vaultDir = process.env.VAULT_PATH ?? resolve("demo-vault");
+  const digest = file => (existsSync(file) ? createHash("sha1").update(readFileSync(file)).digest("hex") : null);
+  // Another vault than the demo one is only known by name, not by path: nothing to compare against, so say so
+  // rather than blocking a pass that may be perfectly current.
+  if (!existsSync(`${vaultDir}/.obsidian/plugins/ideascape`)) return { vaultDir, stale: [], unknown: true };
+  const stale = ["main.js", "styles.css"].filter(name => {
+    const there = digest(`${vaultDir}/.obsidian/plugins/ideascape/${name}`);
+    return there === null || there !== digest(resolve(name));
+  });
+  return { vaultDir, stale };
+}
+
+const build = installedIsCurrent();
+if (build.unknown) console.log(`  (cannot tell whether ${vault} has this build installed: set VAULT_PATH to check)`);
+if (build.stale.length) {
+  console.error(`The vault's plugin is not this build (${build.stale.join(", ")} differ).`);
+  console.error(`Every picture would document code that is not in the repo. Install it first:`);
+  console.error(`  npm run build && node scripts/install.mjs ${build.vaultDir}`);
+  process.exit(1);
 }
 
 mkdirSync(out, { recursive: true });
