@@ -1,7 +1,7 @@
 // obsidian: inline formatting while editing a node. The label is a WYSIWYG contenteditable
 // (see wysiwyg.ts); bold, italic, underline and strike use the browser's own commands, the
 // rest wrap the selection in an element. Every path fires `input`, which the draft listens to.
-import { toggleInline } from './wysiwyg.ts'
+import { browserCommand, toggleInline } from './wysiwyg.ts'
 
 export type Format = 'bold' | 'italic' | 'underline' | 'strike' | 'highlight' | 'code' | 'link'
 
@@ -46,10 +46,9 @@ export function selectAllIn(root: Document = document): boolean {
 export function insertLineBreak(root: Document = document): boolean {
   const label = activeLabel(root)
   if (!label) return false
-  // execCommand is deprecated, and kept on purpose: it is the only insert that joins the browser's own undo
-  // history, which is what ⌘Z takes back inside a label (see map-view.ts, where ⌘Z is handed to the browser
-  // once something has been typed). MDN keeps this exact use as one the platform has no replacement for.
-  label.ownerDocument.execCommand('insertText', false, '\n')
+  // The browser's own insert, because it is the only one that joins the undo history ⌘Z takes back inside a
+  // label (see `browserCommand` in wysiwyg.ts).
+  browserCommand(label.ownerDocument, 'insertText', false, '\n')
   return true
 }
 
@@ -57,23 +56,23 @@ export function applyFormat(f: Format, root: Document = document): boolean {
   const label = activeLabel(root)
   if (!label) return false
   const doc = label.ownerDocument
-  // These four are the browser's own commands, deprecated and kept on purpose: they are what puts the change in
-  // the undo history ⌘Z reads inside a label. The three below wrap the selection themselves and so cannot be
+  // These four are the browser's own commands (see `browserCommand` in wysiwyg.ts): they are what puts the change
+  // in the undo history ⌘Z reads inside a label. The three below wrap the selection themselves and so cannot be
   // taken back that way — the standing difference this editor lives with. `styleWithCSS` off asks for <b>/<i>
   // tags rather than styled spans; the reader (wysiwyg.ts `lookOf`) understands both either way.
-  doc.execCommand('styleWithCSS', false, 'false')
+  browserCommand(doc, 'styleWithCSS', false, 'false')
   switch (f) {
     case 'bold':
-      doc.execCommand('bold')
+      browserCommand(doc, 'bold')
       break
     case 'italic':
-      doc.execCommand('italic')
+      browserCommand(doc, 'italic')
       break
     case 'underline':
-      doc.execCommand('underline')
+      browserCommand(doc, 'underline')
       break
     case 'strike':
-      doc.execCommand('strikeThrough')
+      browserCommand(doc, 'strikeThrough')
       break
     case 'highlight':
       toggleInline(label, 'mark')

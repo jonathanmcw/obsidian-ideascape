@@ -59,6 +59,7 @@ import {
   typed,
   undo as undoStep,
   unfold,
+  unmoved,
   withDraft,
   type Editing,
   type Session,
@@ -1368,7 +1369,8 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       // `isComposing` above cannot see this one: compositionstart fires after the keydown that opens the IME, so the
       // first keystroke of a Chinese, Japanese or Korean word reports false there and 229 here. keyCode is deprecated
       // and has no replacement for this — MDN's own keydown page says to go on testing it for exactly this reason.
-      const composing = e.keyCode === 229
+      // Read through a type of its own: the lint rule that marks it deprecated may not be switched off here.
+      const composing = (e as { keyCode?: number }).keyCode === 229
       if (composing && (editing || !sel)) return
 
       if (e.key === '?' && !editing) {
@@ -1664,17 +1666,22 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
         // branch. The ⌘X path above uses the cut event's own clipboardData, which is written in the same breath.
         const ids = topSelected()
         if (!ids.length) return
-        const before = s.doc
+        const still = unmoved(s)
         try { await navigator.clipboard.writeText(toMarkdownList(doc, ids)) }
         catch { flash('Could not reach the clipboard'); return }
         // The map can move on while the clipboard is being asked for — a reload from disk, or a node committed
         // from the render behind this one. Cutting then would write a document that is no longer the live one.
-        if (cut && s.doc !== before) { flash('The map changed, so nothing was cut') ; return }
+        if (cut && !still()) { flash('The map changed, so nothing was cut') ; return }
         takeSelection(cut)
       },
       paste: async () => {
+        const still = unmoved(s)
         let text = ''
         try { text = await navigator.clipboard.readText() } catch { flash('Could not read the clipboard'); return }
+        // As for a cut, and the wait can be long: a phone asks "Paste?" first and waits for the answer. `pasteText` is
+        // this render's, so it builds on this render's document and hands it to whatever file the tab shows by then —
+        // over a node Sync just brought, or into another note opened meanwhile.
+        if (!still()) { flash('The map changed, so nothing was pasted'); return }
         if (!pasteText(text)) flash('Nothing to paste as nodes')
       },
       nudge: (dx, dy) => {

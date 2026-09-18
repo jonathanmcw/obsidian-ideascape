@@ -183,7 +183,9 @@ export class MapView extends TextFileView {
       else {
         const read = fromMarkdownMap(data, name);
         // A layout block that doesn't parse is kept exactly as written, so moves and folds can't be saved into it until it is fixed.
-        if (clear && read.md.rawGeometry != null) new Notice(`The layout block in “${name}” can't be read, so it is kept as it is. Positions and folds won't save until its layout block (${read.md.block ?? "%%"} … %%) is fixed.`);
+        // Said when the note opens, and when the block breaks under an open map (a merge's conflict markers landing in
+        // it) — not again on every reload after that.
+        if (read.md.rawGeometry != null && (clear || this.doc?.md?.rawGeometry == null)) new Notice(`The layout block in “${name}” can't be read, so it is kept as it is. Positions and folds won't save until its layout block (${read.md.block ?? "%%"} … %%) is fixed.`);
         doc = read;
         if (doc.needsLayout) { doc = seedCanvasPositions(doc); doc.needsLayout = false; }
       }

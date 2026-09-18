@@ -527,6 +527,53 @@ test("map view: text arriving from disk that this view didn't write clears undo"
   assert.equal(v.epoch, e0 + 1, "the view's own write coming back is not a reload");
 });
 
+test("map view: a change from disk while an edit waits for its save arrives merged with it, and the merge is what gets written", async () => {
+  const disk = { text: tripMap };
+  const { v } = await mapView("Trip.md", { vault: { modify: async (_f: unknown, text: string) => { disk.text = text; } }, workspace: { on: () => ({}) } });
+  v.load(tripMap);
+  const next = structuredClone(v.doc);
+  next.nodes.a1.text = "Lisbon";
+  v.onDoc(next); // committed, and the 2-second save not yet run
+  // obsidian: TextFileView.loadFileInternal (1.12.4 and 1.13.7 read). A view that asked for a save and has not had it
+  // gets, not the file's text, but its own unsaved change patched onto it, with Obsidian's "changed externally" notice;
+  // `lastSavedData` is the file's text, so the merge still counts as unsaved. This view must take it as it comes.
+  const merged = tripPulled.replace("- Where ^a1", "- Lisbon ^a1");
+  v.lastSavedData = tripPulled;
+  v.data = merged;
+  v.setViewData(merged, false);
+  assert.equal(v.doc.nodes.a1.text, "Lisbon", "the edit made here");
+  assert.ok(v.doc.nodes.b1, "the node from the phone");
+  await v.save();
+  assert.equal(disk.text, merged);
+});
+
+test("map view: a layout block that stops being readable while the map is open is said once, not kept silently", async (t) => {
+  // With no layout to read, the nodes are laid out afresh, which measures text: a stand-in canvas, for this test only.
+  const g = globalThis as { document?: unknown; activeDocument?: object };
+  const measuring = { win: { createEl: () => ({ getContext: () => ({ font: "", measureText: (s: string) => ({ width: s.length * 7 }) }) }) } };
+  g.document = measuring;
+  t.after(() => { delete g.document; });
+  const { m, v } = await mapView("Trip.md");
+  g.activeDocument = { ...g.activeDocument, ...measuring };
+  v.load(tripMap);
+  m.notices.length = 0;
+  // A git merge left its markers inside the layout block. The map opens, but from here its positions and folds don't save.
+  const conflicted = tripMap.replace("%%ideamap\n", "%%ideamap\n<<<<<<< HEAD\n");
+  v.setViewData(conflicted, false);
+  assert.equal(v.loadError, null);
+  assert.equal(m.notices.length, 1);
+  assert.match(m.notices[0], /layout block/);
+  // Every later reload of the same broken block says nothing more.
+  v.setViewData(conflicted.replace("- Where", "- Where to"), false);
+  assert.equal(m.notices.length, 1);
+  // Opened that way, it is said then, as before.
+  const { m: again, v: w } = await mapView("Trip.md");
+  g.activeDocument = { ...g.activeDocument, ...measuring };
+  again.notices.length = 0;
+  w.load(conflicted);
+  assert.equal(again.notices.length, 1);
+});
+
 /* ---------- links ---------- */
 
 test("links: web and email open, Obsidian links ask, everything else is refused with a reason", () => {
