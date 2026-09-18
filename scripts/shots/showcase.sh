@@ -42,6 +42,10 @@ command -v gifsicle >/dev/null || { echo "gifsicle is required" >&2; exit 1; }
 echo "recording renderer-only frames → $FRAMES"
 CODE="window.__ideascapeShowcase={out:$(node -p 'JSON.stringify(process.argv[1])' "$FRAMES"),fps:$FPS};eval(require('fs').readFileSync($(node -p 'JSON.stringify(process.argv[1])' "$RECORDER"),'utf8'))"
 "$CLI" "vault=$VAULT" eval "code=$CODE"
+# The CLI can return before the renderer has finished what it was given: the recorder is asynchronous, and a pass
+# that took 356 good frames was called unfinished because this looked once, the instant the command returned. Wait
+# for the file the recorder writes, the way scripts/shots/review.mjs waits for its own.
+for _ in $(seq 1 300); do [ -f "$FRAMES/done.json" ] && break; sleep 1; done
 [ -f "$FRAMES/done.json" ] || { echo "The recorder did not finish" >&2; exit 1; }
 python3 scripts/shots/draw_keycast.py "$FRAMES"
 

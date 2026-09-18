@@ -38,8 +38,14 @@
   // produce a 977 x 705 CSS-pixel leaf on the current display.
   const win = electron.getCurrentWindow();
   win.setContentBounds({ x: 80, y: 40, width: 1118, height: 870 });
+  // A window's own focus() does not bring a background app forward on macOS, and an occluded window composites
+  // nothing: capturePage then returns the frame from before, and every wait for something to appear on screen times
+  // out. The app is activated and the window raised for the recording, as scripts/shots/capture.sh does.
+  electron.app.focus({ steal: true });
   win.show();
   win.focus();
+  win.moveTop();
+  win.setAlwaysOnTop(true);
   app.workspace.leftSplit.collapse();
   app.workspace.rightSplit.collapse();
   const leaves = [];
@@ -214,6 +220,7 @@
   }
 
   const result = { frames: frame, fps: Math.round(1000 / frameMs), width: 840, height: 606, keycasts };
+  win.setAlwaysOnTop(false);
   fs.writeFileSync(path.join(out, "done.json"), JSON.stringify(result, null, 2));
   return JSON.stringify(result);
 })();

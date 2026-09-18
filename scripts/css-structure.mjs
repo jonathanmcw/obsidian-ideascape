@@ -74,7 +74,7 @@ export function cssStructureProblems(css, label = "styles.css") {
   const used = new Set([...css.matchAll(/var\((--io-[a-z0-9-]+)/g)].map(m => m[1]))
   const defined = new Set([...css.matchAll(/^\s*(--io-[a-z0-9-]+)\s*:/gm)].map(m => m[1]))
   // Set from JS on the app element, not in the sheet.
-  for (const runtime of ["--io-bottom-inset", "--io-keyboard-inset"]) used.delete(runtime)
+  for (const runtime of ["--io-bottom-inset", "--io-keyboard-inset", "--io-dock-lift"]) used.delete(runtime)
   for (const token of used) if (!defined.has(token)) problems.push(`${label}: \`var(${token})\` is read but never defined`)
   for (const token of defined) if (!used.has(token)) problems.push(`${label}: \`${token}\` is defined but never read`)
 
