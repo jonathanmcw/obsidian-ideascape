@@ -81,15 +81,13 @@ for (const shell of SHELLS) {
     // What each state must show, and what it deliberately hides. A control that stops being drawn — because its
     // rule was spliced, renamed or deleted — fails here rather than on someone's phone.
     const CONTRACT = {
-      shown: [".toolbar .seg-shape .seg-btn", ".toolbar .icon-btn", ".corner .history button", ".find-input", ".node-toolbar .nt-main button", ".sheet .icon-btn", ".node-check",
+      shown: [".doc-name", ".toolbar .seg-shape .seg-btn", ".toolbar .icon-btn", ".corner .history button", ".find-input", ".node-toolbar .nt-main button", ".sheet .icon-btn", ".node-check",
         // Focus stands beside the view toggle at every width — a phone folds the toolbar's centre away, and this
         // must not go with it.
         ".toolbar .toolbar-left .icon-btn",
         // Fit sits with the zoom steps it belongs to, not in a menu; it stands down while typing, with them.
         ...(shell.editing ? [] : [".corner .zoom button:last-child", ".help"])],
       hidden: [
-        // Every hand-held Obsidian draws the note's name in its own header; the map does not draw it a third time.
-        ...(shell.shell === "phone" || shell.shell === "tablet" ? [".doc-name"] : []),
         // While typing, the keyboard dock is the place for controls: zoom and the shortcuts sheet stand down.
         ...(shell.editing ? [".corner .zoom", ".help"] : []),
       ],

@@ -1672,13 +1672,11 @@ body.is-mobile .io-root .help {
   width: var(--mobile-control-size);
   height: var(--mobile-control-size);
 }
-/* Any hand-held Obsidian shows the note's name in its own header, and the root node carries it again: a third copy
-   costs 40px of map for nothing. A tablet has the room and still has no use for it — it is the same three copies,
-   just further apart. Renaming stays where a hand-held does it, in the note's menu. The desktop keeps the name,
-   where it is Obsidian's inline title and the way a map is renamed. */
-body.is-mobile .io-root .doc-name {
-  display: none;
-}
+/* The name stands in the canvas's corner on every screen. A hand-held hid it on the reasoning that Obsidian's own
+   header already carries it and the root node carries it again — but measured on a phone the band is 37px of a
+   769px stage, two thirds of one row, and in the outline it sits above the first row rather than over it. The
+   outline's own root row scrolls away; this one does not, which is the whole of what it is for. Consistency across
+   screens is worth more than the 5%. */
 body.is-mobile .io-root .zoom button {
   font-size: 20px;
 }
