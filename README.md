@@ -18,25 +18,25 @@ Build mind maps at the speed of an outliner, without leaving the keyboard. Tab a
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/screenshots/07-welcome-dark.png" alt="The welcome window on its first slide, a Kyoto weekend as a mind map"><br><b>First run.</b> Three slides: what a map is, how map and outline views relate, and the keyboard basics. Start opens the tour.</td>
-    <td width="50%"><img src="docs/screenshots/08-tour-dark.png" alt="The tour map, each node showing the feature it names"><br><b>The tour.</b> A map where every node is the feature it describes: the bold node is bold, the folded one is folded.</td>
+    <td width="50%" valign="top"><img src="docs/screenshots/07-welcome-dark.png" alt="The welcome window on its first slide, a Kyoto weekend as a mind map"><br><b>First run.</b> Three slides: what a map is, how map and outline views relate, and the keyboard basics. Start opens the tour.</td>
+    <td width="50%" valign="top"><img src="docs/screenshots/08-tour-dark.png" alt="The tour map, each node showing the feature it names"><br><b>The tour.</b> A map where every node is the feature it describes: the bold node is bold, the folded one is folded.</td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/02-outline-dark.png" alt="A podcast plan as an outline"><br><b>Outline.</b> The same note as a list, one key away. Fold, focus and find work here too.</td>
-    <td><img src="docs/screenshots/04-themes-light.png" alt="A trip plan in the Paper theme with the document panel open"><br><b>Themes.</b> Follow your vault in light or dark, or pin Paper, Slate, Graphite or Midnight to one map from the document panel.</td>
+    <td valign="top"><img src="docs/screenshots/02-outline-dark.png" alt="A podcast plan as an outline"><br><b>Outline.</b> The same note as a list, one key away. Fold, focus and find work here too.</td>
+    <td valign="top"><img src="docs/screenshots/04-themes-light.png" alt="A trip plan in the Paper theme with the document panel open"><br><b>Themes.</b> Follow your vault in light or dark, or pin Paper, Slate, Graphite or Midnight to one map from the document panel.</td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/06-markdown-and-map.png" alt="A map beside its Markdown source"><br><b>Plain Markdown underneath.</b> A heading, a nested list, a block id per node. The note reads anywhere.</td>
-    <td><img src="docs/screenshots/05-shortcuts-dark.png" alt="The shortcuts sheet with a filter field"><br><b>Every shortcut.</b> Press <code>?</code> in a map for the sheet, with a filter and the six keys to learn first.</td>
+    <td valign="top"><img src="docs/screenshots/06-markdown-and-map.png" alt="A map beside its Markdown source"><br><b>Plain Markdown underneath.</b> A heading, a nested list, a block id per node. The note reads anywhere.</td>
+    <td valign="top"><img src="docs/screenshots/05-shortcuts-dark.png" alt="The shortcuts sheet with a filter field"><br><b>Every shortcut.</b> Press <code>?</code> in a map for the sheet, with a filter and the six keys to learn first.</td>
   </tr>
 </table>
 
 <table>
   <tr>
-    <td width="25%"><img src="docs/screenshots/10-phone-map.png" alt="The tour map on an iPhone, the whole map in view"><br><b>The map, on a phone.</b> Pinch to zoom, drag to pan. The note's name stays in the corner.</td>
-    <td width="25%"><img src="docs/screenshots/11-phone-focus.png" alt="Focus mode on a phone, one branch lit and the rest dimmed"><br><b>Focus.</b> One branch forward, the rest dimmed, with the way back in the corner.</td>
-    <td width="25%"><img src="docs/screenshots/12-phone-outline.png" alt="The same map as an outline on a phone"><br><b>Outline.</b> The same note as a list, with folding, colours and checkboxes.</td>
-    <td width="25%"><img src="docs/screenshots/13-phone-editing.png" alt="Typing into a row on a phone, a bar of editing keys above the keyboard"><br><b>Typing.</b> Styling, nesting and a new line, above the keyboard rather than under a menu.</td>
+    <td width="25%" valign="top"><img src="docs/screenshots/10-phone-map.png" width="100%" alt="The tour map on an iPhone, the whole map in view"><br><b>The map.</b> Pinch to zoom, drag to pan.</td>
+    <td width="25%" valign="top"><img src="docs/screenshots/11-phone-focus.png" width="100%" alt="Focus mode on a phone, one branch lit and the rest dimmed"><br><b>Focus.</b> One branch forward, the rest dimmed.</td>
+    <td width="25%" valign="top"><img src="docs/screenshots/12-phone-outline.png" width="100%" alt="The same map as an outline on a phone"><br><b>Outline.</b> The same note as a list.</td>
+    <td width="25%" valign="top"><img src="docs/screenshots/13-phone-editing.png" width="100%" alt="Typing into a row on a phone, a bar of editing keys above the keyboard"><br><b>Typing.</b> Styling and nesting, above the keyboard.</td>
   </tr>
 </table>
 
