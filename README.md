@@ -14,7 +14,7 @@ Build mind maps at the speed of an outliner, without leaving the keyboard. Tab a
 - **Themes that fit your vault.** Follow your Obsidian theme in light or dark mode, pick Paper, Slate, Graphite or Midnight, or make your own. Each map can keep its own theme and node style.
 - **Focus on one branch.** Bring it forward and dim the rest while you work on it.
 - **On a phone or tablet.** The same maps, with a bar above the keyboard for styling, nesting and moving rows, and everything sized for a thumb.
-- **Import (beta).** Early support for Markdown lists, `.canvas`, OPML and notes from the file explorer is available for testing. Review the result carefully; these workflows are still being refined.
+- **Dropped and pasted content (beta).** Markdown lists, `.canvas` files, OPML and notes dragged in from the file explorer are still being refined, so review what arrives. Turning one of your own notes into a map is not beta: it tells you before it rewrites anything, and offers to convert a copy instead.
 - **Export.** Save a map as `.canvas`, Markdown, OPML, or a picture of the shape on screen in the theme it is in. Exports land beside the note, under a name nothing in the vault has yet.
 
 <table>
