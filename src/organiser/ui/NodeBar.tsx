@@ -7,7 +7,7 @@ import { IconAlign, IconCheck, IconCheckbox, IconChevron, IconIndent, IconMore, 
 import { ColourPicker } from './ColourPicker'
 import { hueOf as hueOfHex, sortByHue, toneOf, withHue } from '../colour'
 import { CUSTOM_SLOTS } from '../theme'
-import { formatsForNode, isPhoneTouch, roomyDock } from './mobile'
+import { dockFit, formatsForNode, isPhoneTouch } from './mobile'
 import { useCoarsePointer } from './useCoarsePointer'
 
 interface NodeState {
@@ -174,10 +174,14 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
   const docked = isPhoneTouch(coarse, stageWidth, phoneDevice)
   const [menu, setMenu] = useState<Menu>(null)
   // A tablet gets the dock — Obsidian calls it a phone — but not a phone's width. What a phone folds under More
-  // stands in the row there, because the room is sitting empty either side of it.
-  const roomy = roomyDock(docked, stageWidth)
-  const primaryFormats = formatsForNode(docked ? (roomy ? TOUCH_FORMATS : PHONE_FORMATS) : coarse ? TOUCH_FORMATS : FORMATS, node.isRoot) as Format[]
-  const moreFormats = formatsForNode(docked && !roomy ? PHONE_MORE : TOUCH_MORE, node.isRoot) as Format[]
+  // stands in the row there, because the room is sitting empty either side of it; a wide one takes every key.
+  const fit = dockFit(docked, stageWidth)
+  const roomy = fit !== 'phone'
+  const full = fit === 'full'
+  const inRow = !docked ? (coarse ? TOUCH_FORMATS : FORMATS) : full ? FORMATS : roomy ? TOUCH_FORMATS : PHONE_FORMATS
+  const underMore = !docked ? TOUCH_MORE : full ? [] : roomy ? TOUCH_MORE : PHONE_MORE
+  const primaryFormats = formatsForNode(inRow, node.isRoot) as Format[]
+  const moreFormats = formatsForNode(underMore, node.isRoot) as Format[]
   // The slot whose colour is being picked, when the colour menu shows the picker.
   const [picking, setPicking] = useState<number | null>(null)
   const [dx, setDx] = useState(0)
@@ -339,21 +343,16 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
               </button>
             ))}
           </div>
-          <div className="nt-phone-group nt-phone-align" role="group" aria-label="Alignment">
-            {ALIGNS.map(([a, label]) => (
-              <button key={a} type="button" tabIndex={-1} role="menuitemradio" className={node.align === a ? 'is-on' : ''} aria-checked={node.align === a} onClick={() => { onAlign(a); setMenu(null) }}>
-                <IconAlign align={a} />
-                <Name>{label}</Name>
-              </button>
-            ))}
-          </div>
-          {/* A phone has no Backspace to delete a node with, and no menu bar to find one in. */}
-          <div className="nt-phone-group nt-phone-danger" role="group" aria-label="Delete node">
-            <button type="button" tabIndex={-1} role="menuitem" className="nt-delete" disabled={!canDelete} onClick={() => { onDelete(); setMenu(null) }}>
-              <IconTrash />
-              <Name>Delete this node and everything under it</Name>
-            </button>
-          </div>
+          {!roomy && (
+            <div className="nt-phone-group nt-phone-align" role="group" aria-label="Alignment">
+              {ALIGNS.map(([a, label]) => (
+                <button key={a} type="button" tabIndex={-1} role="menuitemradio" className={node.align === a ? 'is-on' : ''} aria-checked={node.align === a} onClick={() => { onAlign(a); setMenu(null) }}>
+                  <IconAlign align={a} />
+                  <Name>{label}</Name>
+                </button>
+              ))}
+            </div>
+          )}
           {outline && (
             <div className="nt-phone-group nt-phone-arrange" role="group" aria-label="Arrange node">
               <button type="button" tabIndex={-1} role="menuitem" className="nt-move-up" disabled={!canMoveUp} onClick={() => { onMoveUp(); setMenu(null) }}>
@@ -363,6 +362,16 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
               <button type="button" tabIndex={-1} role="menuitem" className="nt-move-down" disabled={!canMoveDown} onClick={() => { onMoveDown(); setMenu(null) }}>
                 <IconChevron />
                 <Name>Move down</Name>
+              </button>
+            </div>
+          )}
+          {/* Last, and on its own: a phone has no Backspace to delete a node with, and no menu bar to find one in.
+              A wide bar carries it in the row instead, away from everything else. */}
+          {!roomy && (
+            <div className="nt-phone-group nt-phone-danger" role="group" aria-label="Delete node">
+              <button type="button" tabIndex={-1} role="menuitem" className="nt-delete" disabled={!canDelete} onClick={() => { onDelete(); setMenu(null) }}>
+                <IconTrash />
+                <Name>Delete this node and everything under it</Name>
               </button>
             </div>
           )}
@@ -528,13 +537,22 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
           </>
         )}
         {coarse && (
-          <>
-            <span className="nt-sep" />
+          // On a bar with room, the two keys that end an edit go to the far right, where a thumb expects to finish,
+          // and away from the keys that change the text. Delete sits before Done with a gap between them: the one
+          // is destructive and the other is the one pressed every time, and they must not be neighbours.
+          <span className={roomy ? 'nt-tail' : 'nt-tail is-tight'}>
+            {!roomy && <span className="nt-sep" />}
+            {roomy && (
+              <button type="button" tabIndex={-1} className="nt-delete" disabled={!canDelete} onClick={onDelete}>
+                <IconTrash />
+                <Name>Delete this node and everything under it</Name>
+              </button>
+            )}
             <button type="button" tabIndex={-1} className="nt-done" onClick={onDone}>
               <IconCheck />
               <Name>Done</Name>
             </button>
-          </>
+          </span>
         )}
       </div>
       )}

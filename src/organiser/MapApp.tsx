@@ -289,7 +289,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
   const [hud, setHud] = useState<{ key: string; label: string } | null>(null)
   const [exporting, setExporting] = useState(false)
   const [showKeys, setShowKeys] = useState(false)
-  const [toast, setToast] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ text: string; undo?: () => void } | null>(null)
 
   /** Stage size, kept current by the ResizeObserver below. Read this rather
    *  than calling getBoundingClientRect after a big commit — that one call
@@ -840,10 +840,13 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
   /* -------------------- commands -------------------- */
 
   const [live, setLive] = useState('')
-  const flash = useCallback((msg: string) => {
-    setToast(msg)
+  /** A word about what just happened, and — where something was taken away — the way back. A toast that offers the
+   *  undo is why deleting does not stop to ask: the question is answered after the fact, by whoever was wrong. */
+  const flash = useCallback((msg: string, undo?: () => void) => {
+    const shown = { text: msg, undo }
+    setToast(shown)
     setLive(msg) // the same words reach a screen reader
-    window.setTimeout(() => setToast((t) => (t === msg ? null : t)), 2600)
+    window.setTimeout(() => setToast((t) => (t === shown ? null : t)), undo ? 5200 : 2600)
   }, [])
 
   const createChild = useCallback(
@@ -897,8 +900,15 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       setEdit(null)
       setDraftText(null)
       selectOne(d.nodes[parent] ? parent : d.rootId)
+      // On a touch screen there is no ⌘Z to reach for, and a phone's delete is a button a thumb can find by
+      // accident. So the question is asked after the fact, by whoever was wrong, instead of stopping every
+      // deliberate delete to confirm one.
+      if (coarsePointer) {
+        const branch = ids.length === 1 ? (doc.nodes[ids[0]]?.children.length ? 'Branch deleted' : 'Node deleted') : `${ids.length} nodes deleted`
+        flash(branch, () => undo())
+      }
     },
-    [commit, doc, focusId, multi, selectOne, withEdit],
+    [commit, coarsePointer, doc, flash, focusId, multi, selectOne, undo, withEdit],
   )
 
   /** Empty one of the map's own colour slots; every main branch wearing it goes back to its theme colour. */
@@ -1890,7 +1900,16 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
             </div>
           )}
 
-          {toast && <div className="toast">{toast}</div>}
+          {toast && (
+            <div className="toast">
+              <span>{toast.text}</span>
+              {toast.undo && (
+                <button type="button" className="toast-undo" onClick={() => { toast.undo?.(); setToast(null) }}>
+                  Undo
+                </button>
+              )}
+            </div>
+          )}
           <div className="sr-only" role="status" aria-live="polite">{live}</div>
         </div>
       </main>

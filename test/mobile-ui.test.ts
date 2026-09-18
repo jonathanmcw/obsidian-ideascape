@@ -8,7 +8,7 @@ import {
   centreNudge,
   outlineScrollStop,
   formatsForNode,
-  roomyDock,
+  dockFit,
   outlineSwipeAction,
   stageResizeOffset,
   stageViewportBand,
@@ -186,15 +186,16 @@ test("typing: a row taller than the band keeps its bottom edge, where the next l
 });
 
 // Obsidian calls some tablets phones, so they get the phone's dock — with a tablet's width sitting empty either side.
-test("dock: a phone keeps its short row, a tablet-width dock unpacks", () => {
-  assert.equal(roomyDock(true, 390), false, "a phone has no room to spare");
-  assert.equal(roomyDock(true, 600), false);
-  assert.equal(roomyDock(true, 700), true, "a tablet does");
-  assert.equal(roomyDock(true, 1024), true);
+test("dock: a phone keeps its short row, a tablet unpacks, a wide one takes the lot", () => {
+  assert.equal(dockFit(true, 390), "phone", "a phone has no room to spare");
+  assert.equal(dockFit(true, 699), "phone");
+  assert.equal(dockFit(true, 700), "roomy", "a tablet does");
+  assert.equal(dockFit(true, 959), "roomy");
+  assert.equal(dockFit(true, 960), "full", "and a wide one holds every formatting key");
 });
 
-test("dock: a bar that is not docked is never 'roomy' — it already shows everything", () => {
-  assert.equal(roomyDock(false, 1400), false);
+test("dock: a bar that is not docked is never measured this way — it already shows everything", () => {
+  assert.equal(dockFit(false, 1400), "phone");
 });
 
 // The root is the note's heading and is drawn bold whatever its text says: a Bold key there writes ** into the file
