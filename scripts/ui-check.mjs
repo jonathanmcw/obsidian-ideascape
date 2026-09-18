@@ -24,6 +24,8 @@ const SHELLS = [
   { name: "phone-editing", shell: "phone", width: 390, height: 1700, editing: true },
   // The narrowest phone in common use (many Android handsets report 360dp): where the dock's eight keys are tightest.
   { name: "phone-360", shell: "phone", width: 360, height: 1700 },
+  // A tablet: Obsidian's hand-held chrome at a width that is not a phone's.
+  { name: "tablet", shell: "tablet", width: 1024, height: 1400 },
 ];
 const THEMES = ["light", "dark"];
 
@@ -40,8 +42,8 @@ for (const shell of SHELLS) {
   const context = await browser.newContext({
     deviceScaleFactor: 2,
     viewport: { width: shell.width, height: shell.height },
-    hasTouch: shell.shell === "phone",
-    isMobile: shell.shell === "phone",
+    hasTouch: shell.shell === "phone" || shell.shell === "tablet",
+    isMobile: shell.shell === "phone" || shell.shell === "tablet",
   });
   const page = await context.newPage();
   for (const theme of THEMES) {
@@ -86,7 +88,8 @@ for (const shell of SHELLS) {
         // Fit sits with the zoom steps it belongs to, not in a menu; it stands down while typing, with them.
         ...(shell.editing ? [] : [".corner .zoom button:last-child", ".help"])],
       hidden: [
-        ...(shell.shell === "phone" ? [".doc-name"] : []),
+        // Every hand-held Obsidian draws the note's name in its own header; the map does not draw it a third time.
+        ...(shell.shell === "phone" || shell.shell === "tablet" ? [".doc-name"] : []),
         // While typing, the keyboard dock is the place for controls: zoom and the shortcuts sheet stand down.
         ...(shell.editing ? [".corner .zoom", ".help"] : []),
       ],
@@ -106,7 +109,7 @@ for (const shell of SHELLS) {
         const el = document.querySelector(s);
         return !el || getComputedStyle(el).display === "none";
       }, sel);
-      check(gone, `${state}: \`${sel}\` should be hidden on a phone, where Obsidian's own header already shows it`);
+      check(gone, `${state}: \`${sel}\` should be hidden on a hand-held, where Obsidian's own header already shows it`);
     }
 
     // Obsidian's variables must actually reach the sheet: a renamed or missing token resolves to nothing, and the
