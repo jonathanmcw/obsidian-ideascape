@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   claimMapTouch,
   isPhoneTouch,
+  outlineScrollStop,
   outlineSwipeAction,
   stageResizeOffset,
   stageViewportBand,
@@ -104,4 +105,36 @@ test("mobile UI: node type is one responsive chooser and checkboxes keep a squar
   // and 44px reach are measured in a browser by scripts/ui-check.mjs.
   const css = readFileSync(new URL("../src/organiser/styles.css", import.meta.url), "utf8");
   assert.match(css, /\.is-docked > \.nt-type-menu\s*\{[^}]*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/s);
+});
+
+// The dock stands over the bottom of the outline while a row is being typed into. These are the numbers from the
+// phone that reported it: a 700px visible band above the keyboard, a 64px margin, and a dock reaching 65px up.
+test("outline: the last row stops above the editing dock, not behind it", () => {
+  const visible = 700, margin = 64, dock = 65;
+  const docEnd = 900; // taller than the view, so the outline does scroll
+  const scrolledToTheEnd = outlineScrollStop(-10_000, visible, margin, dock, 0, docEnd);
+  const lastRowBottom = docEnd + scrolledToTheEnd;
+  assert.ok(lastRowBottom <= visible - dock, `the last row ends at ${lastRowBottom}, inside the dock at ${visible - dock}`);
+  assert.equal(scrolledToTheEnd, visible - margin - dock - docEnd);
+});
+
+test("outline: with no dock the last row still stops at the bottom margin", () => {
+  const stop = outlineScrollStop(-10_000, 700, 64, 0, 0, 900);
+  assert.equal(stop, 700 - 64 - 900);
+});
+
+test("outline: a document shorter than the view does not scroll, dock or no dock", () => {
+  assert.equal(outlineScrollStop(-500, 700, 64, 0, 0, 200), 64);
+  assert.equal(outlineScrollStop(-500, 700, 64, 65, 0, 200), 64);
+});
+
+test("outline: whatever the dock's height, the end stays reachable clear of it and the top stays reachable", () => {
+  // The two properties a person depends on while typing at the end of an outline: the row can be brought out from
+  // behind the dock, and the outline can still be scrolled back to its first row.
+  for (const dock of [0, 40, 65, 120, 260]) {
+    const visible = 700, margin = 64, docEnd = 900;
+    const end = outlineScrollStop(-10_000, visible, margin, dock, 0, docEnd);
+    assert.ok(docEnd + end <= visible - dock, `dock ${dock}: the last row ends inside the dock`);
+    assert.equal(outlineScrollStop(10_000, visible, margin, dock, 0, docEnd), margin, `dock ${dock}: the top is not reachable`);
+  }
 });

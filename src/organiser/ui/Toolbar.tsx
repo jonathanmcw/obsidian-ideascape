@@ -3,7 +3,7 @@ import type { Arrangement, MapLayout, Shape } from '../model/types'
 import { LAYOUT_LABEL, MAP_LAYOUTS, SHAPES, SHAPE_LABEL } from '../model/types'
 import type { OutlineWidth } from '../model/store'
 import { chord } from './keys'
-import { IconAuto, IconCheck, IconColumn, IconExport, IconFit, IconFocus, IconFree, IconFull, IconMore, IconOrg, IconSliders, IconTidy } from './Icons'
+import { IconAuto, IconCheck, IconColumn, IconExport, IconFocus, IconFree, IconFull, IconMore, IconOrg, IconSliders, IconTidy } from './Icons'
 
 interface Props {
   shape: Shape
@@ -23,7 +23,6 @@ interface Props {
   arrangement: Arrangement
   onMapLayout: (m: MapLayout) => void
   onTidy: () => void
-  onFit: () => void
 }
 
 type Icon = (p: { size?: number }) => ReactElement
@@ -83,7 +82,6 @@ export function Toolbar({
   arrangement,
   onMapLayout,
   onTidy,
-  onFit,
 }: Props) {
   // Phones fold Document and Export into one button; the menu closes on any press outside it.
   const [more, setMore] = useState(false)
@@ -203,14 +201,27 @@ export function Toolbar({
         if (barItems().includes(btn)) setStop(btn)
       }}
     >
-      {/* Left: the shape. The map's name lives in the canvas's corner, not here. */}
-      <div className="seg seg-shape" style={{ ['--seg-index' as string]: index, ['--seg-count' as string]: SHAPES.length }} role="group" aria-label="View">
-        <span className="seg-thumb" />
-        {SHAPES.map((s, i) => (
-          <button key={s} className={`seg-btn${s === shape ? ' is-on' : ''}`} onClick={() => onShape(s)} aria-pressed={s === shape} aria-label={`${SHAPE_LABEL[s]} — ${chord(`⌘${i + 1}`)}`}>
-            {SHAPE_LABEL[s]}
-          </button>
-        ))}
+      {/* Left: the shape, and Focus beside it. The map's name lives in the canvas's corner, not here.
+          Focus stands here on every size rather than in the centre, which a phone folds away into the menu —
+          it is a way of reading a map, wanted as readily as the view it is read in. */}
+      <div className="toolbar-left">
+        <div className="seg seg-shape" style={{ ['--seg-index' as string]: index, ['--seg-count' as string]: SHAPES.length }} role="group" aria-label="View">
+          <span className="seg-thumb" />
+          {SHAPES.map((s, i) => (
+            <button key={s} className={`seg-btn${s === shape ? ' is-on' : ''}`} onClick={() => onShape(s)} aria-pressed={s === shape} aria-label={`${SHAPE_LABEL[s]} — ${chord(`⌘${i + 1}`)}`}>
+              {SHAPE_LABEL[s]}
+            </button>
+          ))}
+        </div>
+        <button
+          className={`icon-btn${focusActive ? ' is-on' : ''}`}
+          onClick={onToggleFocus}
+          disabled={!canFocus && !focusActive}
+          aria-pressed={focusActive}
+          aria-label={`${focusActive ? 'Show the whole map' : 'Focus on the selected branch'} — ${chord('⌥⌘F')}`}
+        >
+          <IconFocus />
+        </button>
       </div>
 
       {/* Centre: the shape's own toggle — where the Map's nodes go, or how wide the Outline is — with Focus and Tidy at its side. */}
@@ -240,18 +251,9 @@ export function Toolbar({
             onChange={onOutlineWidth}
           />
         )}
-        {/* Focus and Tidy are ways of arranging the view, like the layout: they sit beside the toggle,
-            in a track as wide as the empty one before it, so the toggle stays on the toolbar's centre line. */}
+        {/* Tidy arranges the view like the layout beside it, in a track as wide as the empty one before it, so the
+            toggle stays on the toolbar's centre line. */}
         <div className="toolbar-centre-side">
-          <button
-            className={`icon-btn${focusActive ? ' is-on' : ''}`}
-            onClick={onToggleFocus}
-            disabled={!canFocus && !focusActive}
-            aria-pressed={focusActive}
-            aria-label={`${focusActive ? 'Show the whole map' : 'Focus on the selected branch'} — ${chord('⌥⌘F')}`}
-          >
-            <IconFocus />
-          </button>
           {shape === 'map' && (
             // Tidy stays put like Undo: disabled when there is nothing to tidy.
             <button
@@ -296,11 +298,9 @@ export function Toolbar({
                     <MenuItem icon={IconFull} label="Full width" checked={outlineWidth === 'full'} exclusive onPick={() => { onOutlineWidth('full'); closeMenu() }} />
                   </>
                 )}
-                <MenuItem icon={IconFocus} label="Focus mode" checked={focusActive} disabled={!canFocus && !focusActive} onPick={() => { onToggleFocus(); closeMenu() }} />
                 {shape === 'map' && (
                   <MenuItem icon={IconTidy} label={mapLayout === 'free' ? 'Tidy' : 'Tidy (Free layout only)'} disabled={mapLayout !== 'free'} onPick={() => { onTidy(); closeMenu() }} />
                 )}
-                {shape === 'map' && <MenuItem icon={IconFit} label="Fit map" onPick={() => { onFit(); closeMenu() }} />}
                 <div className="toolbar-menu-sep" role="separator" />
                 <MenuItem icon={IconSliders} label="Document settings" checked={inspectorOpen} onPick={() => { onToggleInspector(); closeMenu() }} />
                 <MenuItem icon={IconExport} label="Export" onPick={() => { onExport(); closeMenu() }} />

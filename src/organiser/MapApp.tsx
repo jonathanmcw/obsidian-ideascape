@@ -38,7 +38,7 @@ import { arrowMove, type ArrowDir } from './layout/nav'
 import { arrangementKind, arrangementOf, nextLayout, shownLayout, tidied, withLayout } from './layout/arrange'
 import { activeLabel, applyFormat, insertLineBreak, type Format } from './ui/format'
 import { renderInto } from './ui/wysiwyg'
-import { IconChevron, IconClose, IconMinus, IconPlus, IconRedo, IconUndo } from './ui/Icons'
+import { IconChevron, IconClose, IconFit, IconMinus, IconPlus, IconRedo, IconUndo } from './ui/Icons'
 import { chord } from './ui/keys'
 import { embedKind, embedsOf, plainText, stripEmbeds, withEmbeds, type Embed } from './model/inline'
 import { MAX_ROW_TEXT_W, ROW_LEAD, setOutlineWidths } from './layout/measure'
@@ -68,8 +68,9 @@ const EMPTY_PALETTE: string[] = []
 import { Toolbar } from './ui/Toolbar'
 import { ExportSheet } from './ui/ExportSheet'
 import { ShortcutsSheet } from './ui/ShortcutsSheet'
-import { stageResizeOffset, stageViewportBand, visibilityNudge, viewportOcclusion } from './ui/mobile'
+import { outlineScrollStop, stageResizeOffset, stageViewportBand, visibilityNudge, viewportOcclusion } from './ui/mobile'
 import { Inspector } from './ui/Inspector'
+import { useCoarsePointer } from './ui/useCoarsePointer'
 import { GRID, Stage, type Camera, type StageApi } from './ui/Stage'
 
 const MORPH_MS = 450
@@ -191,6 +192,16 @@ function bottomInsetFor(stage: HTMLElement): number {
   return Math.round(inset)
 }
 
+/** How far the phone's editing dock reaches up into the part of the stage a person can see. The outline's last rows
+ *  stop above it, so the row being typed into is never behind it. Measured rather than assumed, like the bars above:
+ *  the dock's height follows the type scale, the safe area and whether its second row is open. */
+function dockInsetFor(stage: HTMLElement, visibleBottom: number): number {
+  const dock = stage.ownerDocument.querySelector('.node-toolbar.is-docked')
+  if (!dock) return 0
+  const top = dock.getBoundingClientRect().top - stage.getBoundingClientRect().top
+  return Math.max(0, Math.round(visibleBottom - top))
+}
+
 export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onApi, onOpenLink, onTour, mac, resolveEmbed, onSaveAttachment, linksFromDrag, onHoverLink, onOpenTag, customTheme, onCustomTheme, fileName, fileKey, onRenameFile, onContextMenu }: MapAppProps) {
   // The custom theme is a registry entry: register before anything looks a theme up this render.
   const customThemeDef = useMemo(() => customTheme ?? defaultCustomTheme(), [customTheme])
@@ -246,6 +257,8 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
   const [stageW, setStageW] = useState(0)
   const [bottomInset, setBottomInset] = useState(0)
   const [keyboardInset, setKeyboardInset] = useState(0)
+  const [dockInset, setDockInset] = useState(0)
+  const coarsePointer = useCoarsePointer()
   const [stageViewport, setStageViewport] = useState({ top: 0, bottom: 0 })
   const [paneW, setPaneW] = useState(0)
   /** The pane is narrow (a phone, or a split that tight): the document panel becomes a sheet over the whole width.
@@ -489,11 +502,9 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
     (y: number) => {
       const h = keyboardInset > 0 && stageViewport.bottom > 0 ? stageViewport.bottom : stageSize.current.height
       const { minY, maxY } = frame.bounds
-      const top = OUTLINE_TOP - minY
-      const bottom = h - OUTLINE_TOP - maxY
-      return !h || bottom >= top ? top : Math.min(top, Math.max(bottom, y))
+      return outlineScrollStop(y, h, OUTLINE_TOP, dockInset, minY, maxY)
     },
-    [frame.bounds, keyboardInset, stageViewport.bottom],
+    [frame.bounds, keyboardInset, stageViewport.bottom, dockInset],
   )
   // Rows come and go (typing, folding): keep the outline within its document.
   useEffect(() => {
@@ -710,7 +721,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       if (visibleBottom <= visibleTop) return
       const outline = prefs.shape === 'outline'
       const topPad = outline ? 16 : 90
-      const bottomPad = outline ? 72 : 90
+      const bottomPad = outline ? 72 + dockInset : 90
       if (outline) {
         setCamera((current) => {
           const nodeTop = (b.y - b.h / 2) * current.z + current.y
@@ -743,8 +754,29 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       }
       animateCamera({ ...camera, x: camera.x + dx, y: camera.y + dy }, 260)
     },
-    [clampOutlineY, animateCamera, camera, focusId, frame, keyboardInset, prefs.shape, stageViewport],
+    [clampOutlineY, animateCamera, camera, dockInset, focusId, frame, keyboardInset, prefs.shape, stageViewport],
   )
+
+  // The dock arrives a frame after an edit begins and goes when it ends, and it grows when More opens. Measured on
+  // each of those, and again on the next frame, since it is drawn after this render.
+  useEffect(() => {
+    const el = stageRef.current
+    if (!el) return
+    const win = el.ownerDocument.defaultView ?? window
+    const measure = () => {
+      const visibleBottom = keyboardInset > 0 && stageViewport.bottom > 0 ? stageViewport.bottom : stageSize.current.height
+      setDockInset(dockInsetFor(el, visibleBottom))
+    }
+    measure()
+    const raf = win.requestAnimationFrame(measure)
+    const ro = new ResizeObserver(measure)
+    const dock = el.ownerDocument.querySelector('.node-toolbar.is-docked')
+    if (dock) ro.observe(dock)
+    return () => {
+      win.cancelAnimationFrame(raf)
+      ro.disconnect()
+    }
+  }, [edit?.id, keyboardInset, stageViewport.top, stageViewport.bottom])
 
   // The software keyboard keeps the node being typed into in view: when editing starts, when the keyboard or the
   // visible band changes, and when the node grows a line. Not on every camera change — ensureVisible depends on the
@@ -1670,7 +1702,6 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
           arrangement={arrangement}
           onMapLayout={setLayout}
           onTidy={tidy}
-          onFit={() => fitCamera(frame, prefs.shape, true, focusSubtree)}
           inspectorOpen={prefs.inspectorOpen}
           onToggleInspector={() => setPrefs({ inspectorOpen: !prefs.inspectorOpen })}
         />
@@ -1766,8 +1797,9 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
                   </span>
                 ))}
               </div>
-              <button type="button" className="esc" onClick={() => setFocusId(null)} aria-label="Exit focus — Esc">
-                <kbd>Esc</kbd> to exit · <kbd>{chord('⌥⌘F')}</kbd>
+              {/* A touch screen has no Esc and no ⌥⌘F to offer: there the banner is simply the way out, in words. */}
+              <button type="button" className="esc" onClick={() => setFocusId(null)} aria-label="Exit focus">
+                {coarsePointer ? 'Exit focus' : <><kbd>Esc</kbd> to exit · <kbd>{chord('⌥⌘F')}</kbd></>}
               </button>
             </>
           )}
@@ -1786,6 +1818,11 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
                 </button>
                 <button onClick={() => zoomBy(1 / 1.2)} aria-label={`Zoom out — ${chord('⌥⌘-')}`} data-tooltip-position="left">
                   <IconMinus size={15} />
+                </button>
+                {/* Fit is where the rest of moving around the map is, rather than in a menu: it answers the same
+                    question as the two above it — what am I looking at, and how do I get back to all of it. */}
+                <button onClick={() => fitCamera(frame, prefs.shape, true, focusSubtree)} aria-label={`Fit map — ${chord('⇧⌘0')}`} data-tooltip-position="left">
+                  <IconFit size={15} />
                 </button>
               </div>
             )}

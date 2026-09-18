@@ -8,6 +8,7 @@ import { ColourPicker } from './ColourPicker'
 import { hueOf as hueOfHex, sortByHue, toneOf, withHue } from '../colour'
 import { CUSTOM_SLOTS } from '../theme'
 import { isPhoneTouch } from './mobile'
+import { useCoarsePointer } from './useCoarsePointer'
 
 interface NodeState {
   isRoot: boolean
@@ -96,28 +97,6 @@ interface Tip {
 
 type Menu = null | 'type' | 'colour' | 'more'
 
-
-/** True on a touch screen: bigger targets, fewer buttons, and the actions that keys usually cover. */
-function useCoarsePointer(): boolean {
-  const query = () =>
-    (typeof document !== 'undefined' && document.body.classList.contains('is-mobile')) ||
-    (typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches)
-  const [coarse, setCoarse] = useState(query)
-  useEffect(() => {
-    if (typeof matchMedia !== 'function') return
-    const mq = matchMedia('(pointer: coarse)')
-    const on = () => setCoarse(query())
-    mq.addEventListener('change', on)
-    const body = typeof document !== 'undefined' ? document.body : null
-    const mo = body ? new MutationObserver(on) : null
-    if (body) mo?.observe(body, { attributes: true, attributeFilter: ['class'] })
-    return () => {
-      mq.removeEventListener('change', on)
-      mo?.disconnect()
-    }
-  }, [])
-  return coarse
-}
 
 function FormatIcon({ f }: { f: Format }) {
   const p = { className: 'io-icon', fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }

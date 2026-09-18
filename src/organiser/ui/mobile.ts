@@ -67,3 +67,13 @@ export function claimMapTouch(event: { pointerType: string; stopPropagation(): v
   event.stopPropagation()
   return true
 }
+
+/** Where the outline's scroll stops. The first row rests at the top margin, and the last stops at that same margin
+ *  above the bottom of what can be seen — above the phone's editing dock when one stands there. Without the dock in
+ *  the sum, the row being typed into sits behind it and no amount of scrolling brings it out, because the document
+ *  has already reached its end. A document shorter than the view does not scroll at all. */
+export function outlineScrollStop(y: number, visibleHeight: number, margin: number, dockInset: number, minY: number, maxY: number): number {
+  const top = margin - minY
+  const bottom = visibleHeight - margin - dockInset - maxY
+  return !visibleHeight || bottom >= top ? top : Math.min(top, Math.max(bottom, y))
+}

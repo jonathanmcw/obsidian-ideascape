@@ -82,10 +82,13 @@
       <h2>Toolbar</h2>
       <div class="frame">
         <div class="toolbar" role="toolbar" aria-label="Map controls">
-          <div class="seg seg-shape" style="--seg-index:0;--seg-count:2" role="group" aria-label="View">
-            <span class="seg-thumb"></span>
-            <button class="seg-btn is-on" aria-pressed="true">Map</button>
-            <button class="seg-btn" aria-pressed="false">Outline</button>
+          <div class="toolbar-left">
+            <div class="seg seg-shape" style="--seg-index:0;--seg-count:2" role="group" aria-label="View">
+              <span class="seg-thumb"></span>
+              <button class="seg-btn is-on" aria-pressed="true">Map</button>
+              <button class="seg-btn" aria-pressed="false">Outline</button>
+            </div>
+            <button class="icon-btn" aria-label="Focus on the selected branch"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5.5"/><circle cx="8" cy="8" r="1.6"/></svg></button>
           </div>
           <div style="display:flex;gap:8px;align-items:center;justify-content:center">
             <div class="seg seg-mini" style="--seg-index:0;--seg-count:2" role="group" aria-label="Layout">
@@ -132,6 +135,7 @@
               <div class="zoom" role="group" aria-label="Zoom">
                 <button aria-label="Zoom in"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3.5v9M3.5 8h9"/></svg></button>
                 <button aria-label="Zoom out"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8h9"/></svg></button>
+                <button aria-label="Fit map"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 5.5v-3h3M13.5 5.5v-3h-3M2.5 10.5v3h3M13.5 10.5v3h-3"/></svg></button>
               </div>
               <div class="history" role="group" aria-label="History">
                 <button aria-label="Undo"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8a4.5 4.5 0 1 0 1.3-3.2M3.5 2.8v2.4h2.4"/></svg></button>

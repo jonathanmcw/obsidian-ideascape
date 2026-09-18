@@ -78,7 +78,11 @@ for (const shell of SHELLS) {
     // rule was spliced, renamed or deleted — fails here rather than on someone's phone.
     const CONTRACT = {
       shown: [".toolbar .seg-shape .seg-btn", ".toolbar .icon-btn", ".corner .history button", ".find-input", ".node-toolbar .nt-main button", ".sheet .icon-btn", ".node-check",
-        ...(shell.editing ? [] : [".help"])],
+        // Focus stands beside the view toggle at every width — a phone folds the toolbar's centre away, and this
+        // must not go with it.
+        ".toolbar .toolbar-left .icon-btn",
+        // Fit sits with the zoom steps it belongs to, not in a menu; it stands down while typing, with them.
+        ...(shell.editing ? [] : [".corner .zoom button:last-child", ".help"])],
       hidden: [
         ...(shell.shell === "phone" ? [".doc-name"] : []),
         // While typing, the keyboard dock is the place for controls: zoom and the shortcuts sheet stand down.

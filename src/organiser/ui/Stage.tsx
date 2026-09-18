@@ -499,6 +499,29 @@ export function Stage({
     if (d.kind === 'node' && d.moved) setSettleKey((k) => k + 1)
   }
 
+  // A finger that lifts over something that has since been removed never delivers its pointerup to the element the
+  // gesture began on — and a pinch removes things constantly, since every zoom step re-renders the map. The map
+  // would go on believing that finger is down, and the next one-finger drag would count two pointers and read as a
+  // pinch: the map zooms while a thumb tries to pan it. The document hears every lift, whatever became of the
+  // element underneath, so the count is kept there rather than inferred from the handlers that happen to fire.
+  useEffect(() => {
+    const doc = hostRef.current?.ownerDocument ?? document
+    const forget = (e: PointerEvent) => {
+      if (!pointers.current.delete(e.pointerId)) return
+      const d = dragRef.current
+      if (d?.kind === 'pinch' && pointers.current.size === 0) {
+        dragRef.current = null
+        setDrag(null)
+      }
+    }
+    doc.addEventListener('pointerup', forget, true)
+    doc.addEventListener('pointercancel', forget, true)
+    return () => {
+      doc.removeEventListener('pointerup', forget, true)
+      doc.removeEventListener('pointercancel', forget, true)
+    }
+  }, [hostRef])
+
   // Escape takes a gesture back the way a lost pointer does: a dragged node eases home, a resize or a branch being
   // pulled out commits nothing, a selection box or a pan stops where it is. Caught before the map's own Escape,
   // which would otherwise clear the selection while the drag carried on under the pointer.

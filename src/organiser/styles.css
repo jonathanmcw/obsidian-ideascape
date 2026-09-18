@@ -262,9 +262,13 @@
   z-index: 5;
 }
 
-.io-root .toolbar > .seg-shape {
+.io-root .toolbar > .toolbar-left {
   grid-column: 1;
   justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
 /* obsidian: the note's name sits in the canvas's top-left corner, like Obsidian's inline title;
    Focus mode puts its breadcrumb there instead (the title is not drawn then). */
@@ -966,6 +970,11 @@
 .io-root .zoom button:hover {
   background: color-mix(in srgb, var(--ink) 8%, transparent);
   color: var(--ink);
+}
+/* Fit is a different kind of move from the two steps above it — a place to return to rather than a step — so a
+   hairline sets it apart without taking it out of the group it belongs to. */
+.io-root .zoom button:last-child:not(:nth-child(2)) {
+  border-top: 1px solid var(--line);
 }
 
 .io-root .help {
