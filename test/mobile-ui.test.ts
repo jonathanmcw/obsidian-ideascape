@@ -7,6 +7,7 @@ import {
   isPhoneTouch,
   centreNudge,
   outlineScrollStop,
+  formatsForNode,
   roomyDock,
   outlineSwipeAction,
   stageResizeOffset,
@@ -194,4 +195,16 @@ test("dock: a phone keeps its short row, a tablet-width dock unpacks", () => {
 
 test("dock: a bar that is not docked is never 'roomy' — it already shows everything", () => {
   assert.equal(roomyDock(false, 1400), false);
+});
+
+// The root is the note's heading and is drawn bold whatever its text says: a Bold key there writes ** into the file
+// and changes nothing on screen.
+test("bar: the root is offered every format except Bold", () => {
+  assert.deepEqual(formatsForNode(["bold", "italic", "underline", "link"], true), ["italic", "underline", "link"]);
+  assert.deepEqual(formatsForNode(["bold", "italic"], false), ["bold", "italic"], "every other node keeps it");
+});
+
+test("bar: a phone's row, where Bold is the only key, gets Italic on the root rather than a gap", () => {
+  assert.deepEqual(formatsForNode(["bold"], true), ["italic"]);
+  assert.deepEqual(formatsForNode(["bold"], false), ["bold"]);
 });

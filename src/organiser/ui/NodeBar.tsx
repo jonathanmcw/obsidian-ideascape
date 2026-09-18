@@ -7,7 +7,7 @@ import { IconAlign, IconCheck, IconCheckbox, IconChevron, IconIndent, IconMore, 
 import { ColourPicker } from './ColourPicker'
 import { hueOf as hueOfHex, sortByHue, toneOf, withHue } from '../colour'
 import { CUSTOM_SLOTS } from '../theme'
-import { isPhoneTouch, roomyDock } from './mobile'
+import { formatsForNode, isPhoneTouch, roomyDock } from './mobile'
 import { useCoarsePointer } from './useCoarsePointer'
 
 interface NodeState {
@@ -176,8 +176,8 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
   // A tablet gets the dock — Obsidian calls it a phone — but not a phone's width. What a phone folds under More
   // stands in the row there, because the room is sitting empty either side of it.
   const roomy = roomyDock(docked, stageWidth)
-  const primaryFormats = docked ? (roomy ? TOUCH_FORMATS : PHONE_FORMATS) : coarse ? TOUCH_FORMATS : FORMATS
-  const moreFormats = docked && !roomy ? PHONE_MORE : TOUCH_MORE
+  const primaryFormats = formatsForNode(docked ? (roomy ? TOUCH_FORMATS : PHONE_FORMATS) : coarse ? TOUCH_FORMATS : FORMATS, node.isRoot) as Format[]
+  const moreFormats = formatsForNode(docked && !roomy ? PHONE_MORE : TOUCH_MORE, node.isRoot) as Format[]
   // The slot whose colour is being picked, when the colour menu shows the picker.
   const [picking, setPicking] = useState<number | null>(null)
   const [dx, setDx] = useState(0)

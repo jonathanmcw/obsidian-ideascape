@@ -98,3 +98,13 @@ export function centreNudge(nodeTop: number, nodeBottom: number, visibleTop: num
 export function roomyDock(docked: boolean, stageWidth: number): boolean {
   return docked && stageWidth >= ROOMY_DOCK_MIN
 }
+
+/** Which formatting keys a node's bar offers. The root is the map's title — the note's `# heading` — and is drawn at
+ *  full weight whatever its text says, so Bold there cannot change anything a person can see while still writing
+ *  `**` into the note. A key that only edits the file is worse than one that is missing, so it goes; on a phone,
+ *  where Bold is the only key in the row, Italic takes its place rather than leaving a gap. */
+export function formatsForNode(formats: readonly string[], isRoot: boolean): string[] {
+  if (!isRoot) return [...formats]
+  const kept = formats.filter((f) => f !== 'bold')
+  return kept.length ? kept : ['italic']
+}
