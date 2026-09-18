@@ -162,6 +162,32 @@ screenshots)
   repaint; shot 07-welcome-dark; unfront
   finish
   ;;
+listing) # the five frames the directory's pictures are cut from (scripts/shots/listing.py), raw in $OUT, nothing written
+  # to the repo. One map all the way through, so the five pictures read as one thought being followed. Zoomed past fit:
+  # the pictures are close crops, and a crop of a map drawn small is a picture of small type.
+  K="Maps/Weekend in Kyoto.md"
+  press() { ev "(()=>{const n=[...document.querySelectorAll('.io-root .node')].find(e=>e.textContent.trim()==='$1'); if(!n) return 'no node $1'; const b=n.getBoundingClientRect(); const at={clientX:b.left+b.width/2, clientY:b.top+b.height/2, bubbles:true, pointerId:1, isPrimary:true, button:0}; n.dispatchEvent(new PointerEvent('pointerdown',at)); n.dispatchEvent(new PointerEvent('pointerup',at)); return 'pressed'})()"; sleep 0.8; }
+  esc() { ev "for(let i=0;i<3;i++) document.querySelector('.io-root')?.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})); 'esc'" >/dev/null; sleep 0.8; }
+  reset; theme obsidian
+  # The whole shape for the second picture, and a closer stand for the first, where one node is the subject.
+  solo "$K" map; panel off; fit; zoomfill 0.94; shot L2-shape
+  fit; zoom 1.4
+  press "Tea ceremony"; ev "app.commands.executeCommandById('ideascape:map-edit'); 'edit'" >/dev/null; sleep 1.2
+  [ "$(ev "!!document.querySelector('.io-root .node-toolbar')")" = true ] || { echo 'no node is being edited, so the hero would show no bar' >&2; exit 1; }
+  shot L1-editing; esc
+  solo "$K" outline; shot L3-outline
+  # The note as it is on disk on the left — source mode, so the list markers and the block ids show — and its map on the right.
+  solo "$K" map
+  ev "app.commands.executeCommandById('ideascape:open-as-markdown'); 'md'" >/dev/null; sleep 2
+  ev "(async()=>{const l=app.workspace.getMostRecentLeaf(); const st=l.getViewState(); st.state={...st.state, mode:'source', source:true}; await l.setViewState(st); const m=app.workspace.getLeaf('split'); await m.setViewState({type:'ideascape', state:{file:'$K'}}); app.workspace.setActiveLeaf(m,{focus:true});})(); 'split'" >/dev/null; sleep 3
+  fit; zoomfill 0.92; shot L4-note-and-map
+  solo "$K" map; panel off; theme moonstone; fit; zoom 1.2
+  ev "app.commands.executeCommandById('ideascape:map-export'); 'export'" >/dev/null; sleep 1.5
+  [ "$(ev "!!document.querySelector('.io-root .sheet')")" = true ] || { echo 'the export sheet did not open' >&2; exit 1; }
+  shot L5-export-light; esc
+  theme obsidian; solo "$K" map; fit
+  [ -z "$(git status --porcelain demo-vault 2>/dev/null)" ] || true
+  ;;
 hero)   # the first picture alone, for a quick retake: bash scripts/shots/capture.sh hero
   reset; theme obsidian
   solo "Maps/Launch a podcast.md" map;      panel off; fit; zoomfill 0.86; shot 01-map-dark

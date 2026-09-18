@@ -2,13 +2,13 @@
 
 ![A Lisbon weekend built from the keyboard: Tab and Enter add nodes, ⌘B and ⌘I style them, ⌘↵ adds checkboxes, ⇧⌘7 numbers a list, ⌘. folds a branch, ⌥⌘F focuses on it, and ⌘2 and ⌘1 switch between outline and map. Each key shows in the corner as it is pressed.](https://raw.githubusercontent.com/jonathanmcw/obsidian-ideascape/main/docs/showcase-clean.gif)
 
-Build mind maps at the speed of an outliner, without leaving the keyboard. Tab adds a child, Enter adds a sibling, arrows navigate, and typing edits the selected node. Switch the same note between map and outline views with one shortcut; underneath, it stays a readable Markdown list.
+A thought arrives faster than you can draw it, so Ideascape lets you type it. Tab adds a child, Enter adds a sibling, the arrows move, and typing edits the selected node; the map keeps up and your hands stay on the keyboard. One shortcut turns the same note into an outline, and another turns it back. Underneath it is a plain Markdown list: readable anywhere, and still yours without the plugin.
 
 ## What it does
 
-- **Built for the keyboard.** Tab adds a child, Enter adds a sibling, the arrow keys move around, and typing replaces the selected node's text. Press `?` in a map to see every shortcut.
-- **One note, two views.** Press ⌘1 for the map and ⌘2 for the outline. Both edit the same note.
-- **Plain Markdown underneath.** The title is the note's heading and each node is a list item with a block id, so you can link to any node (`[[Plan#^a1b2c3]]`), search it, and read it on mobile or in git.
+- **Built for the keyboard.** Tab adds a child, Enter adds a sibling, the arrow keys move around, and typing replaces the selected node's text. Nothing between the thought and the node asks for the mouse. Press `?` in a map to see every shortcut.
+- **One note, two views.** Press ⌘1 for the map and ⌘2 for the outline. Both edit the same note, so you can find the shape in one and write in the other.
+- **Plain Markdown underneath.** The title is the note's heading and each node is a list item with a block id, so you can link to any node (`[[Plan#^a1b2c3]]`), search it, and read it on mobile or in git. Uninstall Ideascape and it is still an ordinary note.
 - **Mind map or free layout.** Branches spread either side of the centre, or you place nodes yourself. Tidy puts a free layout back in order.
 - **Formatting while you type.** Bold, italic, underline, strikethrough, highlight, code, links, headings, alignment, checkboxes and numbered items, from the keyboard or the bar above the node.
 - **Themes that fit your vault.** Follow your Obsidian theme in light or dark mode, pick Paper, Slate, Graphite or Midnight, or make your own. Each map can keep its own theme and node style.

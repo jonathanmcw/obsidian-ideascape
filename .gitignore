@@ -9,5 +9,7 @@ __pycache__/
 demo-vault/
 /review/
 /test/ui/fixture.js
-docs/listing/
+# The directory's pictures are made, not kept (scripts/shots/listing.py); the words and crops they are made from are kept.
+docs/listing/*
+!docs/listing/headlines.json
 docs/icon-v2/alternatives/

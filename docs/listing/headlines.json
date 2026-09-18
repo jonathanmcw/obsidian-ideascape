@@ -1,0 +1,95 @@
+{
+  "desktop": [
+    {
+      "name": "1-keys",
+      "source": "docs/listing/frames/raw-L1-editing.png",
+      "crop": [
+        0.505,
+        0.283,
+        1.0,
+        0.8
+      ],
+      "bleed": false,
+      "kicker": "KEYBOARD",
+      "headline": "Hands on the keys. The map keeps up.",
+      "tint": "terracotta"
+    },
+    {
+      "name": "2-shape",
+      "source": "docs/listing/frames/raw-L2-shape.png",
+      "crop": [
+        0.06,
+        0.283,
+        0.995,
+        0.947
+      ],
+      "layout": "wide",
+      "kicker": "THE SHAPE",
+      "headline": "Tab, Enter, type. The shape appears.",
+      "tint": "blue"
+    },
+    {
+      "name": "3-outline",
+      "source": "docs/listing/frames/raw-L3-outline.png",
+      "crop": [
+        0.268,
+        0.315,
+        0.7,
+        0.905
+      ],
+      "kicker": "THE OUTLINE",
+      "headline": "One shortcut, and it is an outline.",
+      "tint": "green"
+    },
+    {
+      "name": "4-file",
+      "source": "docs/listing/frames/raw-L4-note-and-map.png",
+      "crop": [
+        0.055,
+        0.195,
+        0.455,
+        0.722
+      ],
+      "kicker": "THE FILE",
+      "headline": "It was only ever a Markdown note.",
+      "tint": "ochre"
+    },
+    {
+      "name": "5-export",
+      "source": "docs/listing/frames/raw-L5-export-light.png",
+      "crop": [
+        0.235,
+        0.262,
+        0.81,
+        0.858
+      ],
+      "bleed": false,
+      "kicker": "THE WAY OUT",
+      "headline": "Export the map. Keep the note.",
+      "tint": "plum"
+    }
+  ],
+  "mobile": [
+    {
+      "name": "1-phone",
+      "source": "docs/screenshots/10-phone-map.png",
+      "kicker": "THE PHONE",
+      "headline": "The same map, on your phone.",
+      "tint": "teal"
+    },
+    {
+      "name": "2-dock",
+      "source": "docs/screenshots/13-phone-editing.png",
+      "kicker": "THE DOCK",
+      "headline": "A soft keyboard has no Tab. The dock does.",
+      "tint": "rose"
+    },
+    {
+      "name": "3-note",
+      "source": "docs/screenshots/12-phone-outline.png",
+      "kicker": "THE NOTE",
+      "headline": "Still a list. Still yours.",
+      "tint": "olive"
+    }
+  ]
+}

@@ -3,7 +3,7 @@
   "name": "Ideascape",
   "version": "0.9.5",
   "minAppVersion": "1.7.2",
-  "description": "Create keyboard-first mind maps and outlines that stay as ordinary Markdown notes.",
+  "description": "Mind maps you type, not draw. Tab adds a child, Enter a sibling, and one shortcut turns the map into an outline. Underneath it is a plain Markdown note, readable anywhere and yours to keep.",
   "author": "Jonathan Wong",
   "authorUrl": "https://github.com/jonathanmcw",
   "fundingUrl": "https://buymeacoffee.com/jonathanmcw",
