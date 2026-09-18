@@ -96,6 +96,50 @@ test("layout, Outline: indentation never pushes a phone-width row past the right
   }
 });
 
+test("drop, Outline: a row's edges place a branch between rows, its middle makes it a child", () => {
+  const d = trip();
+  const f = frameFor(d, "outline");
+  const pick = (t: ReturnType<typeof dropTargetFor>) => (t ? { parent: t.parent, index: t.index } : null);
+  const row = (id: string) => {
+    const b = f.boxes[id]!;
+    return { x: b.x + 20, top: b.y - b.h / 2, bottom: b.y + b.h / 2, mid: b.y };
+  };
+
+  // Porto sits under Lisbon's branch. Dragging Seville over Porto's top edge puts it above Porto, among the root's
+  // children — not inside Porto, which is what every drop used to mean.
+  const porto = row("b");
+  // Indices count the children with the dragged branch taken out, as every slot in this file does.
+  assert.deepEqual(pick(dropTargetFor(d, f, porto.x, porto.top + 1, ["d"])), { parent: "r", index: 1 }, "the top edge goes above the row");
+  assert.deepEqual(pick(dropTargetFor(d, f, porto.x, porto.mid, ["d"])), { parent: "b", index: 0 }, "the middle still makes a child");
+
+  // A leaf's bottom edge is the place after it among its siblings.
+  const belem = row("a2");
+  assert.deepEqual(pick(dropTargetFor(d, f, belem.x, belem.bottom - 1, ["d"])), { parent: "a", index: 2 }, "the bottom edge goes below the row");
+
+  // Under an open row, the place below it is its first child's place: the line a person sees is that same line.
+  const lisbon = row("a");
+  assert.deepEqual(pick(dropTargetFor(d, f, lisbon.x, lisbon.bottom - 1, ["d"])), { parent: "a", index: 0 }, "below an open row is inside it, above its first child");
+
+  // Folded, it has no children on screen, so below it means below it.
+  const folded = setCollapsed(d, "a", true);
+  const ff = frameFor(folded, "outline");
+  const fb = ff.boxes["a"]!;
+  assert.deepEqual(pick(dropTargetFor(folded, ff, fb.x + 20, fb.y + fb.h / 2 - 1, ["d"])), { parent: "r", index: 1 }, "below a folded row is after it");
+});
+
+test("drop, Outline: the bands are big enough for a finger, and never eat a short row whole", () => {
+  const d = trip();
+  const f = frameFor(d, "outline");
+  const b = f.boxes["b"]!;
+  const at = (y: number) => dropTargetFor(d, f, b.x + 20, y, ["d"]);
+  // A middle band survives on the shortest row the outline draws, so "make a child" is always reachable.
+  assert.equal(at(b.y)!.parent, "b");
+  // And each edge band is at least 7px, which is what a finger can hit between rows 4px apart.
+  const top = b.y - b.h / 2;
+  assert.equal(at(top + 6)!.parent, "r", "6px into the row is still between the rows");
+  assert.equal(at(top + 1)!.parent, "r");
+});
+
 test("drop, Map: over a node the dragged branch becomes its child", () => {
   const d = trip();
   const frame = frameFor(d, "map");

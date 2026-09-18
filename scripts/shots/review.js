@@ -37,10 +37,33 @@
 
   const theme = async (which) => { app.changeTheme(which); await sleep(1400); };
   const open = async () => {
+    const file = app.vault.getAbstractFileByPath(note);
+    if (!file) throw new Error(`${note} is not in this vault`);
+    // Open the file first, then make it a map: setViewState alone leaves a leaf that is already a map showing
+    // whatever it had — which is how a run of this once photographed an empty Untitled map fourteen times.
     const leaf = app.workspace.getMostRecentLeaf();
-    await leaf.setViewState({ type: "ideascape", state: { file: note } });
+    await leaf.openFile(file);
+    if (leaf.view.getViewType() !== "ideascape") await leaf.setViewState({ type: "ideascape", state: { file: note } });
     app.workspace.setActiveLeaf(leaf, { focus: true });
-    await sleep(1600);
+    await sleep(1800);
+    // Opening a marked note can leave a twin leaf behind — one drawn, one not, each with its own camera and shape.
+    // Keep the one on screen and make it active, or a command lands on the leaf nobody is photographing.
+    const leaves = app.workspace.getLeavesOfType("ideascape");
+    const onScreen = leaves.find(l => l.containerEl?.offsetParent) ?? leaves[0];
+    for (const other of leaves) if (other !== onScreen) other.detach();
+    if (onScreen) app.workspace.setActiveLeaf(onScreen, { focus: true });
+    await sleep(700);
+    const shown = onScreen?.view?.file?.path ?? onScreen?.getViewState()?.state?.file;
+    if (shown !== note) throw new Error(`opened ${shown}, not ${note}`);
+  };
+  /** Ask for a shape and wait until the view is actually wearing it. */
+  const shape = async (which) => {
+    for (let tries = 0; tries < 3; tries++) {
+      run(`map-shape-${which}`);
+      await sleep(700);
+      if (document.querySelector(`.io-root .stage.shape-${which}`)) return;
+    }
+    throw new Error(`the view would not become a ${which}`);
   };
   /** Press a node the way a finger does, so the bar and the selection appear as they do in use. */
   const pressNode = async () => {
@@ -63,13 +86,13 @@
   await sleep(800);
 
   // The two views, in both themes: the surfaces a person spends the day in.
-  await step("01-map-dark", async () => { await theme("obsidian"); await open(); run("map-shape-map"); await sleep(600); run("map-fit"); });
-  await step("02-outline-dark", async () => { run("map-shape-outline"); await sleep(900); });
-  await step("03-map-light", async () => { await theme("moonstone"); run("map-shape-map"); await sleep(900); run("map-fit"); });
-  await step("04-outline-light", async () => { run("map-shape-outline"); await sleep(900); });
+  await step("01-map-dark", async () => { await theme("obsidian"); await open(); await shape("map"); run("map-fit"); await sleep(600); });
+  await step("02-outline-dark", async () => { await shape("outline"); await sleep(600); });
+  await step("03-map-light", async () => { await theme("moonstone"); await shape("map"); run("map-fit"); await sleep(600); });
+  await step("04-outline-light", async () => { await shape("outline"); await sleep(600); });
 
   // Everything that opens over the map.
-  await step("05-panel-light", async () => { run("map-shape-map"); await sleep(700); run("map-properties"); });
+  await step("05-panel-light", async () => { await shape("map"); run("map-properties"); await sleep(600); });
   await step("06-panel-dark", async () => { await theme("obsidian"); });
   await step("07-node-bar-dark", async () => { run("map-properties"); await sleep(500); await pressNode(); });
   await step("08-editing-dark", async () => { run("map-edit"); await sleep(600); });

@@ -32,7 +32,18 @@
     --touch-size-s: 40px; --touch-size-m: 44px;
     margin: 0; background: #202020; font-family: var(--font-interface);
   }
-  body.is-mobile { --clickable-icon-radius: 44px; --modal-radius: var(--radius-l); }
+  /* Obsidian's phone values, from the same app.css: bigger icons, finger-sized inputs, type derived from the
+     reading size. The dock is styled against these, so the fixture must carry them or it checks a phone that
+     does not exist. */
+  body.is-mobile {
+    --font-text-size: 16px;
+    --clickable-icon-radius: var(--touch-size-m); --input-radius: var(--radius-l); --modal-radius: var(--radius-l);
+    --input-height: var(--touch-size-m);
+    --icon-xs: 18px; --icon-s: 18px; --icon-m: 20px; --icon-l: 24px;
+    --font-ui-smaller: calc(var(--font-text-size) * 0.8);
+    --font-ui-small: calc(var(--font-text-size) * 0.937);
+    --font-ui-medium: var(--font-text-size);
+  }
   .surface { padding: 16px; }
   .surface > h2 { margin: 0 0 8px; font: 600 12px/1 var(--font-interface); color: #888; text-transform: uppercase; letter-spacing: .05em; }
   .frame { position: relative; overflow: hidden; border-radius: 10px; }

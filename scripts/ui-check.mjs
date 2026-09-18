@@ -157,6 +157,13 @@ for (const shell of SHELLS) {
       check(dock.align.length === 3 && dock.align.every(w => w === 44), `phone: the dock's alignments are ${dock.align}, not three 44px targets`);
       check(dock.arrange.length === 4 && dock.arrange.every(w => w === 44), `phone: the dock's arrange keys are ${dock.arrange}, not four 44px targets`);
       check(Math.round(dock.slop) === 44, `phone: the checkbox reaches ${Math.round(dock.slop)}px, not the 44px a finger needs`);
+
+      // The dock's glyphs are one step below Obsidian's navbar (26px), which is drawn right under them.
+      const glyph = await page.evaluate(() => {
+        const icon = document.querySelector(".node-toolbar.is-docked .io-icon");
+        return icon ? Math.round(icon.getBoundingClientRect().width) : null;
+      });
+      check(glyph === 20, `phone: the dock's icons are ${glyph}px, not the 20px that sits a step under Obsidian's 26px navbar`);
     }
 
     if (shotDir) {

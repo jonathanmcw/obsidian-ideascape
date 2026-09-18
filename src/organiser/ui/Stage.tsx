@@ -730,7 +730,7 @@ export function Stage({
           )}
           {drag?.kind === 'node' && drag.target && (
             <line
-              className="slot"
+              className={`slot${drag.target.between ? ' is-between' : ''}`}
               x1={drag.target.x}
               y1={drag.target.y}
               x2={drag.target.down ? drag.target.x : drag.target.x + drag.target.w}
@@ -770,7 +770,7 @@ export function Stage({
                 editSeed={editId === id ? editSeed : null}
                 dim={dimmed.has(id)}
                 dragging={isDragged && !!draggingId}
-                dropTarget={(drag?.kind === 'node' && drag.target?.parent === id) || dropOver === id}
+                dropTarget={(drag?.kind === 'node' && drag.target?.parent === id && !drag.target.between) || dropOver === id}
                 linkTarget={drag?.kind === 'handle' && drag.over === id}
                 hovered={hover === id}
                 resizing={drag?.kind === 'resize' && drag.id === id}

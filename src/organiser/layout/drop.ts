@@ -16,6 +16,9 @@ export interface DropTarget {
   w: number
   /** Org chart, between siblings in a row: the slot line runs down between them. */
   down?: true
+  /** A place between two outline rows rather than inside one: the line is the whole of what is shown, because
+   *  ringing the parent as well would read as "into that row", which is the confusion this distinguishes. */
+  between?: true
 }
 
 /** The node under (wx, wy), leaving out `exclude`; the visually topmost when boxes overlap. */
@@ -171,12 +174,51 @@ function runUnder(doc: IODoc, frame: Frame, wx: number, wy: number, exclude: Rea
   return best?.id ?? null
 }
 
-/** Where `movingIds` would land if dropped at (wx, wy) in a tidy shape: onto the node under the point, or into the
- *  column of siblings beside it. Null when the point is over neither. */
+/** How much of an outline row's height, at each end, means "between the rows" rather than "into this row". */
+const ROW_EDGE = 0.3
+const ROW_EDGE_MIN = 7
+const ROW_EDGE_MAX = 16
+
+/**
+ * An outline row is three bands, the way every outliner reads one: its top edge puts the branch above that row, its
+ * bottom edge below it, and the middle makes it a child. Rows are stacked 4px apart, so without the bands the only
+ * drop a finger could reach was "make a child" — a drag between two rows landed inside the row it passed over.
+ */
+function outlineTarget(doc: IODoc, frame: Frame, overId: NodeId, wy: number, exclude: ReadonlySet<NodeId>): DropTarget | null {
+  const b = frame.boxes[overId]
+  const node = doc.nodes[overId]
+  if (!b || !node || overId === doc.rootId) return null
+  const parentId = node.parent
+  const parent = parentId ? doc.nodes[parentId] : null
+  if (!parentId || !parent) return null
+  const edge = Math.min(ROW_EDGE_MAX, Math.max(ROW_EDGE_MIN, b.h * ROW_EDGE))
+  const top = b.y - b.h / 2
+  const bottom = b.y + b.h / 2
+  const above = wy < top + edge
+  const below = wy > bottom - edge
+  if (!above && !below) return null
+
+  // Below an open row, the place between it and its own first child is that child's place, not its sibling's: the
+  // line a person sees is the same one, and this is the reading that keeps a branch where they dropped it.
+  const kids = node.collapsed ? [] : node.children.filter((c) => !exclude.has(c) && frame.boxes[c])
+  if (below && kids.length) return { parent: overId, index: doc.nodes[overId].children.filter((c) => !exclude.has(c)).indexOf(kids[0]), x: leftOf(frame.boxes[kids[0]], 'outline'), y: bottom, w: Math.max(70, frame.boxes[kids[0]].w), between: true }
+
+  const reduced = parent.children.filter((c) => !exclude.has(c))
+  const at = reduced.indexOf(overId)
+  if (at < 0) return null
+  return { parent: parentId, index: above ? at : at + 1, x: leftOf(b, 'outline'), y: above ? top : bottom, w: Math.max(70, b.w), between: true }
+}
+
+/** Where `movingIds` would land if dropped at (wx, wy) in a tidy shape: onto the node under the point, between two
+ *  outline rows, or into the column of siblings beside it. Null when the point is over none of them. */
 export function dropTargetFor(doc: IODoc, frame: Frame, wx: number, wy: number, movingIds: NodeId[]): DropTarget | null {
   const exclude = new Set(movingIds.flatMap((m) => subtreeIds(doc, m)))
   const overId = hitTest(frame, wx, wy, exclude)
   const ownParent = movingIds.length === 1 ? doc.nodes[movingIds[0]]?.parent ?? null : null
+  if (frame.shape === 'outline' && overId && !exclude.has(overId)) {
+    const between = outlineTarget(doc, frame, overId, wy, exclude)
+    if (between) return between
+  }
   const parentId = overId && !exclude.has(overId) ? overId : columnUnder(doc, frame, wx, wy, exclude, ownParent)
   if (!parentId) return null
   return slotIn(doc, frame, parentId, wx, wy, exclude)

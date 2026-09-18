@@ -34,8 +34,10 @@
 
   win.setContentBounds({ x: 120, y: 60, width: config.width ?? 414, height: config.height ?? 880 });
   await sleep(1500);
+  const file = app.vault.getAbstractFileByPath(config.note);
   const leaf = app.workspace.getMostRecentLeaf();
-  await leaf.setViewState({ type: "ideascape", state: { file: config.note } });
+  if (file) await leaf.openFile(file);
+  if (leaf.view.getViewType() !== "ideascape") await leaf.setViewState({ type: "ideascape", state: { file: config.note } });
   app.workspace.setActiveLeaf(leaf, { focus: true });
   await sleep(2000);
 

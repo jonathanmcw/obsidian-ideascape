@@ -575,6 +575,10 @@
   stroke-width: 2.5;
   stroke-linecap: round;
 }
+/* Between two rows, the line says everything — no row is ringed — so it carries a little more weight. */
+.io-root .slot.is-between {
+  stroke-width: 3.5;
+}
 
 .io-root .nodes {
   /* Measured, not inherited: layout/measure.ts sizes every label against this exact list. */
@@ -2051,6 +2055,21 @@ body.is-mobile .io-root .app.is-editing .corner .help {
     padding: 0 4px;
   }
   .io-root .node-toolbar.is-docked .nt-main > .nt-sep { display: none; }
+  /* Obsidian's navbar sits directly under this dock and draws its own icons at 26px; a 15px glyph inside a 44px
+     target read as a different app's. One step below the navbar — Obsidian's own --icon-m, which is 20px on a
+     phone — keeps the dock secondary to it while belonging to the same screen. The stroke stays the weight the
+     rest of the plugin's icons take, so they grow without thickening. */
+  .io-root .node-toolbar.is-docked .io-icon {
+    width: var(--icon-m, 20px);
+    height: var(--icon-m, 20px);
+  }
+  .io-root .node-toolbar.is-docked .nt-dot {
+    width: 18px;
+    height: 18px;
+  }
+  .io-root .node-toolbar.is-docked .nt-drop {
+    font-size: var(--font-ui-small, 13px);
+  }
   .io-root .node-toolbar.is-docked .nt-phone-more {
     position: absolute;
     left: 50%;
