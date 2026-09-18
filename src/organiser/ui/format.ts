@@ -24,11 +24,31 @@ export function activeLabel(root: Document = document): HTMLElement | null {
   return el?.nodeType === 1 && el.classList.contains('node-label') && el.isContentEditable ? el : null
 }
 
+/** Select everything in the node label being typed into — ⌘A, and F2 opening a node with all its text selected.
+ *  A range over the label's own contents, rather than the document's `selectAll` command: it selects the label
+ *  and nothing else, so focus that has slipped out of it (to a toolbar button) cannot turn ⌘A into a selection
+ *  of the whole view. */
+export function selectAllIn(root: Document = document): boolean {
+  const label = activeLabel(root)
+  if (!label) return false
+  const doc = label.ownerDocument
+  const sel = doc.defaultView?.getSelection()
+  if (!sel) return false
+  const range = doc.createRange()
+  range.selectNodeContents(label)
+  sel.removeAllRanges()
+  sel.addRange(range)
+  return true
+}
+
 /** Insert a real Markdown line break at the caret without leaving the node. The mobile toolbar keeps the label
  *  focused on pointer-down, so this is the touch equivalent of Shift+Enter on a physical keyboard. */
 export function insertLineBreak(root: Document = document): boolean {
   const label = activeLabel(root)
   if (!label) return false
+  // execCommand is deprecated, and kept on purpose: it is the only insert that joins the browser's own undo
+  // history, which is what ⌘Z takes back inside a label (see map-view.ts, where ⌘Z is handed to the browser
+  // once something has been typed). MDN keeps this exact use as one the platform has no replacement for.
   label.ownerDocument.execCommand('insertText', false, '\n')
   return true
 }
@@ -37,6 +57,10 @@ export function applyFormat(f: Format, root: Document = document): boolean {
   const label = activeLabel(root)
   if (!label) return false
   const doc = label.ownerDocument
+  // These four are the browser's own commands, deprecated and kept on purpose: they are what puts the change in
+  // the undo history ⌘Z reads inside a label. The three below wrap the selection themselves and so cannot be
+  // taken back that way — the standing difference this editor lives with. `styleWithCSS` off asks for <b>/<i>
+  // tags rather than styled spans; the reader (wysiwyg.ts `lookOf`) understands both either way.
   doc.execCommand('styleWithCSS', false, 'false')
   switch (f) {
     case 'bold':

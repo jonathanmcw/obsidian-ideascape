@@ -9,6 +9,7 @@
 // through them. Nothing here touches Obsidian: it is the stylesheet over the app's own variables.
 import assert from "node:assert/strict";
 import { mkdirSync, writeFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 
 const harness = new URL("../test/ui/harness.html", import.meta.url).href;
@@ -197,6 +198,135 @@ for (const shell of SHELLS) {
   await context.close();
 }
 
+/* -------------------- the label's own editing -------------------- */
+// The tests beside this one build a DOM of their own: it has no selection, no ranges and no editing commands, so
+// the one thing they cannot see is whether a format can be taken back — and taking one back is exactly what was
+// broken. Highlight, code and links used to move nodes about by hand, which leaves the browser's undo history
+// describing a label that no longer exists: ⌘Z took back the typing and left the highlight standing, so the words
+// went and the colour stayed. They go through the same command bold does now, and this drives a real
+// contenteditable, with real keystrokes, to hold them to it.
+{
+  const { build } = await import("esbuild");
+  const bundle = await build({
+    entryPoints: [fileURLToPath(new URL("../src/organiser/ui/wysiwyg.ts", import.meta.url))],
+    bundle: true, format: "iife", globalName: "W", write: false, logLevel: "silent",
+  });
+  const module = bundle.outputFiles[0].text;
+
+  /** A label of its own for each case: the browser's undo history is per document, and resetting one by hand
+   *  would be the very thing under test. */
+  const labelPage = async (context, text) => {
+    const page = await context.newPage();
+    await page.setContent('<div id="l" class="node-label" contenteditable spellcheck="false"></div>');
+    await page.addScriptTag({ content: module });
+    await page.evaluate(() => {
+      // obsidian: elements are built through the window the document belongs to; a plain page has no `win`.
+      document.win = { createEl: t => document.createElement(t), createFragment: () => document.createDocumentFragment() };
+      window.L = document.getElementById("l");
+      window.md = () => W.domToMarkdown(L);
+      window.undo = () => document.execCommand("undo");
+      window.pick = word => {
+        const walk = n => { if (n.nodeType === 3 && n.data.includes(word)) return n; for (const c of n.childNodes) { const f = walk(c); if (f) return f; } return null; };
+        const node = walk(L);
+        if (!node) throw new Error(`no "${word}" in the label`);
+        const at = node.data.indexOf(word);
+        const range = document.createRange();
+        range.setStart(node, at); range.setEnd(node, at + word.length);
+        const sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      };
+    });
+    await page.click("#l");
+    if (text) await page.keyboard.type(text);
+    return page;
+  };
+
+  const context = await browser.newContext();
+
+  // The guard. Every check below reads the label after an undo, so a harness that has stopped driving the
+  // browser's own undo would pass the lot by doing nothing at all. Prove plain typing can be taken back first.
+  {
+    const page = await labelPage(context, "guard");
+    const [typed, after] = await page.evaluate(() => { const was = L.textContent; undo(); return [was, L.textContent]; });
+    check(typed === "guard" && after !== "guard", `editing: the harness is not driving the browser's undo (${JSON.stringify(typed)} → ${JSON.stringify(after)}), so none of the editing checks below are testing anything`);
+    await page.close();
+  }
+
+  for (const [tag, wrapped] of [["mark", "keep ==this== safe"], ["code", "keep `this` safe"]]) {
+    const page = await labelPage(context, "keep this safe");
+    const r = await page.evaluate(tag => {
+      pick("this");
+      W.toggleInline(L, tag);
+      const on = { md: md(), sel: getSelection().toString(), placing: L.querySelectorAll("[data-placing]").length };
+      W.toggleInline(L, tag);
+      const off = md();
+      undo();
+      const back = md();
+      const staleAfterUndo = L.querySelectorAll(`[data-placing]`).length;
+      undo();
+      return { on, off, back, plain: md(), staleAfterUndo };
+    }, tag);
+    check(r.on.md === wrapped, `editing: ${tag} wrote ${JSON.stringify(r.on.md)}, not ${JSON.stringify(wrapped)}`);
+    check(r.on.sel === "this", `editing: ${tag} left ${JSON.stringify(r.on.sel)} selected, not the text it had just wrapped`);
+    check(r.on.placing === 0, `editing: ${tag} left the mark it places elements with behind in the label`);
+    check(r.off === "keep this safe", `editing: taking ${tag} off wrote ${JSON.stringify(r.off)}`);
+    check(r.back === wrapped, `editing: undo after taking ${tag} off gave ${JSON.stringify(r.back)}, not ${JSON.stringify(wrapped)} — the change never reached the browser's undo history`);
+    check(r.plain === "keep this safe", `editing: a second undo gave ${JSON.stringify(r.plain)}, not the text before ${tag} was put on`);
+    // Undo restores the markup as the command recorded it, so the mark used to find a new element must not come
+    // back with it: a stale one would have the next format select the wrong words.
+    check(r.staleAfterUndo === 0, `editing: undo brought back ${r.staleAfterUndo} placing mark(s) for ${tag}, which the next format would find instead of its own`);
+    await page.close();
+  }
+
+  // Bold inside a highlight is the reason this is not `removeFormat`: that empties everything in the selection,
+  // and leaves a link alone entirely.
+  {
+    const page = await labelPage(context, "alpha beta gamma");
+    const r = await page.evaluate(() => {
+      pick("beta");
+      document.execCommand("styleWithCSS", false, "false");
+      document.execCommand("bold");
+      const all = document.createRange(); all.selectNodeContents(L);
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(all);
+      W.toggleInline(L, "mark");
+      const on = md();
+      W.toggleInline(L, "mark");
+      return { on, off: md() };
+    });
+    check(r.on === "==alpha **beta** gamma==", `editing: highlighting over bold wrote ${JSON.stringify(r.on)}`);
+    check(r.off === "alpha **beta** gamma", `editing: taking the highlight off wrote ${JSON.stringify(r.off)} — the bold inside it did not survive`);
+    await page.close();
+  }
+
+  // A caret rather than a selection: the link arrives with something to stand on, selected to be typed over.
+  {
+    const page = await labelPage(context, "see also ");
+    const r = await page.evaluate(() => {
+      const end = document.createRange(); end.selectNodeContents(L); end.collapse(false);
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(end);
+      W.toggleInline(L, "a", { class: "node-link", "data-wiki": "1" });
+      const on = { md: md(), sel: getSelection().toString() };
+      undo();
+      return { on, back: md() };
+    });
+    check(r.on.md === "see also [[Note]]", `editing: a link at the caret wrote ${JSON.stringify(r.on.md)}`);
+    check(r.on.sel === "Note", `editing: the new link left ${JSON.stringify(r.on.sel)} selected, so its placeholder cannot be typed over`);
+    // The label keeps its trailing space here; it is the draft that is trimmed when the node is left.
+    check(r.back === "see also ", `editing: undo after a link gave ${JSON.stringify(r.back)}`);
+    await page.close();
+  }
+
+  // The browser writes the space beside an insertion as a non-breaking one to hold its rendering still; the file
+  // must never be given it.
+  {
+    const page = await labelPage(context, "keep this safe");
+    const nbsp = await page.evaluate(() => { pick("this"); W.toggleInline(L, "mark"); return { html: L.innerHTML, md: md() }; });
+    check(!nbsp.md.includes(" "), `editing: a non-breaking space reached the file in ${JSON.stringify(nbsp.md)}`);
+    await page.close();
+  }
+
+  await context.close();
+}
+
 await browser.close();
 
 if (shotDir) {
@@ -211,3 +341,4 @@ figcaption{margin-top:6px;color:#888;font-size:12px}</style>
 
 assert.deepEqual(problems, [], `the rendered chrome is wrong:\n  ${problems.join("\n  ")}`);
 console.log(`Checked the chrome rendered at ${SHELLS.length} widths in ${THEMES.length} themes: every control visible, hittable and on Obsidian's tokens.`);
+console.log("Checked a label edited in a real contenteditable: every format goes on, comes off, and is taken back by the browser's own undo.");

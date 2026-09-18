@@ -36,7 +36,7 @@ import { clipboardFragment, droppedLinks, isMapFile, linkName, mapFileFragment, 
 import { applyFocus, frameFor, keepBoxes, kindFor, layoutFor, leftOf, snapX, type Box, type Frame } from './layout'
 import { arrowMove, type ArrowDir } from './layout/nav'
 import { arrangementKind, arrangementOf, nextLayout, shownLayout, tidied, withLayout } from './layout/arrange'
-import { activeLabel, applyFormat, insertLineBreak, type Format } from './ui/format'
+import { activeLabel, applyFormat, insertLineBreak, selectAllIn, type Format } from './ui/format'
 import { renderInto } from './ui/wysiwyg'
 import { IconChevron, IconClose, IconFit, IconMinus, IconPlus, IconRedo, IconUndo } from './ui/Icons'
 import { chord } from './ui/keys'
@@ -1365,6 +1365,9 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       const editing = !!edit
       const sel = selection
       // The key that starts a composition. On a selected node it starts typing there (below); anywhere else it is the input method's.
+      // `isComposing` above cannot see this one: compositionstart fires after the keydown that opens the IME, so the
+      // first keystroke of a Chinese, Japanese or Korean word reports false there and 229 here. keyCode is deprecated
+      // and has no replacement for this — MDN's own keydown page says to go on testing it for exactly this reason.
       const composing = e.keyCode === 229
       if (composing && (editing || !sel)) return
 
@@ -1638,7 +1641,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       search: openSearch,
       selectAll: () => {
         if (edit) {
-          (rootRef.current?.ownerDocument ?? document).execCommand('selectAll')
+          selectAllIn(rootRef.current?.ownerDocument ?? document)
           return
         }
         // Every node on show; in focus, the branch's, not the dimmed rest.
@@ -1650,7 +1653,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
         else if (selection) stageApi.beginEdit(selection, null, false)
       },
       editAll: () => {
-        if (s.edit) (rootRef.current?.ownerDocument ?? document).execCommand('selectAll')
+        if (s.edit) selectAllIn(rootRef.current?.ownerDocument ?? document)
         else if (selection) stageApi.beginEdit(selection, null, true)
       },
       addChild: () => createChild(selection ?? doc.rootId),
