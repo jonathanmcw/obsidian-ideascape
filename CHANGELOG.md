@@ -17,6 +17,8 @@ What changed in each release of Ideascape, newest first. The layout follows [Kee
 
 ### Fixed
 
+- The note's name is no longer cut at both ends on a phone. A button centres its text, so a name too long for the band lost its first letter as well as its last, with no ellipsis to say so: "Weekend in Kyoto" read as "eekend in Kyot". The band also kept a width meant for the toolbar it used to live in, rather than the canvas corner it sits in now.
+- In the outline, the note's name stepped aside once the rows scrolled under it, instead of being drawn over them.
 - The welcome window's three pictures show what they describe again. Since 0.9.4 each showed the welcome window inside itself, and the third pointed at a menu that was not there.
 - Fenced code under a node is kept whole. A `^word` inside it could be taken as the node's block id, a list line inside it could become a node, and a tab inside it was written back as spaces.
 - Attaching an image to a node that quotes embed syntax as code (`` `![[photo.png]]` ``) removed the quoted text.

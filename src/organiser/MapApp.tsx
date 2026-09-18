@@ -1770,6 +1770,9 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
               already shows. */}
           {!focusId && search === null && (
             <DocTitle
+              // The outline scrolls its rows under this band. Away from the top the band would be drawn over a row,
+              // so it steps aside; the map has nothing to collide with and keeps it at all times.
+              scrolled={prefs.shape === 'outline' && camera.y < OUTLINE_TOP - frame.bounds.minY - 1}
               name={fileName ?? doc.name}
               onRename={async (name) => {
                 if (onRenameFile) { if (!(await onRenameFile(name))) flash('Could not rename the note') }
@@ -1984,13 +1987,13 @@ function crumbText(text: string | undefined): string {
 }
 
 /** obsidian: the note's name in the canvas's top-left corner, like Obsidian's inline title; click to rename. */
-function DocTitle({ name, onRename }: { name: string; onRename: (name: string) => void | Promise<void> }) {
+function DocTitle({ name, onRename, scrolled }: { name: string; onRename: (name: string) => void | Promise<void>; scrolled?: boolean }) {
   const [editing, setEditing] = useState(false)
   // Esc leaves through blur like Enter, marked as a cancel: whether the field's removal also sends a blur is then
   // beside the point, and a typed name is never saved on the way out.
   const cancelled = useRef(false)
   return (
-    <div className="doc-name">
+    <div className={`doc-name${scrolled && !editing ? ' is-scrolled' : ''}`}>
       {editing ? (
         <input
           autoFocus

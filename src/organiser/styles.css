@@ -292,9 +292,23 @@
   border-radius: var(--io-r-control);
   max-width: 100%;
   overflow: hidden;
+  /* A button centres its text, and centred text too long for its box is shaved at BOTH ends — the first letter goes
+     missing and no ellipsis says so. Measured on a phone, where the band is at its narrowest: "Weekend in Kyoto"
+     came back as "eekend in Kyot". A name is trimmed at its end or not at all. */
+  text-align: start;
   text-overflow: ellipsis;
   white-space: nowrap;
-  transition: background var(--io-fast) ease;
+  transition: background var(--io-fast) ease, opacity var(--io-fast) ease;
+}
+/* In the outline the rows scroll under the band, not past it: once the list has moved, the name and a row are drawn
+   over each other. The band is there to say which note this is when the outline's own root row has scrolled away —
+   so it fades as soon as that scrolling starts, and comes back at the top. */
+.io-root .doc-name.is-scrolled {
+  opacity: 0;
+  pointer-events: none;
+}
+.io-root .doc-name {
+  transition: opacity var(--io-fast) ease;
 }
 .io-root .doc-name-btn:hover {
   color: var(--ink);
@@ -1528,9 +1542,7 @@
     min-width: 0;
     padding: 5px 13px;
   }
-  .io-root .doc-name-btn {
-    max-width: 150px;
-  }
+
 }
 
 /* In a pane under 760px the rail can no longer take a column of its own without squeezing the canvas, so it floats
@@ -1566,8 +1578,9 @@
   gap: 5px;
   padding: 0 8px;
 }
+/* The name sits in the canvas corner, not in the toolbar, so it is not the toolbar's crowding that should size it:
+   `.doc-name` below gives it 55% of the stage. A 120px cap here is what cut "Weekend in Kyoto" in half on a phone. */
 .io-root .app.is-compact .doc-name-btn {
-  max-width: 120px;
   padding: 4px 6px;
 }
 .io-root .app.is-compact .toolbar-right {
