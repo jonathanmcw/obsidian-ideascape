@@ -19,7 +19,8 @@
     "welcome:again": "node scripts/welcome-again.mjs",
     "fresh:start": "node scripts/fresh-start.mjs",
     "ui": "node scripts/ui-check.mjs",
-    "review": "node scripts/shots/review.mjs"
+    "review": "node scripts/shots/review.mjs",
+    "phone": "node scripts/shots/phone.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
