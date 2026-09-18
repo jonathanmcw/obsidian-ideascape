@@ -72,6 +72,16 @@ for (const shell of SHELLS) {
     await page.goto(`${harness}?theme=${theme}&shell=${shell.shell}${shell.editing ? "&editing=1" : ""}`);
     await page.waitForTimeout(120);
 
+    // Before anything is measured: the page must be as wide as it was asked to be. A fixture with no
+    // `<meta name="viewport">` falls back to the classic 980px layout viewport, and every measurement below is then
+    // taken on a screen no phone has — while all of them still pass. That is how the phone shells were checked at
+    // 980px for weeks. The harness carries the meta tag; this is the check that notices when it stops.
+    const measured = await page.evaluate(() => window.innerWidth);
+    check(
+      measured === shell.width,
+      `${state}: the page is ${measured}px wide, not the ${shell.width}px it was opened at — every measurement below is of the wrong screen (is test/ui/harness.html missing its <meta name="viewport">?)`,
+    );
+
     // Every button a person can see must be big enough to hit. Hiding one can be deliberate (the phone hides the
     // note's name), so what must exist in each state is named in CONTRACT below — that is the check that catches a
     // rule spliced into a selector list, which is how the phone lost its zoom and undo buttons.
