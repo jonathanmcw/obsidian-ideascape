@@ -267,6 +267,8 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
   const [dockLift, setDockLift] = useState(0)
   const [dockInset, setDockInset] = useState(0)
   const coarsePointer = useCoarsePointer()
+  /** The last node typed into: what Focus falls back to when nothing is selected. */
+  const lastEdited = useRef<NodeId | null>(null)
   /** Everything standing over the bottom of the stage, as one number. The dock is drawn above Obsidian's navigation
    *  bar — its own offset already clears it — so the two are not added: whichever reaches higher is the reach. */
   const chromeInset = Math.max(dockInset, bottomInset)
@@ -798,6 +800,10 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
   // The software keyboard keeps the node being typed into in view: when editing starts, when the keyboard or the
   // visible band changes, and when the node grows a line. Not on every camera change — ensureVisible depends on the
   // camera, so following it would snap back each pan while typing, and loop on a node that cannot fit.
+  useEffect(() => {
+    if (edit?.id) lastEdited.current = edit.id
+  }, [edit?.id])
+
   const ensureVisibleRef = useRef(ensureVisible)
   ensureVisibleRef.current = ensureVisible
   const editBox = edit?.id ? frame.boxes[edit.id] : undefined
@@ -1315,10 +1321,20 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
   const toggleFocus = useCallback(() => {
     if (focusId) {
       setFocusId(null)
+      rootRef.current?.focus({ preventScroll: true })
       return
     }
-    if (selection) setFocusId(selection)
-  }, [focusId, selection])
+    // Focus needs a branch to focus on, and waiting for one to be selected makes the button dead most of the time.
+    // What was last typed into is the likeliest thing meant; the root is always there.
+    const onto = (selection && doc.nodes[selection] ? selection : null) ?? (lastEdited.current && doc.nodes[lastEdited.current] ? lastEdited.current : null) ?? doc.rootId
+    if (!doc.nodes[onto]) return
+    setFocusId(onto)
+    selectOne(onto)
+    // The keys belong to the map now. Without this they stay wherever they were — on the toolbar button just
+    // pressed, where the arrows walk the toolbar instead of the map.
+    rootRef.current?.focus({ preventScroll: true })
+    flash(`Focused on this branch — the arrow keys move between nodes, ${chord('⌥⌘F')} shows the whole map again`)
+  }, [focusId, selection, doc, selectOne, rootRef, flash])
 
   useEffect(() => {
     // obsidian: handled keys must not reach Obsidian's global hotkeys (⌘E, ⌘N, Esc…).
@@ -1714,7 +1730,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
         <Toolbar
           shape={prefs.shape}
           focusActive={!!focusId}
-          canFocus={!!selection}
+          canFocus={!!doc.nodes[doc.rootId]}
           tidyScope={multi.size > 1 ? multi.size : 0}
           onShape={shiftTo}
           onToggleFocus={toggleFocus}

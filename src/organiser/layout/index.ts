@@ -363,23 +363,12 @@ export function treePath(parent: Box, child: Box, shape: LayoutKind): string {
     const cx = child.x - child.w / 2
     return `M${px} ${py} C${px} ${child.y} ${px} ${child.y} ${cx} ${child.y}`
   }
-  // One connector style for both map layouts: the curve leaves the parent's
-  // edge and arrives at the child's edge. Auto knows the side from the tidy
-  // layout; Free reads it from where the child actually sits. A child parked
-  // above or below its parent (spans overlap) is joined top-to-bottom instead
-  // of threading a curve through the box.
+  // One connector style for both map layouts: the curve leaves the parent's left or right edge and arrives at the
+  // child's. Auto knows the side from the tidy layout; Free reads it from where the child actually sits. Free used
+  // to join a child parked above or below its parent top-to-bottom instead, which meant lines leaving a node on all
+  // four sides in one map and two in the other — the same map, rearranged, drawn by different rules.
   const dx = child.x - parent.x
-  const dy = child.y - parent.y
   const stored = shape === 'map' ? child.dir : 0
-  if (stored === 0 && Math.abs(dx) < (parent.w + child.w) / 2) {
-    const down = dy >= 0 ? 1 : -1
-    const x1 = parent.x
-    const y1 = parent.y + (down * parent.h) / 2
-    const x2 = child.x
-    const y2 = child.y - (down * child.h) / 2
-    const my = y1 + (y2 - y1) * 0.5
-    return `M${x1} ${y1} C${x1} ${my} ${x2} ${my} ${x2} ${y2}`
-  }
   const dir = stored === 0 ? (dx >= 0 ? 1 : -1) : stored
   const x1 = parent.x + (dir * parent.w) / 2
   const y1 = parent.y

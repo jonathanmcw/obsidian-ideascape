@@ -1,4 +1,7 @@
 export const PHONE_STAGE_MAX = 600
+/** A docked bar this wide has room for what a phone hides under More. Twelve 44px keys and their gaps come to
+ *  roughly 580px; below that the bar keeps the phone's short row rather than crowding. */
+export const ROOMY_DOCK_MIN = 700
 
 /** Phone-specific UI needs both touch input and a phone-width map. A narrow desktop split stays desktop-like,
  *  while an iPad keeps the roomier touch treatment. */
@@ -88,4 +91,10 @@ export function centreNudge(nodeTop: number, nodeBottom: number, visibleTop: num
   if (nodeBottom - nodeTop > bottom - visibleTop) return bottom - nodeBottom
   const wanted = visibleTop + (bottom - visibleTop - (nodeBottom - nodeTop)) / 2
   return Math.round(wanted - nodeTop)
+}
+
+/** Whether a docked bar has the width to show what a phone folds away — a tablet held in the hands, most often.
+ *  Obsidian calls some tablets phones, so the dock is theirs; the room is not. */
+export function roomyDock(docked: boolean, stageWidth: number): boolean {
+  return docked && stageWidth >= ROOMY_DOCK_MIN
 }

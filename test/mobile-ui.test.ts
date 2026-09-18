@@ -7,6 +7,7 @@ import {
   isPhoneTouch,
   centreNudge,
   outlineScrollStop,
+  roomyDock,
   outlineSwipeAction,
   stageResizeOffset,
   stageViewportBand,
@@ -181,4 +182,16 @@ test("typing: a row taller than the band keeps its bottom edge, where the next l
   // 600px of text in a 470px band: the start scrolls away, the caret's end stays just above the dock.
   const dy = centreNudge(0, 600, 0, 600, 130);
   assert.equal(600 + dy, 470, "the row's bottom sits on the reserve, not inside it");
+});
+
+// Obsidian calls some tablets phones, so they get the phone's dock — with a tablet's width sitting empty either side.
+test("dock: a phone keeps its short row, a tablet-width dock unpacks", () => {
+  assert.equal(roomyDock(true, 390), false, "a phone has no room to spare");
+  assert.equal(roomyDock(true, 600), false);
+  assert.equal(roomyDock(true, 700), true, "a tablet does");
+  assert.equal(roomyDock(true, 1024), true);
+});
+
+test("dock: a bar that is not docked is never 'roomy' — it already shows everything", () => {
+  assert.equal(roomyDock(false, 1400), false);
 });
