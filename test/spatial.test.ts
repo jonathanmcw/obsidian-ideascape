@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { fromMarkdownMap } from "../src/organiser/model/markdown.ts";
-import { addChild, addLink, moveTo, ordinalOf, setCollapsed, setOrdered, setSide, setText } from "../src/organiser/model/doc.ts";
-import { frameFor, keepBoxes } from "../src/organiser/layout/index.ts";
+import { addChild, addLink, emptyDoc, moveTo, ordinalOf, rootSides, setCollapsed, setOrdered, setSide, setText } from "../src/organiser/model/doc.ts";
+import { frameFor, keepBoxes, mapLayout } from "../src/organiser/layout/index.ts";
 import { MAX_ROW_TEXT_W, ROW_LEAD, metricsFor, nodeMetrics, setOutlineWidths } from "../src/organiser/layout/measure.ts";
 import { arrowMove, type ArrowDir } from "../src/organiser/layout/nav.ts";
 import { columnUnder, dropTargetFor, hitTest } from "../src/organiser/layout/drop.ts";
@@ -231,4 +231,42 @@ test("layout: a node measured from its own data and its place is measured as the
       assert.deepEqual(nodeMetrics(d.nodes[id]!, { isRoot: id === d.rootId, ordinal: ordinalOf(d, id), linked: links > 0 }, kind), metricsFor(d, id, kind), `${kind} ${id}`);
     }
   }
+});
+
+// A person who drags branches to one side of the root means it: the tidy map must not even the sides up again, and
+// a branch added later must not push an existing one across to balance the count.
+test("map: sides a person chose are kept, however lopsided, and later branches fill the shorter side", () => {
+  let d = emptyDoc("Root");
+  for (const t of ["a", "b", "c", "d"]) [d] = addChild(d, d.rootId, t);
+  const kids = d.nodes[d.rootId].children;
+  // Untouched, the map splits them evenly.
+  const even = rootSides(d);
+  assert.deepEqual(kids.map((k) => even[k]), [-1, -1, 1, 1]);
+
+  // Drag the third to the left: that one is chosen, and the others are frozen where they already were.
+  d = setSide(d, kids[2], -1);
+  const after = rootSides(d);
+  assert.deepEqual(kids.map((k) => after[k]), [-1, -1, -1, 1], "three left, one right — and it stays that way");
+
+  // A fourth dragged left leaves the right side empty, which is allowed.
+  d = setSide(d, kids[3], -1);
+  assert.deepEqual(d.nodes[d.rootId].children.map((k) => rootSides(d)[k]), [-1, -1, -1, -1]);
+
+  // A branch added now fills the shorter side rather than moving any of the chosen ones.
+  const [d2, added] = addChild(d, d.rootId, "e");
+  const sides = rootSides(d2);
+  assert.equal(sides[added], 1, "the new branch goes to the empty side");
+  assert.deepEqual(kids.map((k) => sides[k]), [-1, -1, -1, -1], "nothing a person chose moved");
+});
+
+test("map: a chosen side survives the layout — the boxes really are on that side of the root", () => {
+  let d = emptyDoc("Root");
+  for (const t of ["a", "b", "c", "d"]) [d] = addChild(d, d.rootId, t);
+  const kids = d.nodes[d.rootId].children;
+  d = setSide(d, kids[2], -1);
+  d = setSide(d, kids[3], -1);
+  const frame = mapLayout(d);
+  const rootX = frame.boxes[d.rootId].x;
+  for (const k of kids) assert.ok(frame.boxes[k].x < rootX, `${d.nodes[k].text} should be drawn left of the root`);
+  assert.deepEqual(kids.map((k) => frame.boxes[k].dir), [-1, -1, -1, -1]);
 });
