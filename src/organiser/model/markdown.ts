@@ -102,7 +102,9 @@ const closesFence = (open: string, line: string) => {
   const m = /^ {0,3}(`{3,}|~{3,})\s*$/.exec(line)
   return !!m && m[1][0] === open[0] && m[1].length >= open.length
 }
-const FM_RE = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/
+/** obsidian: the note's frontmatter, as Obsidian reads it — the first `---` line to the next one,
+ *  the empty block `---\n---` included, so a note that has one is never given a second. */
+const FM_RE = /^---\r?\n(?:([\s\S]*?)\r?\n)??---(?:\r?\n|$)/
 
 export function newMdId(taken: Set<string>): string {
   let id = ''
@@ -114,7 +116,7 @@ export function newMdId(taken: Set<string>): string {
 
 export function isMarkdownMap(src: string): boolean {
   const m = FM_RE.exec(src)
-  return !!m && new RegExp(`^(?:${KEY_ALT})\\s*:`, 'm').test(m[1])
+  return !!m && new RegExp(`^(?:${KEY_ALT})\\s*:`, 'm').test(m[1] ?? '')
 }
 
 /* ------------------------------------------------------------------ write */
@@ -403,10 +405,11 @@ export function fromMarkdownMap(src: string, fallbackName = 'Untitled'): IODoc &
   const fm = FM_RE.exec(text)
   let markerId: string | null = null
   if (fm) {
-    extras.frontmatter = fm[1]
-    const key = new RegExp(`^(${KEY_ALT})\\s*:`, 'm').exec(fm[1])?.[1]
+    const body = fm[1] ?? '' // an empty block captures nothing
+    extras.frontmatter = body
+    const key = new RegExp(`^(${KEY_ALT})\\s*:`, 'm').exec(body)?.[1]
     if (key) extras.key = key
-    const mv = key ? new RegExp(`^${key}\\s*:\\s*([A-Za-z0-9-]+)\\s*$`, 'm').exec(fm[1]) : null
+    const mv = key ? new RegExp(`^${key}\\s*:\\s*([A-Za-z0-9-]+)\\s*$`, 'm').exec(body) : null
     if (mv && mv[1] !== '1' && mv[1] !== 'true') markerId = mv[1]
     text = text.slice(fm[0].length)
   }
@@ -464,7 +467,9 @@ export function fromMarkdownMap(src: string, fallbackName = 'Untitled'): IODoc &
     // The root's own further lines sit right under the heading, up to a blank line. A line the writer
     // would have escaped (a heading, a quote) is the note's own text, and so is everything after the blank.
     // A block (the root's own code, say) is the root's only when every line of it could be.
-    const rootLine = (l: string) => l.trim() !== '' && !BLOCK_RE.test(l) && !HEADING_RE.test(l)
+    // A line already carrying a block id is the note's own too: the root wears its id in the frontmatter, so
+    // taking the line would cost the note the id — and every [[note#^id]] pointed at it — to an escape.
+    const rootLine = (l: string) => l.trim() !== '' && !BLOCK_RE.test(l) && !HEADING_RE.test(l) && !ID_RE.test(l)
     let k = h1 + 1
     for (; k < listStart && rootLine(lines[k]); k++) {
       const end = blockEnd(k)
@@ -524,13 +529,18 @@ export function fromMarkdownMap(src: string, fallbackName = 'Untitled'): IODoc &
       order.push(n.id)
       stack.push({ indent, id: n.id })
       last = prev = n
-      lastIndent = indent
+      // What the writer will indent this item by, never more than the file already does: the reader and the
+      // writer then draw the line between a node's own text and the note's in the same place, so a list the
+      // file indents more widely than the writer does still reads back as it was written.
+      lastIndent = Math.min(indent, 2 * (stack.length - 1))
       ownId = n.id === id
       fences = null
       continue
     }
-    if (last && isText(line) && indentOf(leadOf(line)) > lastIndent && !pending.some(isText)) {
-      pending = []
+    // A node's further lines follow its head with nothing in between — the writer puts a blank line of a
+    // node's own text down as `\`, and only fenced code holds a truly blank one. So anything after a blank
+    // line is the note's, however far it is indented, and stays the note's when it is written back.
+    if (last && isText(line) && indentOf(leadOf(line)) > lastIndent && !pending.length) {
       // Fenced code in the item's text is kept line for line: no escapes, no block ids. A line that is
       // only a backslash is a blank line as an older version wrote one.
       const end = FENCE_RE.test(dedent(line)) ? fenceEnd(i) : -1
