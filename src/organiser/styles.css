@@ -800,6 +800,12 @@
   /* `pre`, not `nowrap`: a node can hold several lines (⇧Enter), and the text
      is Markdown, where the line breaks are meaningful. */
   white-space: pre;
+  /* Measured, not inherited, for the same reason `.nodes` states the font stack: measure.ts lays the text out on
+     a canvas, which spaces glyphs by the font alone. A theme that spaces its body text would otherwise widen
+     every label without the layout ever seeing it. */
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-transform: none;
   line-height: 18px;
   outline: none;
   min-width: 4px;
@@ -1785,7 +1791,32 @@ body.is-mobile .io-root .app.is-editing .corner .help {
   pointer-events: none;
   z-index: 30;
 }
-/* Inline Markdown inside a node */
+/* Inline Markdown inside a node.
+   A theme's sheet loads after this one and names the very elements a row is painted with — `b`, `code`, `mark`,
+   `a` — so this sheet has to claim every property that changes how wide a run comes out. It is not tidiness:
+   measure.ts sized the node from a canvas, which no stylesheet can reach, and a run drawn wider than it was
+   measured pushes the text out of the pill built for it. That is the Android checkbox's bug — a theme sizing
+   `button` for a finger, and the 15px box at the head of a row with it — as a rule rather than one element.
+   Claimed first, so each element's own rule below still overrides what it means to change. */
+.io-root .node-label b,
+.io-root .node-label i,
+.io-root .node-label u,
+.io-root .node-label s,
+.io-root .node-label mark,
+.io-root .node-label code,
+.io-root .node-label a {
+  margin: 0;
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  font-style: normal;
+  font-variant: inherit;
+  letter-spacing: inherit;
+  word-spacing: inherit;
+  text-transform: none;
+  vertical-align: baseline;
+}
 .io-root .node-label b { font-weight: 700; }
 .io-root .node-label i { font-style: italic; }
 .io-root .node-label u { text-decoration-line: underline; text-underline-offset: 2px; }
@@ -1801,6 +1832,11 @@ body.is-mobile .io-root .app.is-editing .corner .help {
 /* obsidian: lists. The number and the checkbox sit ahead of the text, on its first line,
    inside the node's alignment; measure.ts reserves their width (`lead`). */
 .io-root .node-lead {
+  /* Measured, not inherited, for the reason .node-label states: measure.ts reserves this lead's width — the
+     number's glyphs on a canvas, plus CHECK_W for the box — and spacing a theme sets on the text around it would
+     widen the drawn lead without the layout seeing a thing. */
+  letter-spacing: normal;
+  word-spacing: normal;
   position: absolute;
   display: inline-flex;
   align-items: center;
@@ -2114,14 +2150,19 @@ body.is-mobile .io-root .app.is-editing .corner .help {
      moving in and out a level — and eight of those will not fit a 360dp phone: 325px of keys in 302px of screen.
      So they give way together, and only as far as they must, down to a floor of 34. The height stays 44 throughout,
      which is the axis a thumb actually misses on in a single row — the proportions of a phone keyboard's own keys,
-     and far past the 24px WCAG 2.5.8 asks for. */
-  .io-root .node-toolbar.is-docked .nt-main > button {
+     and far past the 24px WCAG 2.5.8 asks for.
+
+     Every key in the row, not only the ones parented straight to it: Delete and Done stand inside the tail that
+     holds them apart, and alignment inside the anchor its menu opens from. A child combinator here missed all
+     three, and they took the 40x38 a pointer bar's keys are — a short key among tall ones, and a Done meant to be
+     a circle drawn as an ellipse. */
+  .io-root .node-toolbar.is-docked .nt-main button {
     flex: 0 1 44px;
     width: 44px;
     min-width: 34px;
     height: 44px;
   }
-  .io-root .node-toolbar.is-docked .nt-main > .nt-drop {
+  .io-root .node-toolbar.is-docked .nt-main .nt-drop {
     flex-basis: 44px;
     padding: 0 4px;
   }

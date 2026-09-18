@@ -1,6 +1,9 @@
 // The rendered checks (npm run ui) are only as honest as their fixture. A fixture drifts when a component renames a
 // class and the page beside it keeps the old one: the check still passes, and it is checking a page the app no
 // longer draws. So every class the fixture uses must still be written somewhere in src.
+//
+// The node bar and a row of text are no longer copied at all — ui-check.mjs bundles NodeBar, RichLabel and
+// measure.ts into the page and mounts them, so those cannot drift. What is left here is the chrome around them.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
@@ -26,7 +29,7 @@ test("ui fixture: every class it renders is one the components still write", () 
   const css = read("src/organiser/styles.css") + read("src/styles/map-host.css");
 
   // The fixture's own scaffolding, which belongs to the page and not to the app.
-  const scaffolding = new Set(["surface", "frame", "io-root", "app"]);
+  const scaffolding = new Set(["surface", "bleed", "frame", "io-root", "app", "nodes"]);
   const classes = new Set(
     [...harness.matchAll(/class="([^"]+)"/g)]
       .flatMap(match => match[1]!.split(/\s+/))
@@ -49,4 +52,17 @@ test("ui fixture: it dresses the sheet in the app's own variables, and reads the
   for (const token of ["--radius-m", "--clickable-icon-radius", "--modal-radius", "--icon-m-stroke-width", "--font-ui-small", "--font-interface", "--anim-duration-fast"]) {
     assert.match(harness, new RegExp(`${token}:`), `the fixture must define Obsidian's ${token}`);
   }
+});
+
+// The checkbox at the head of a row is drawn at a fixed 15px, and measure.ts reserves exactly that much for it
+// (CHECK_W) when it sizes the node. It was a <button>, and on an Android tablet a theme that sizes buttons for a
+// finger sized this one too — into a wide pill lying across the row's text. A span has no element left for such a
+// rule to name. The rendered check beside this one measures the box; this one holds the element it is drawn with,
+// which no measurement of a fixture can see.
+test("row: the checkbox is not drawn with an element a theme sizes", () => {
+  const stage = read("src/organiser/ui/Stage.tsx");
+  const check = stage.slice(stage.indexOf("role=\"checkbox\"") - 400, stage.indexOf("role=\"checkbox\"") + 400);
+  assert.ok(/<span\s/.test(check), "the checkbox must be a span");
+  assert.ok(!/<button[\s>]/.test(check), "the checkbox must not be a button, whatever it is styled with");
+  assert.match(check, /className={`node-check/, "and it must still be the element .node-check styles");
 });

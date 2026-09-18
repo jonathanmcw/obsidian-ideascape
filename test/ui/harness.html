@@ -21,6 +21,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ideascape chrome</title>
 <link rel="stylesheet" href="../../styles.css">
+<!-- Built by `npm run ui`; open that once before opening this page by hand. -->
+<script defer src="fixture.js"></script>
 <style>
   /* Obsidian 1.13's variables, at the values app.css defines (macOS desktop; the phone shell overrides below). */
   body {
@@ -48,9 +50,19 @@
     --font-ui-medium: var(--font-text-size);
   }
   .surface { padding: 16px; }
+  /* The bar's own stages reach both edges: the dock is laid out against the screen, and a card with padding
+     around it would report room the screen does not have. */
+  .surface.bleed { padding: 0 0 16px; }
+  .surface.bleed > h2 { padding: 16px 16px 8px; }
+  .surface.bleed > .frame { border-radius: 0; }
   .surface > h2 { margin: 0 0 8px; font: 600 12px/1 var(--font-interface); color: #888; text-transform: uppercase; letter-spacing: .05em; }
   .frame { position: relative; overflow: hidden; border-radius: 10px; }
   .io-root { height: auto; }
+  /* The surfaces are this page's own layout, not the map's shell. `.app` is the map's two-column grid — `0
+     minmax(0, 1fr)` — and it places children alternately, so every other surface would stand in the zero-width
+     column with its contents spilling out of it. Measurements taken there are measurements of nothing: that is
+     what once produced a 10px-wide dock, and an assertion that passed on it. */
+  .io-root .app { display: block; height: auto; overflow: visible; }
 
   /* The map's own theme variables, as organiser/theme.ts sets them at runtime. Paper (light) and Graphite (dark). */
   .io-root[data-theme='paper'] {
@@ -151,63 +163,34 @@
       </div>
     </section>
 
-    <section class="surface" data-surface="node-bar">
-      <h2>Node bar (pointer)</h2>
-      <div class="frame" style="height:120px">
-        <div class="stage" style="position:absolute;inset:0">
-          <div class="node-toolbar" role="toolbar" style="left:50%;top:30px">
-            <div class="nt-row nt-main">
-              <button class="nt-drop" aria-label="Node type">Aa<svg class="nt-chev" viewBox="0 0 8 8" aria-hidden="true"><path d="M1.5 3L4 5.5 6.5 3" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
-              <span class="nt-sep"></span>
-              <button class="fmt fmt-bold" aria-label="Bold"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 2.5h4a2.5 2.5 0 0 1 0 5h-4zM4.5 7.5h4.6a2.75 2.75 0 0 1 0 5.5H4.5z"/></svg></button>
-              <button class="fmt fmt-italic is-on" aria-label="Italic"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5H6.5M9.5 13.5H6M9.2 2.5L6.8 13.5"/></svg></button>
-              <span class="nt-sep"></span>
-              <button aria-label="Branch colour"><span class="nt-dot" style="background:var(--branch-0)"></span></button>
-            </div>
-          </div>
-        </div>
+    <!-- The node bar is not markup here: scripts/ui-check.mjs bundles the component itself into fixture.js and it
+         mounts below, measuring its own stage the way MapApp measures the map's. It is the one surface whose shape
+         is chosen at runtime — a pointer gets the floating bar, a phone the dock, and a tablet Obsidian calls a
+         phone gets the dock unpacked into the room it has — so a hand-written copy would only ever assert what its
+         author believed. These two stages span the screen, because "does the row fit" is a question about the
+         screen and not about a card with padding around it. -->
+    <!-- A row with one of everything in it, drawn by RichLabel at the width measure.ts measured for it. The
+         checkbox that stretched on an Android tablet was a theme reaching the plugin's drawing by element name;
+         what made it a bug and not a blemish is that the layout had already reserved 15px for that box. So this
+         surface exists to compare the two — see the row check in scripts/ui-check.mjs. -->
+    <section class="surface" data-surface="node-text">
+      <h2>A row of text: what the layout reserved, drawn</h2>
+      <div class="frame" style="height:90px">
+        <div class="stage" style="position:absolute;inset:0;padding:16px" data-live-row></div>
       </div>
     </section>
 
-    <section class="surface" data-surface="phone-dock">
-      <h2>Phone dock (docked node bar, More open)</h2>
-      <div class="frame" style="height:260px">
-        <div class="stage" style="position:absolute;inset:0">
-          <div class="node-toolbar is-docked" role="toolbar">
-            <div class="nt-phone-more" role="menu" aria-label="More editing options">
-              <div class="nt-phone-group nt-phone-format" role="group" aria-label="Formatting">
-                <button class="fmt fmt-bold" aria-label="Bold"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4.5 2.5h4a2.5 2.5 0 0 1 0 5h-4z"/></svg></button>
-                <button class="fmt fmt-italic" aria-label="Italic"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 2.5H6.5"/></svg></button>
-                <button class="fmt fmt-underline" aria-label="Underline"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 2.5v5a4 4 0 0 0 8 0v-5"/></svg></button>
-                <button class="fmt fmt-code" aria-label="Code"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 4L2.5 8 6 12"/></svg></button>
-                <button class="fmt fmt-highlight" aria-label="Highlight"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 12h10"/></svg></button>
-                <button class="fmt fmt-strike" aria-label="Strikethrough"><svg class="io-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 8h10"/></svg></button>
-              </div>
-              <div class="nt-phone-group nt-phone-align" role="group" aria-label="Alignment">
-                <button class="is-on" aria-label="Align left"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="2" rx="1" fill="currentColor"/></svg></button>
-                <button aria-label="Align centre"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="3" width="8" height="2" rx="1" fill="currentColor"/></svg></button>
-                <button aria-label="Align right"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="2" rx="1" fill="currentColor"/></svg></button>
-              </div>
-              <div class="nt-phone-group nt-phone-danger" role="group" aria-label="Delete node">
-                <button class="nt-delete" aria-label="Delete this node"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.5 8.5h6l.5-8.5"/></svg></button>
-              </div>
-              <div class="nt-phone-group nt-phone-arrange" role="group" aria-label="Arrange node">
-                <button class="nt-move-up" aria-label="Move up"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 3.5L10.5 8 6 12.5"/></svg></button>
-                <button class="nt-move-down" aria-label="Move down"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 3.5L10.5 8 6 12.5"/></svg></button>
-              </div>
-            </div>
-            <div class="nt-row nt-main">
-              <button class="nt-drop" aria-label="Node type">Aa<svg class="nt-chev" viewBox="0 0 8 8" aria-hidden="true"><path d="M1.5 3L4 5.5 6.5 3" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
-              <button aria-label="Branch colour"><span class="nt-dot" style="background:var(--branch-2)"></span></button>
-              <button class="is-on" aria-haspopup="menu" aria-expanded="true" aria-label="More editing options"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="3" cy="8" r="1"/><circle cx="8" cy="8" r="1"/><circle cx="13" cy="8" r="1"/></svg></button>
-              <button aria-label="Move out a level"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 4h7M7 8h7M7 12h7M4 6L2 8l2 2"/></svg></button>
-              <button aria-label="Move in a level"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 4h7M7 8h7M7 12h7M2 6l2 2-2 2"/></svg></button>
-              <button aria-label="New line"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 4v4H4M7 5L4 8l3 3"/></svg></button>
-              <button aria-label="Add child"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 3.5v9M3.5 8h9"/></svg></button>
-              <button class="nt-done" aria-label="Done"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8.5l3.2 3.2L13 5"/></svg></button>
-            </div>
-          </div>
-        </div>
+    <section class="surface bleed" data-surface="node-bar">
+      <h2>Node bar, at rest</h2>
+      <div class="frame" style="height:150px">
+        <div class="stage" style="position:absolute;inset:0" data-live-bar="plain"></div>
+      </div>
+    </section>
+
+    <section class="surface bleed" data-surface="node-bar-more">
+      <h2>Node bar, with More open</h2>
+      <div class="frame" style="height:330px">
+        <div class="stage" style="position:absolute;inset:0" data-live-bar="more"></div>
       </div>
     </section>
 

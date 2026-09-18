@@ -267,8 +267,13 @@ export const CHECK_W = 15
 const CHECK_GAP = 7
 /** Gap after a numbered item's "3." */
 const NUM_GAP = 5
-/** A #tag is drawn as a chip: this much wider than its text. */
+/** Drawn wider than the text inside them, by the padding styles.css gives each: a #tag chip, a highlight, and a
+ *  span of code. Counted here because nothing else can — the width a node is built at comes from a canvas, which
+ *  measures glyphs and knows nothing of the boxes they are painted in, and a run drawn wider than it was measured
+ *  takes the text past the pill made for it. Change one of these and change its rule in styles.css with it. */
 const TAG_PAD = 6
+const MARK_PAD = 4
+const CODE_PAD = 6
 
 /** obsidian: what sits before the text — a number, a checkbox — and the width it takes. */
 export interface Lead {
@@ -317,8 +322,9 @@ export function nodeMetrics(n: IONode, place: NodePlace, shape: LayoutKind): Nod
   const text = plainText(n.text) // obsidian: markers are painted, never measured
   lineCursor = 0
   const runs = parseInline(n.text).runs
-  const styled = runs.some((r) => r.b || r.code || r.tag)
-  /** Width of text[from,to) with bold runs at 700 and code runs in the monospace face. */
+  const styled = runs.some((r) => r.b || r.code || r.tag || r.mark)
+  /** Width of text[from,to) with bold runs at 700, code runs in the monospace face, and the padding each painted
+   *  box adds — added outside the branch, so a run that is both (code inside a highlight) is counted for both. */
   const measureFor = (weight: number, size: number): MeasureFn | undefined =>
     !styled
       ? undefined
@@ -329,7 +335,8 @@ export function nodeMetrics(n: IONode, place: NodePlace, shape: LayoutKind): Nod
             const b = Math.min(r.end, to)
             if (b <= a) continue
             const seg = text.slice(a, b)
-            w += r.code ? monoWidth(seg, size * 0.92) : textWidth(seg, r.b ? 700 : weight, size) + (r.tag ? TAG_PAD : 0)
+            w += r.code ? monoWidth(seg, size * 0.92) : textWidth(seg, r.b ? 700 : weight, size)
+            w += (r.tag ? TAG_PAD : 0) + (r.mark ? MARK_PAD : 0) + (r.code ? CODE_PAD : 0)
           }
           return w
         }

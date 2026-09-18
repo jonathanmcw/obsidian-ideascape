@@ -8,3 +8,4 @@ __pycache__/
 *.pyc
 demo-vault/
 /review/
+/test/ui/fixture.js
