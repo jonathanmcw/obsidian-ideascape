@@ -67,6 +67,8 @@ export interface IODoc {
     postscript?: string
     trailer?: string
     rawGeometry?: string
+    geometryVersion?: number
+    unknownGeometry?: Record<string, unknown>
     eol?: '\r\n'
   }
   /** obsidian: set by the Markdown reader when some node has no stored position. */

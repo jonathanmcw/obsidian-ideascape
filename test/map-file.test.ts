@@ -75,6 +75,62 @@ test("layout block: JSON that will not parse is written back unchanged, not repl
   assert.equal(cycle(odd), odd);
 });
 
+/** SAVED as a later version might write it: a higher `v`, and top-level fields this version has never heard of. */
+const blockOf = (src: string) => JSON.parse(/%%ideamap\n(.*)\n%%/.exec(src)![1]!) as Record<string, unknown>;
+const FUTURE = SAVED.replace('{"v":1,', '{"v":2,').replace(/\}\n%%\n$/, ',"groups":{"g1":{"of":["a1","b1"],"tint":3}},"note":"kept"}\n%%\n');
+
+test("layout block: a block from a later version keeps its version and the fields this one doesn't know", () => {
+  assert.deepEqual(blockOf(FUTURE).groups, { g1: { of: ["a1", "b1"], tint: 3 } }, "the fixture carries the field");
+  const c1 = cycle(FUTURE);
+  assert.equal(c1, FUTURE, "opened and saved, the file is as it was");
+  assert.equal(cycle(c1), FUTURE);
+  const g = blockOf(c1);
+  assert.equal(g.v, 2);
+  assert.deepEqual(g.groups, { g1: { of: ["a1", "b1"], tint: 3 } });
+  assert.equal(g.note, "kept");
+  // An unknown field in a v1 block is kept too, and the version stays 1; a version that is no number is written as 1.
+  const v1 = FUTURE.replace('{"v":2,', '{"v":1,');
+  assert.equal(cycle(v1), v1);
+  for (const v of ['"2"', "null", "0", "1.5", "-3"]) assert.equal(cycle(FUTURE.replace('{"v":2,', `{"v":${v},`)), v1, `v: ${v}`);
+});
+
+test("layout block: an edit to a later version's map changes what it knows and keeps what it doesn't", () => {
+  const d = fromMarkdownMap(FUTURE, "Trip map");
+  d.nodes.b1!.x = 123;
+  d.nodes.b1!.y = -45;
+  d.nodes.a1!.collapsed = false;
+  addChild(d, "b1", "May");
+  const written = toMarkdownMap(d);
+  const g = blockOf(written);
+  assert.deepEqual((g.pos as Record<string, unknown>).b1, [123, -45]);
+  assert.deepEqual(g.collapsed, []);
+  assert.equal(g.v, 2);
+  assert.deepEqual(g.groups, { g1: { of: ["a1", "b1"], tint: 3 } });
+  assert.equal(g.note, "kept");
+  assert.equal(cycle(written), written, "and the edited file is settled");
+});
+
+test("layout block: a map with nothing unknown in it is written exactly as before", () => {
+  const d = fromMarkdownMap(SAVED, "Trip map");
+  assert.equal(d.md.unknownGeometry, undefined);
+  assert.equal(d.md.geometryVersion, undefined);
+  assert.equal(toMarkdownMap(d), SAVED);
+  // The bytes, spelled out, so a change to the writer's key order cannot hide behind a fixture that moved with it.
+  assert.ok(toMarkdownMap(d).endsWith('%%ideamap\n{"v":1,"pos":{"r1":[0,0],"a1":[-500,-300],"a2":[-700,-300],"b1":[400,250]},"collapsed":["a1"],"links":[["a2","b1"]],"align":{},"branch":{},"look":{"layout":"free"}}\n%%\n'));
+});
+
+test("layout block: a __proto__ or constructor key in the block pollutes nothing and is not written back", () => {
+  const hostile = SAVED.replace(/\}\n%%\n$/, ',"__proto__":{"polluted":true},"constructor":{"prototype":{"polluted":true}},"kept":1}\n%%\n');
+  const d = fromMarkdownMap(hostile, "Trip map");
+  assert.equal(({} as { polluted?: unknown }).polluted, undefined);
+  assert.equal((d.md as { polluted?: unknown }).polluted, undefined);
+  assert.equal((d.md.unknownGeometry as { polluted?: unknown }).polluted, undefined);
+  const written = toMarkdownMap(d);
+  assert.equal(({} as { polluted?: unknown }).polluted, undefined);
+  assert.equal(written, SAVED.replace(/\}\n%%\n$/, ',"kept":1}\n%%\n'));
+  assert.equal(cycle(written), written);
+});
+
 test("free layout: an item added outside the plugin is placed beside the others; stored positions stay", () => {
   // A free-layout map arranged by hand, then edited in the Markdown editor.
   const saved = "---\nidea-map: r\n---\n# Trip\n\n- Where ^a\n  - Lisbon ^a2\n- When ^b\n\n%%ideamap\n" +
@@ -390,4 +446,102 @@ test("file format: a key and a block from different formats are each kept; the l
   assert.equal(d.md.block, BLOCK);
   // A root line reading as either opening line is escaped, so it can't open a block.
   for (const f of MAP_FORMATS) assert.equal(escapeRootLine(f.block), `\\${f.block}`);
+});
+
+/** A saved map around a list and a frontmatter, and the same note after one open and save. */
+const NOTE_TAIL = `\n${BLOCK}\n{"v":1,"pos":{}}\n%%\n`;
+const saved = (body: string, fm = "ideascape: root") => `---\n${fm}\n---\n# R\n\n${body}${NOTE_TAIL}`;
+/** The note's own part of a file: everything above the layout block. */
+const above = (s: string) => s.slice(0, s.lastIndexOf(`\n${BLOCK}\n`));
+
+test("text: fenced code under an item is kept whole — a ^word, a list line or a task inside it is code", () => {
+  const notes = [
+    "- snippet ^s\n  ~~~md\n  value ^literal\n  - code-list\n  ~~~\n",
+    "- snippet ^s\n  ```md\n  value ^literal\n  - [ ] a task\n  1. one\n  # heading\n  ```\n- next ^n\n",
+    // A longer fence holds a shorter one, and only one at least as long closes it.
+    "- snippet ^s\n  ````md\n  ```\n  value ^literal\n  ~~~\n  - code-list\n  `````\n- next ^n\n",
+  ];
+  for (const body of notes) {
+    const src = saved(body);
+    const d = fromMarkdownMap(src, "R");
+    assert.ok(d.nodes["s"], `the item keeps its own id:\n${body}`);
+    assert.equal(d.nodes["literal"], undefined, "a ^word in code is not a block id");
+    assert.equal(d.nodes["s"]!.children.length, 0, "a list line in code is not an item");
+    assert.match(d.nodes["s"]!.text, /value \^literal/);
+    assert.equal(above(toMarkdownMap(d)), above(src), body);
+  }
+  const back = fromMarkdownMap(saved(notes[0]!), "R");
+  assert.equal(back.nodes["s"]!.text, "snippet\n~~~md\nvalue ^literal\n- code-list\n~~~");
+});
+
+test("text: a fence nothing closes is text, its list lines are items, and a ^word under it is kept", () => {
+  const src = saved("- snippet ^s\n  ~~~md\n  value ^literal\n  more\n  - code-list\n- next ^n\n");
+  const d = fromMarkdownMap(src, "R");
+  assert.equal(d.nodes["s"]!.text, "snippet\n~~~md\nvalue ^literal\nmore");
+  assert.deepEqual(d.nodes["s"]!.children.map((c) => d.nodes[c]!.text), ["code-list"], "the map's items are never swallowed");
+  const out = toMarkdownMap(d);
+  assert.match(out, /\n- snippet\n {2}\\~~~md\n {2}value \\\^literal\n {2}more \^s\n/);
+  const back = fromMarkdownMap(out, "R");
+  assert.equal(back.nodes["s"]!.text, d.nodes["s"]!.text);
+  assert.equal(toMarkdownMap(back), out, "the second save changes nothing");
+  // The ^word on the last line too; an item with no id of its own still takes one from there.
+  const last = fromMarkdownMap(saved("- snippet ^s\n  ~~~md\n  value ^literal\n"), "R");
+  assert.equal(last.nodes["s"]!.text, "snippet\n~~~md\nvalue ^literal");
+  assert.equal(fromMarkdownMap(toMarkdownMap(last), "R").nodes["s"]!.text, last.nodes["s"]!.text);
+  assert.ok(fromMarkdownMap("# R\n\n- old\n  ```\n  go()\n  ``` ^d1\n", "R").nodes["d1"]);
+});
+
+test("text: a fence the map's own item would have to sit inside is not code, so the item stays an item", () => {
+  // A stray fence in one item, and a child whose code has the line that would close it.
+  const src = saved("- a ^a\n  ~~~\n  - b\n    more ^b\n    ~~~\n    code\n    ~~~\n- c ^c\n");
+  const d = fromMarkdownMap(src, "R");
+  assert.deepEqual(d.nodes["a"]!.children, ["b"]);
+  assert.equal(d.nodes["b"]!.text, "b\nmore\n~~~\ncode\n~~~");
+});
+
+test("text: a tab inside an item's code is kept; only the list's own indentation comes off and goes back on", () => {
+  const src = saved("- build ^a\n  ~~~make\n  all:\n  \techo hi\n  \t\tdeeper \t tabs\n  ~~~\n  - child ^c\n    ```\n    \tx\n    ```\n");
+  const d = fromMarkdownMap(src, "R");
+  assert.equal(d.nodes["a"]!.text, "build\n~~~make\nall:\n\techo hi\n\t\tdeeper \t tabs\n~~~");
+  assert.equal(d.nodes["c"]!.text, "child\n```\n\tx\n```");
+  assert.equal(above(toMarkdownMap(d)), above(src));
+  // A list indented with tabs reads as it did: the tab is the list's, a tab being four columns and the map's
+  // own indentation two, and what is past that is the code's.
+  const tabbed = fromMarkdownMap("# R\n\n- a ^a\n\t- b ^b\n\t  ```\n\t  \tx\n\t      y\n\t  ```\n", "R");
+  assert.equal(tabbed.nodes["b"]!.text, "b\n  ```\n  \tx\n      y\n  ```");
+  assert.equal(tabbed.nodes["b"]!.parent, "a");
+  assert.equal(toMarkdownMap(fromMarkdownMap(toMarkdownMap(tabbed), "R")), toMarkdownMap(tabbed));
+});
+
+test("frontmatter: the note's own lines are kept exactly — blank lines before the closing fence too", () => {
+  const fm = "ideascape: r\npoem: |+\n  line\n\n";
+  const src = saved("- a ^a\n", fm);
+  assert.equal(above(cycle(src, "R")), above(src));
+  // A note that is not yet a map gains the marker line and nothing else.
+  const note = "---\npoem: |+\n  line\n\n\n---\n# R\n\n- a ^a\n";
+  const out = cycle(note, "R");
+  assert.match(out, /^---\nideascape: \w+\npoem: \|\+\n {2}line\n\n\n---\n# R\n/);
+  assert.equal(cycle(out, "R"), out);
+});
+
+test("frontmatter: a marker whose value runs over more lines is replaced whole, never left as broken YAML", () => {
+  for (const [fm, rest] of [
+    ["ideascape:\n  custom: value\ntags: [keep]", "tags: [keep]"],
+    ["tags: [keep]\nideascape:\n  - one\n\n  - two\nafter: 1", "tags: [keep]\nafter: 1"],
+    ["ideascape:\n- one\n- two\ntags: [keep]", "tags: [keep]"],
+    ["ideascape: |\n  text\n\n  more\n\ntags: [keep]", "\ntags: [keep]"],
+    ["ideascape: [one,\n  two]\ntags: [keep]", "tags: [keep]"],
+    // Under a marker that is already a plain word the lines are the note's own, and stay.
+    ["ideascape: plain\n  and more\ntags: [keep]", "  and more\ntags: [keep]"],
+  ] as const) {
+    const out = cycle(saved("- a ^a\n", fm), "R");
+    const written = /^---\n([\s\S]*?)\n---\n/.exec(out)![1]!;
+    const marker = /^ideascape: (\w+)$/m.exec(written);
+    assert.ok(marker, `a plain marker line:\n${written}`);
+    assert.equal(written.replace(/^ideascape: \w+\n?/m, ""), rest, fm);
+    assert.equal(fromMarkdownMap(out, "R").rootId, marker[1], "and the root is the one it names");
+    assert.equal(cycle(out, "R"), out);
+  }
+  // A value on the marker's own line is the only one read as the root's id.
+  assert.notEqual(fromMarkdownMap(saved("- a ^a\n", "ideascape:\n  nested"), "R").rootId, "nested");
 });
