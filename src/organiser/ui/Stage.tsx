@@ -560,8 +560,8 @@ export function Stage({
     stopGlide()
     let vy = flick.current.vy
     flick.current = { y: 0, t: 0, vy: 0 }
-    if (Math.abs(vy) < 0.35) return // a slow finger meant to stop where it stopped
-    vy = Math.max(-4, Math.min(4, vy)) // however hard it was thrown, no faster than the eye can follow
+    if (Math.abs(vy) < 0.25) return // a slow finger meant to stop where it stopped
+    vy = Math.max(-6.5, Math.min(6.5, vy)) // however hard it was thrown, no faster than the eye can follow
     let last = performance.now()
     const step = () => {
       const now = performance.now()
@@ -569,9 +569,9 @@ export function Stage({
       last = now
       const before = cameraRef.current.y
       api.setCamera({ ...cameraRef.current, y: before + vy * dt })
-      // 0.0025 per millisecond leaves a flick gliding for about a second: long enough to be worth the flick, short
-      // enough that a second one is never waiting on the first.
-      vy *= Math.exp(-0.0025 * dt)
+      // 0.0016 per millisecond leaves a flick gliding for two seconds or so — a long list crosses in one throw —
+      // while a touch still stops it dead, so a second flick never waits on the first.
+      vy *= Math.exp(-0.0016 * dt)
       if (Math.abs(vy) < 0.02 || Math.abs(cameraRef.current.y - before) < 0.1) { glide.current = 0; return }
       glide.current = winOf().requestAnimationFrame(step)
     }
@@ -1404,9 +1404,11 @@ const NodeView = memo(function NodeView({
           style={{ left: leadLeft, top: leadCentred ? undefined : (outline ? ROW_PAD : padY) - 1, height: m.lineH, fontSize: m.fontSize, fontWeight: m.fontWeight }}
         >
           {lead.num && <span className="node-num">{lead.num}</span>}
+          {/* A span, not a button: a mobile theme that gives `button` a minimum size or padding restyles this one too,
+              and it is drawn at a fixed 15px inside a row of text. It never takes focus — the map handles the keys —
+              so the role and the aria state are all the semantics the button was giving it. */}
           {lead.task != null && (
-            <button
-              type="button"
+            <span
               tabIndex={-1}
               role="checkbox"
               aria-checked={done}
@@ -1430,7 +1432,7 @@ const NodeView = memo(function NodeView({
               ) : lead.task !== ' ' ? (
                 lead.task
               ) : null}
-            </button>
+            </span>
           )}
         </span>
       )}

@@ -262,6 +262,9 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
   const [stageW, setStageW] = useState(0)
   const [bottomInset, setBottomInset] = useState(0)
   const [keyboardInset, setKeyboardInset] = useState(0)
+  /** How much of the stage is hidden below the fold — normally by the software keyboard. The dock stands on this,
+   *  measured, because hosts differ: some resize the page for the keyboard and some let it cover the page. */
+  const [dockLift, setDockLift] = useState(0)
   const [dockInset, setDockInset] = useState(0)
   const coarsePointer = useCoarsePointer()
   /** Everything standing over the bottom of the stage, as one number. The dock is drawn above Obsidian's navigation
@@ -683,6 +686,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
         const stageBox = stageRef.current?.getBoundingClientRect()
         setKeyboardInset(viewportOcclusion(rootBox.bottom, viewport.offsetTop, viewport.height))
         if (stageBox) {
+          setDockLift(viewportOcclusion(stageBox.bottom, viewport.offsetTop, viewport.height))
           const band = stageViewportBand(stageBox.top, stageBox.bottom, viewport.offsetTop, viewport.height)
           setStageViewport((current) => (current.top === band.top && current.bottom === band.bottom ? current : band))
         }
@@ -1697,7 +1701,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
     <div
       ref={appRef}
       className={`app${prefs.inspectorOpen ? ' inspector-open' : ''}${narrow ? ' is-narrow' : ''}${medium ? ' is-medium' : ''}${compact ? ' is-compact' : ''}${edit ? ' is-editing' : ''}${search !== null ? ' is-finding' : ''}`}
-      style={{ '--io-bottom-inset': `${bottomInset}px`, '--io-keyboard-inset': `${keyboardInset}px` } as React.CSSProperties}
+      style={{ '--io-bottom-inset': `${bottomInset}px`, '--io-keyboard-inset': `${keyboardInset}px`, '--io-dock-lift': `${dockLift}px` } as React.CSSProperties}
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => {
         const f = e.dataTransfer.files[0]

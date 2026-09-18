@@ -97,7 +97,7 @@ interface Tip {
   left: number
 }
 
-type Menu = null | 'type' | 'colour' | 'more'
+type Menu = null | 'type' | 'colour' | 'align' | 'more'
 
 
 function FormatIcon({ f }: { f: Format }) {
@@ -381,6 +381,18 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
           ))}
         </div>
       )}
+      {menu === 'align' && (
+        <div className="nt-col" role="menu">
+          <div className="nt-row nt-aligns">
+            {ALIGNS.map(([a, label, keys]) => (
+              <button key={a} type="button" tabIndex={-1} role="menuitemradio" className={(node.align ?? 'left') === a ? 'is-on' : ''} aria-checked={(node.align ?? 'left') === a} onClick={() => { onAlign(a); setMenu(null); refocusLabel(ref.current) }}>
+                <IconAlign align={a} />
+                <Name tip={label} keys={keys}>{`${label} — ${chord(keys)}`}</Name>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       {menu === 'colour' && !node.isRoot && picking != null && (
         // Editing a colour: the bar is that one small view and nothing else.
         <div className="nt-editor">
@@ -489,13 +501,15 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
           </button>
         )}
         {!docked && <span className="nt-sep" />}
-        {/* How the text sits in the node — always offered on desktop; the phone moves it under More. */}
-        {!docked && ALIGNS.map(([a, label, keys]) => (
-          <button key={a} type="button" tabIndex={-1} className={node.align === a ? 'is-on' : ''} aria-pressed={node.align === a} onClick={() => onAlign(a)}>
-            <IconAlign align={a} />
-            <Name tip={label} keys={keys}>{`${label} — ${chord(keys)}`}</Name>
+        {/* How the text sits in the node. Three keys in a row for something almost never changed, so it folds into
+            one that wears the current alignment — the two places it frees go to things reached far more often. */}
+        {!docked && (
+          <button type="button" tabIndex={-1} className={`nt-drop nt-align-drop${menu === 'align' ? ' is-on' : ''}`} aria-haspopup="menu" aria-expanded={menu === 'align'} onClick={() => toggle('align')}>
+            <IconAlign align={node.align ?? 'left'} />
+            <Name tip="How the text sits" keys="⇧⌘L">{`Alignment: ${ALIGNS.find(([a]) => a === (node.align ?? 'left'))?.[1] ?? 'Align left'}`}</Name>
+            <Chevron />
           </button>
-        ))}
+        )}
         {coarse && !docked && outline && (
           <>
             <span className="nt-sep" />

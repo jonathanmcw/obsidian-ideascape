@@ -1861,6 +1861,8 @@ body.is-mobile .io-root .app.is-editing .corner .help {
 .io-root .node-toolbar .nt-sep { width: 1px; height: 16px; margin: 0 3px; background: var(--line); }
 .io-root .node-toolbar .nt-dot { display: block; width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18); }
 .io-root .node-toolbar .nt-palette { padding: 2px 3px; }
+/* The alignment menu: three keys under the one that wears the current alignment, laid out like the palette row. */
+.io-root .node-toolbar .nt-aligns { padding: 2px 3px; gap: 2px; }
 .io-root .node-toolbar .nt-palette button { width: 24px; }
 .io-root .node-toolbar .nt-palette .nt-dot { width: 15px; height: 15px; }
 .io-root .node-toolbar .nt-palette button.is-on { background: none; }
@@ -2043,9 +2045,10 @@ body.is-mobile .io-root .app.is-editing .corner .help {
     /* This bar exists only while a phone is being typed into, so the soft keyboard is up: it covers the home
        indicator and Obsidian's navigation bar both, and leaving room for either put a finger's width of empty screen
        between the bar and the keys it belongs to. Where the host lets the keyboard cover the page instead of
-       resizing for it, --io-keyboard-inset is that overlap; where it resizes, the inset is 0 and the bar already
-       sits on the new bottom edge. */
-    bottom: calc(8px + var(--io-keyboard-inset, 0px));
+       resizing for it, the lift is how much of the stage is hidden below the fold; where it resizes, the lift is 0
+       and the bar already sits on the new bottom edge. Measured either way, because hosts differ and a bar that
+       guesses wrong is a bar behind the keyboard, which is a bar that does not exist. */
+    bottom: calc(8px + max(var(--io-dock-lift, 0px), var(--io-keyboard-inset, 0px)));
     width: auto;
     transform: none;
     flex-direction: column;
