@@ -5,7 +5,7 @@ import { MAP_FORMATS, isLayoutBlockLine } from "./organiser/model/markdown.ts";
 
 /* ---------- opening a note as a map ---------- */
 
-const FM_RE = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/;
+const FM_RE = /^---\r?\n(?:([\s\S]*?)\r?\n)??---(?:\r?\n|$)/;
 const TRAILING_ID = /(^|\s)\^[A-Za-z0-9-]+\s*$/;
 const MARKER_LINE = new RegExp(`^(?:${MAP_FORMATS.map(f => f.key).join("|")})\\s*:`);
 const HEADING = /^\s*#{1,6}(\s|$)/;
@@ -16,7 +16,7 @@ interface Row { text: string; gap: boolean } // gap: a blank line sits above it
 function noteParts(text: string): { fm: string[]; rows: Row[] } {
   let t = text.replace(/\r\n?/g, "\n");
   const m = FM_RE.exec(t);
-  const fm = m ? m[1].split("\n").map(l => l.trimEnd()).filter(l => !MARKER_LINE.test(l)) : [];
+  const fm = m ? (m[1] ?? "").split("\n").map(l => l.trimEnd()).filter(l => !MARKER_LINE.test(l)) : [];
   while (fm.length && !fm[fm.length - 1]) fm.pop();
   if (m) t = t.slice(m[0].length);
   const lines = t.split("\n").map(l => l.trimEnd());

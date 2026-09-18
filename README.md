@@ -54,7 +54,7 @@ Found a bug, or have an idea? [Open an issue](https://github.com/jonathanmcw/obs
 
 1. Turn Ideascape on. A short welcome shows what a map is, how map and outline views relate, and the keyboard basics; Start opens the tour.
 2. **New map:** the ribbon button, a folder's **New map here**, or the command **Create a new map**.
-3. **Existing notes (beta):** **Open as a map** is available for testing with list-based notes. Use a copy while this path is refined.
+3. **Existing notes:** **Open as a map**, from the note's menu or the command. If the map would rewrite anything beyond what it adds on purpose, you are told how many lines and shown the first of them, with **Convert a copy** offered instead.
 4. **Take the tour:** a map where every node shows a feature by using it. It's in Settings, in the shortcut sheet, and the command **Take the tour**. Press `?` in any map for every shortcut.
 
 ### Keys to know
@@ -107,7 +107,7 @@ ideascape: root
 - The map draws the list, and only the list. Headings below the first one, paragraphs, tables, embedded images, code and callouts are kept in the note exactly as they were, but they are not drawn as nodes, so a note that is mostly prose or tables shows as a small map beside a long note. Nothing is lost: editing the map rewrites the list item you changed and the `%%` comment, and leaves the rest of the note byte for byte as it was.
 - Text between list items belongs to the item above it: it moves with that item, and goes to the end of the list if the item is deleted.
 - Positions, folds and the map's own look are kept in the `%%` comment at the end, which Obsidian doesn't show in reading view. Delete it and the map lays itself out again, with its folds and its own look back to the defaults.
-- Opening an existing note as a map is still a beta workflow. Test it with a copy and review the generated property, block ids and layout comment before relying on the result.
+- Opening an existing note as a map never rewrites it behind your back. Anything the map would change beyond the `ideascape` property, the block ids and the `%%` comment is counted and shown to you first, and **Convert a copy** writes the map beside the note instead. Once converted the file has settled: saving it again changes nothing.
 - Without Ideascape, a map is still an ordinary note: a heading and a nested list, with a short block id at the end of each item and the `%%` comment hidden in reading view.
 
 ## Settings
