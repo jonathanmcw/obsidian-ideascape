@@ -352,14 +352,6 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
                 <IconChevron />
                 <Name>Move down</Name>
               </button>
-              <button type="button" tabIndex={-1} role="menuitem" disabled={!canOutdent} onClick={() => { onOutdent(); setMenu(null) }}>
-                <IconOutdent />
-                <Name>Outdent</Name>
-              </button>
-              <button type="button" tabIndex={-1} role="menuitem" disabled={!canIndent} onClick={() => { onIndent(); setMenu(null) }}>
-                <IconIndent />
-                <Name>Indent</Name>
-              </button>
             </div>
           )}
         </div>
@@ -466,6 +458,20 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
             <IconMore />
             <Name>{docked ? 'More editing options' : 'More formatting'}</Name>
           </button>
+        )}
+        {/* Moving a row in or out a level is what an outline is for, and a soft keyboard has no Tab to do it with:
+            on the dock it stands in the row itself rather than under More. */}
+        {docked && outline && (
+          <>
+            <button type="button" tabIndex={-1} disabled={!canOutdent} onClick={onOutdent}>
+              <IconOutdent />
+              <Name>Move out a level</Name>
+            </button>
+            <button type="button" tabIndex={-1} disabled={!canIndent} onClick={onIndent}>
+              <IconIndent />
+              <Name>Move in a level</Name>
+            </button>
+          </>
         )}
         {docked && (
           <button type="button" tabIndex={-1} onClick={() => { onNewLine(); setMenu(null) }}>

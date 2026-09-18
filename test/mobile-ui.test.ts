@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
+import { knobOnRight } from "../src/organiser/layout/index.ts";
 import {
   claimMapTouch,
   isPhoneTouch,
@@ -137,4 +138,27 @@ test("outline: whatever the dock's height, the end stays reachable clear of it a
     assert.ok(docEnd + end <= visible - dock, `dock ${dock}: the last row ends inside the dock`);
     assert.equal(outlineScrollStop(10_000, visible, margin, dock, 0, docEnd), margin, `dock ${dock}: the top is not reachable`);
   }
+});
+
+// The knob and the collapsed count stand on the branch's outer edge, away from the root. The map's own layouts
+// record that as the box's direction; the Free layout stores positions only, so it is read from where the node sits.
+test("knob: the map's layouts place it by the branch's direction", () => {
+  assert.equal(knobOnRight({ x: 0, y: 0, w: 10, h: 10, depth: 1, dir: 1 }, "map"), true);
+  assert.equal(knobOnRight({ x: 0, y: 0, w: 10, h: 10, depth: 1, dir: -1 }, "map"), false);
+});
+
+test("knob: the Free layout places it by which side of the root the node sits on", () => {
+  const left = { x: 100, y: 0, w: 10, h: 10, depth: 1, dir: 0 } as const;
+  const right = { x: 500, y: 0, w: 10, h: 10, depth: 1, dir: 0 } as const;
+  assert.equal(knobOnRight(left, "canvas", 300), false, "a node left of the root points left");
+  assert.equal(knobOnRight(right, "canvas", 300), true, "a node right of the root points right");
+  // Without the root's position there is nothing to be relative to, and dir 0 reads as the right — as before.
+  assert.equal(knobOnRight(left, "canvas"), true);
+});
+
+test("knob: rearranging a map does not move the knob across the node", () => {
+  // The same node, on the left of the root, laid out both ways: the answer must not depend on which layout drew it.
+  const auto = { x: 100, y: 0, w: 10, h: 10, depth: 1, dir: -1 } as const;
+  const free = { x: 100, y: 0, w: 10, h: 10, depth: 1, dir: 0 } as const;
+  assert.equal(knobOnRight(auto, "map"), knobOnRight(free, "canvas", 300));
 });

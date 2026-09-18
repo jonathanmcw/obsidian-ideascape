@@ -22,6 +22,8 @@ const SHELLS = [
   { name: "phone", shell: "phone", width: 390, height: 1700 },
   // Typing on a phone: the dock owns the bottom, so the corner keeps history only and moves out of its way.
   { name: "phone-editing", shell: "phone", width: 390, height: 1700, editing: true },
+  // The narrowest phone in common use (many Android handsets report 360dp): where the dock's eight keys are tightest.
+  { name: "phone-360", shell: "phone", width: 360, height: 1700 },
 ];
 const THEMES = ["light", "dark"];
 
@@ -146,7 +148,18 @@ for (const shell of SHELLS) {
       check(sizes.zoom?.[0] === 40 && sizes.zoom?.[1] === 40, `phone: zoom buttons are ${sizes.zoom}, not Canvas's 40x40`);
       check(sizes.undo?.[0] === 40 && sizes.undo?.[1] === 40, `phone: undo is ${sizes.undo}, not 40x40`);
       check(sizes.help?.[0] === 40 && sizes.help?.[1] === 40, `phone: the shortcuts button is ${sizes.help}, not 40x40`);
-      check(sizes.dock?.[0] === 44 && sizes.dock?.[1] === 44, `phone: dock buttons are ${sizes.dock}, not 44x44`);
+      check(sizes.dock?.[0] >= 34 && sizes.dock?.[1] === 44, `phone: dock buttons are ${sizes.dock}, under the 34x44 floor an eight-key row falls to`);
+
+      // Eight keys on the narrowest phone must still fit the screen: a row that overflows puts Done past the edge,
+      // where no thumb can reach it.
+      const row = await page.evaluate(() => {
+        const el = document.querySelector(".node-toolbar.is-docked .nt-main");
+        const last = document.querySelector(".node-toolbar.is-docked .nt-main > button:last-child");
+        if (!el || !last) return null;
+        return { overflow: Math.round(el.scrollWidth - el.clientWidth), lastRight: Math.round(last.getBoundingClientRect().right), screen: window.innerWidth, keys: el.querySelectorAll("button").length };
+      });
+      check(row && row.overflow <= 0, `phone: the dock's ${row?.keys} keys overflow their row by ${row?.overflow}px`);
+      check(row && row.lastRight <= row.screen, `phone: the dock's last key ends at ${row?.lastRight}, past the ${row?.screen}px screen`);
       check(sizes.check?.[0] === 15 && sizes.check?.[1] === 15, `phone: the checkbox is ${sizes.check}, not the square 15x15 it is drawn as`);
 
       // The dock's groups: six formatting keys, three alignments, four arrange keys, every one a 44px target, and
@@ -159,7 +172,7 @@ for (const shell of SHELLS) {
       });
       check(dock.format.length === 6 && dock.format.every(w => w === 44), `phone: the dock's formatting keys are ${dock.format}, not six 44px targets`);
       check(dock.align.length === 3 && dock.align.every(w => w === 44), `phone: the dock's alignments are ${dock.align}, not three 44px targets`);
-      check(dock.arrange.length === 4 && dock.arrange.every(w => w === 44), `phone: the dock's arrange keys are ${dock.arrange}, not four 44px targets`);
+      check(dock.arrange.length === 2 && dock.arrange.every(w => w === 44), `phone: the dock's arrange keys are ${dock.arrange}, not the two 44px targets left under More`);
       check(Math.round(dock.slop) === 44, `phone: the checkbox reaches ${Math.round(dock.slop)}px, not the 44px a finger needs`);
 
       // The dock's glyphs are one step below Obsidian's navbar (26px), which is drawn right under them.

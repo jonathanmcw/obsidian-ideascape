@@ -2050,13 +2050,18 @@ body.is-mobile .io-root .app.is-editing .corner .help {
   .io-root .node-toolbar.is-docked .nt-main {
     flex-wrap: nowrap;
     justify-content: center;
-    gap: 4px;
+    gap: 3px;
     max-width: none;
   }
+  /* 44px is the size these want, and what they get wherever there is room. An outline's row carries two more —
+     moving in and out a level — and eight of those will not fit a 360dp phone: 325px of keys in 302px of screen.
+     So they give way together, and only as far as they must, down to a floor of 34. The height stays 44 throughout,
+     which is the axis a thumb actually misses on in a single row — the proportions of a phone keyboard's own keys,
+     and far past the 24px WCAG 2.5.8 asks for. */
   .io-root .node-toolbar.is-docked .nt-main > button {
-    flex: 0 0 44px;
+    flex: 0 1 44px;
     width: 44px;
-    min-width: 44px;
+    min-width: 34px;
     height: 44px;
   }
   .io-root .node-toolbar.is-docked .nt-main > .nt-drop {

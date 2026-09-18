@@ -31,6 +31,15 @@ const SIBLING_GAP = 12
 export function leftOf(b: Box, shape: LayoutKind): number {
   return shape === 'outline' ? b.x : b.x - b.w / 2
 }
+/** Which side of a node its knob and count stand on: the branch's outer edge, away from the root. The map's own
+ *  layouts record that as the box's direction. The Free layout stores positions and nothing else, so every box reads
+ *  dir 0 and everything would sit on the right, on both sides of the root — the same map, rearranged, answering
+ *  differently. There it is read from where the node actually sits. */
+export function knobOnRight(box: Box, kind: LayoutKind, rootX?: number): boolean {
+  if (kind === 'canvas' && rootX !== undefined) return box.x >= rootX
+  return box.dir >= 0
+}
+
 export function rightOf(b: Box, shape: LayoutKind): number {
   return shape === 'outline' ? b.x + b.w : b.x + b.w / 2
 }

@@ -259,6 +259,9 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
   const [keyboardInset, setKeyboardInset] = useState(0)
   const [dockInset, setDockInset] = useState(0)
   const coarsePointer = useCoarsePointer()
+  /** Everything standing over the bottom of the stage, as one number. The dock is drawn above Obsidian's navigation
+   *  bar — its own offset already clears it — so the two are not added: whichever reaches higher is the reach. */
+  const chromeInset = Math.max(dockInset, bottomInset)
   const [stageViewport, setStageViewport] = useState({ top: 0, bottom: 0 })
   const [paneW, setPaneW] = useState(0)
   /** The pane is narrow (a phone, or a split that tight): the document panel becomes a sheet over the whole width.
@@ -502,9 +505,9 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
     (y: number) => {
       const h = keyboardInset > 0 && stageViewport.bottom > 0 ? stageViewport.bottom : stageSize.current.height
       const { minY, maxY } = frame.bounds
-      return outlineScrollStop(y, h, OUTLINE_TOP, dockInset, minY, maxY)
+      return outlineScrollStop(y, h, OUTLINE_TOP, chromeInset, minY, maxY)
     },
-    [frame.bounds, keyboardInset, stageViewport.bottom, dockInset],
+    [frame.bounds, keyboardInset, stageViewport.bottom, chromeInset],
   )
   // Rows come and go (typing, folding): keep the outline within its document.
   useEffect(() => {
@@ -721,7 +724,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       if (visibleBottom <= visibleTop) return
       const outline = prefs.shape === 'outline'
       const topPad = outline ? 16 : 90
-      const bottomPad = outline ? 72 + dockInset : 90
+      const bottomPad = outline ? 72 + chromeInset : 90
       if (outline) {
         setCamera((current) => {
           const nodeTop = (b.y - b.h / 2) * current.z + current.y
@@ -754,7 +757,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       }
       animateCamera({ ...camera, x: camera.x + dx, y: camera.y + dy }, 260)
     },
-    [clampOutlineY, animateCamera, camera, dockInset, focusId, frame, keyboardInset, prefs.shape, stageViewport],
+    [clampOutlineY, animateCamera, camera, chromeInset, focusId, frame, keyboardInset, prefs.shape, stageViewport],
   )
 
   // The dock arrives a frame after an edit begins and goes when it ends, and it grows when More opens. Measured on
@@ -791,7 +794,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
     if ((keyboardInset > 0 || coarsePointer) && edit?.id) ensureVisibleRef.current(edit.id)
     // dockInset among them: the dock is measured a frame after it appears, and until that lands the room below the
     // row is overstated by the dock's own height — the row is nudged to where the dock is about to stand.
-  }, [edit?.id, coarsePointer, dockInset, keyboardInset, stageViewport.top, stageViewport.bottom, editBox?.h, editBox?.w])
+  }, [edit?.id, coarsePointer, chromeInset, keyboardInset, stageViewport.top, stageViewport.bottom, editBox?.h, editBox?.w])
 
   /* -------------------- the Shift -------------------- */
 

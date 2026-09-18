@@ -16,6 +16,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<!-- Without this, a mobile emulation falls back to the classic 980px layout viewport and every phone measurement
+     here is taken on a screen no phone has. -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Ideascape chrome</title>
 <link rel="stylesheet" href="../../styles.css">
 <style>
@@ -188,14 +191,14 @@
               <div class="nt-phone-group nt-phone-arrange" role="group" aria-label="Arrange node">
                 <button class="nt-move-up" aria-label="Move up"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 3.5L10.5 8 6 12.5"/></svg></button>
                 <button class="nt-move-down" aria-label="Move down"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 3.5L10.5 8 6 12.5"/></svg></button>
-                <button aria-label="Outdent"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 4h7M7 8h7M7 12h7M4 6L2 8l2 2"/></svg></button>
-                <button aria-label="Indent"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 4h7M7 8h7M7 12h7M2 6l2 2-2 2"/></svg></button>
               </div>
             </div>
             <div class="nt-row nt-main">
               <button class="nt-drop" aria-label="Node type">Aa<svg class="nt-chev" viewBox="0 0 8 8" aria-hidden="true"><path d="M1.5 3L4 5.5 6.5 3" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
               <button aria-label="Branch colour"><span class="nt-dot" style="background:var(--branch-2)"></span></button>
               <button class="is-on" aria-haspopup="menu" aria-expanded="true" aria-label="More editing options"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="3" cy="8" r="1"/><circle cx="8" cy="8" r="1"/><circle cx="13" cy="8" r="1"/></svg></button>
+              <button aria-label="Move out a level"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 4h7M7 8h7M7 12h7M4 6L2 8l2 2"/></svg></button>
+              <button aria-label="Move in a level"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 4h7M7 8h7M7 12h7M2 6l2 2-2 2"/></svg></button>
               <button aria-label="New line"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 4v4H4M7 5L4 8l3 3"/></svg></button>
               <button aria-label="Add child"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 3.5v9M3.5 8h9"/></svg></button>
               <button class="nt-done" aria-label="Done"><svg class="io-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8.5l3.2 3.2L13 5"/></svg></button>

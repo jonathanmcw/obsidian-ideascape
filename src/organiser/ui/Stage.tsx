@@ -6,7 +6,7 @@ import { NodeBar } from './NodeBar'
 import { RichLabel } from './RichLabel'
 import { domToMarkdown, dropText, pasteText, renderInto } from './wysiwyg'
 import type { Box, Frame } from '../layout'
-import { leftOf, linkPath, snapX, treePath } from '../layout'
+import { knobOnRight, leftOf, linkPath, snapX, treePath } from '../layout'
 import { dropTargetFor, hitTest, type DropTarget } from '../layout/drop'
 import { MAX_PILL_W, MAX_ROOT_TEXT_W, MAX_TEXT_W, MIN_PILL_W, ROW_LEAD, ROW_PAD, metricsFor, nodeMetrics, outlineTextAvailable, setMediaSize } from '../layout/measure'
 import { stripEmbeds } from '../model/inline'
@@ -522,6 +522,31 @@ export function Stage({
     }
   }, [hostRef])
 
+  // A system sheet taking over the screen — the photo picker, the share sheet, another app — can end a touch
+  // without ever delivering its pointerup or pointercancel to the page. The finger is then remembered forever, and
+  // the next one-finger drag counts two pointers and reads as a pinch: the map zooms where a thumb meant to pan.
+  // A page that has gone away cannot be in the middle of a gesture, so coming back starts from nothing.
+  useEffect(() => {
+    const doc = hostRef.current?.ownerDocument ?? document
+    const win = doc.defaultView ?? window
+    const forgetAll = () => {
+      if (!pointers.current.size && !dragRef.current) return
+      pointers.current.clear()
+      const d = dragRef.current
+      dragRef.current = null
+      setDrag(null)
+      if (d?.kind === 'resize') api.previewWidth(d.id, null)
+      if (d?.kind === 'node' && d.moved) setSettleKey((k) => k + 1)
+    }
+    const onVisibility = () => { if (doc.visibilityState === 'hidden') forgetAll() }
+    doc.addEventListener('visibilitychange', onVisibility)
+    win.addEventListener('blur', forgetAll)
+    return () => {
+      doc.removeEventListener('visibilitychange', onVisibility)
+      win.removeEventListener('blur', forgetAll)
+    }
+  }, [hostRef, api])
+
   // Escape takes a gesture back the way a lost pointer does: a dragged node eases home, a resize or a branch being
   // pulled out commits nothing, a selection box or a pan stops where it is. Caught before the map's own Escape,
   // which would otherwise clear the selection while the drag carried on under the pointer.
@@ -784,6 +809,7 @@ export function Stage({
                 themeId={themeId}
                 palette={palette}
                 box={box}
+                rootX={frame.boxes[doc.rootId]?.x}
                 offsetX={offsetX}
                 offsetY={offsetY}
                 stagger={Math.min(i, STAGGER_CAP / STAGGER_MS)}
@@ -1077,6 +1103,8 @@ interface NodeProps {
   themeId: string
   palette: string[]
   box: Box
+  /** The root's centre, for placing the knob on the branch's outer side in the Free layout. */
+  rootX?: number
   offsetX: number
   offsetY: number
   /** Stagger slot for the Shift, 0–15. Applied only while `.nodes.morphing`. */
@@ -1110,6 +1138,7 @@ const NodeView = memo(function NodeView({
   themeId,
   palette,
   box,
+  rootX,
   offsetX,
   offsetY,
   stagger,
@@ -1427,7 +1456,7 @@ const NodeView = memo(function NodeView({
           // Sits on the branch's outer edge. On left-fanning nodes that's the
           // same side as the colour bar, so it clears it by a few pixels. In the
           // Org chart the children hang below, and the stylesheet puts it there.
-          style={kind === 'org' ? undefined : outline || box.dir >= 0 ? { right: -26 } : { left: -26 }}
+          style={kind === 'org' ? undefined : outline || knobOnRight(box, kind, rootX) ? { right: -26 } : { left: -26 }}
         >
           {n.collapsed ? (
             hiddenChildren
