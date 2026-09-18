@@ -14,8 +14,16 @@
   const taken = [];
   const missed = [];
 
+  // capturePage hands back the last composited frame: wait for two, or the picture is the screen as it was.
+  // Raced against a timer: a window behind another app gets no animation frames at all, and waiting on one
+  // then never returns — which stalled a whole pass three pictures in.
+  const painted = () => Promise.race([
+    new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))),
+    sleep(400),
+  ]);
   const shot = async (name) => {
-    await sleep(500);
+    await sleep(600);
+    await painted();
     fs.writeFileSync(`${out}/${name}.png`, (await win.webContents.capturePage()).toPNG());
     taken.push(name);
   };

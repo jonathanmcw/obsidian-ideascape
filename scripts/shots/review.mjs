@@ -56,6 +56,10 @@ const renderer = resolve("scripts/shots/review.js");
 console.log(`Obsidian (${vault}) → ${out}`);
 for (const stale of ["done.json", "done-phone.json"]) if (existsSync(`${out}/${stale}`)) rmSync(`${out}/${stale}`);
 
+// Park the cursor off the window first: Obsidian turns an aria-label into a tooltip on hover, and a cursor left
+// resting over a sheet puts that tooltip in the picture. cliclick is optional — without it the pass still runs.
+try { execFileSync("cliclick", ["m:20,20"], { stdio: "ignore" }); } catch { /* no cliclick: the cursor stays put */ }
+
 evaluate(`window.__ideascapeReview=${JSON.stringify({ out, note })};${asFile(renderer)}`, 20);
 console.log(`  desktop: ${await waitFor(`${out}/done.json`, 180)} pictures`);
 
@@ -85,6 +89,7 @@ if (wantsPhone) {
   console.log("  phone: skipped (add --phone; it reloads Obsidian and can crash it)");
 }
 
+await sleep(1500); // the last picture may still be on its way to disk
 // The page and the contact sheet are built with Pillow, as the rest of the shots rig is.
 const version = JSON.parse(readFileSync("manifest.json", "utf8")).version;
 execFileSync("python3", [resolve("scripts/shots/review-page.py"), out, version, vault], { stdio: "inherit" });
