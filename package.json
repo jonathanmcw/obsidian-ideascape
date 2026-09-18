@@ -8,11 +8,12 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production && node scripts/build-css.mjs",
-    "check": "npm run lint && npm test && npm run build && npm run ui && npm run verify:release",
+    "check": "npm run lint && npm test && npm run build && npm run ui && npm run verify:export && npm run verify:release",
     "dev": "node scripts/build-css.mjs && node esbuild.config.mjs",
     "css": "node scripts/build-css.mjs",
     "test": "node --test test/*.test.ts",
     "lint": "eslint src manifest.json package.json --max-warnings 11",
+    "verify:export": "node scripts/export-check.mjs",
     "verify:release": "node scripts/verify-release.mjs",
     "showcase": "bash scripts/shots/showcase.sh",
     "install:vault": "node scripts/install.mjs",

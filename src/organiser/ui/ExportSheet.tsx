@@ -49,6 +49,8 @@ export function ExportSheet({ doc, kind, themeId, nodeStyle, palette, resolveEmb
   const shape = kind === 'canvas' ? 'map-free' : kind === 'org' ? 'map-org' : kind
   const [busy, setBusy] = useState<string | null>(null)
   const [problem, setProblem] = useState<string | null>(null)
+  /** Something the file that was saved should be known for — an image drawn smaller than 2×, so far. */
+  const [note, setNote] = useState<string | null>(null)
   const name = slug(doc.name)
   const dropped = droppedLinkCount(doc)
   // Keys go to the sheet while it is open: Enter presses the row it is on, not a node behind the scrim.
@@ -59,14 +61,23 @@ export function ExportSheet({ doc, kind, themeId, nodeStyle, palette, resolveEmb
 
   const save = (filename: string, data: string, mime: string) => {
     setProblem(null)
+    setNote(null)
     void download(filename, data, mime).then(setProblem)
   }
 
   const png = async () => {
     setBusy('png')
     setProblem(null)
+    setNote(null)
     try {
-      setProblem(await download(`${name}-${shape}.png`, await toPNG(doc, kind, themeId, nodeStyle, 2, resolveEmbed, palette)))
+      const { blob, scale } = await toPNG(doc, kind, themeId, nodeStyle, 2, resolveEmbed, palette)
+      const failure = await download(`${name}-${shape}.png`, blob)
+      setProblem(failure)
+      // A map too large for 2× is drawn smaller rather than refused; say so, since the row promised 2×.
+      if (!failure && scale < 2) setNote(`This map was too large for a 2× image on this device, so it was saved at ${scale}×.`)
+    } catch (err) {
+      // A map larger than the device will draw at any scale ends here. Without this the button did nothing at all.
+      setProblem(err instanceof Error ? err.message : 'That image could not be made.')
     } finally {
       setBusy(null)
     }
@@ -117,6 +128,7 @@ export function ExportSheet({ doc, kind, themeId, nodeStyle, palette, resolveEmb
         </div>
 
         {problem && <p className="sheet-note is-problem">{problem}</p>}
+        {note && <p className="sheet-note">{note}</p>}
 
         {dropped > 0 && (
           <p className="sheet-note">

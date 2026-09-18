@@ -50,9 +50,11 @@ export function toOPML(doc: IODoc): string {
       .replace(/\t/g, '&#9;')
       .replace(/\r/g, '&#13;')
 
+  // A root with no text takes the map's name, as the Markdown export and the map's own file both do —
+  // an outline whose top line reads "Untitled" tells the app it is opened in nothing.
   const render = (id: string, indent: string): string => {
     const n = doc.nodes[id]
-    const attr = `text="${esc(n.text || 'Untitled')}"`
+    const attr = `text="${esc(n.text || (id === doc.rootId ? doc.name : '') || 'Untitled')}"`
     if (!n.children.length) return `${indent}<outline ${attr} />`
     const kids = n.children.map((c) => render(c, indent + '  ')).join('\n')
     return `${indent}<outline ${attr}>\n${kids}\n${indent}</outline>`
@@ -108,6 +110,39 @@ function roundRect(c: CanvasRenderingContext2D, x: number, y: number, w: number,
   c.closePath()
 }
 
+/**
+ * A canvas of this size that the platform will really give its pixels back, or null.
+ *
+ * A canvas past what the browser can hold is not refused: it takes a 2d context, accepts every draw, and
+ * then hands back transparent pixels and a null blob. Chromium stops at 65,535px a side and around 268
+ * million pixels; the WebKit behind Obsidian on an iPhone stops far earlier, and neither says so. One
+ * pixel, written and read back before anything is drawn, is the only reliable question, and it is cheap.
+ */
+function usableCanvas(w: number, h: number): HTMLCanvasElement | null {
+  // obsidian: activeWindow, the window the export was asked for in (a popped-out one included).
+  const canvas = activeWindow.createEl('canvas')
+  canvas.width = w
+  canvas.height = h
+  if (canvas.width === w && canvas.height === h) {
+    const c = canvas.getContext('2d')
+    if (c) {
+      c.fillStyle = '#fff'
+      c.fillRect(0, 0, 1, 1)
+      try {
+        if (c.getImageData(0, 0, 1, 1).data[3] === 255) {
+          c.clearRect(0, 0, 1, 1)
+          return canvas
+        }
+      } catch { /* a canvas too large to read from; the next size down is the answer */ }
+    }
+  }
+  // Give the memory back now rather than at the next collection: the try after this one wants it.
+  canvas.width = canvas.height = 0
+  return null
+}
+
+/** The picture, and the scale it could actually be drawn at — 2×, unless the map was too large for this
+ *  device to hold that, in which case the sheet says which scale it fell back to. */
 export async function toPNG(
   doc: IODoc,
   shape: LayoutKind,
@@ -116,7 +151,27 @@ export async function toPNG(
   scale = 2,
   resolveEmbed?: (file: string) => { url: string; kind: 'image' | 'audio' } | null,
   palette: readonly string[] = [],
-): Promise<Blob> {
+): Promise<{ blob: Blob; scale: number }> {
+  const theme = themeById(themeId)
+  const frame = frameFor(doc, shape)
+  const pad = 48
+  const { minX, minY, maxX, maxY } = frame.bounds
+  const w = Math.max(320, maxX - minX + pad * 2)
+  const h = Math.max(240, maxY - minY + pad * 2)
+
+  // A large map can be more picture than the device will draw. Rather than fail, it is drawn at the largest
+  // scale that works: 2×, then 1×, then a half. The canvas is taken before the embeds are fetched, so a map
+  // that cannot be drawn at all costs nothing to refuse.
+  let canvas: HTMLCanvasElement | null = null
+  let used = scale
+  for (let s = scale; s >= 0.25 && !canvas; s /= 2) {
+    canvas = usableCanvas(Math.round(w * s), Math.round(h * s))
+    used = s
+  }
+  if (!canvas) {
+    throw new Error(`This map is ${Math.round(w)}×${Math.round(h)}, too large to draw as one image here. Fold the branches you do not need, or export it as Markdown or .canvas.`)
+  }
+
   // obsidian: images are loaded up front so they can be drawn synchronously below
   const images = new Map<string, HTMLImageElement>()
   if (resolveEmbed) {
@@ -137,26 +192,21 @@ export async function toPNG(
       ),
     )
   }
-  const theme = themeById(themeId)
-  const frame = frameFor(doc, shape)
-  const pad = 48
-  const { minX, minY, maxX, maxY } = frame.bounds
-  const w = Math.max(320, maxX - minX + pad * 2)
-  const h = Math.max(240, maxY - minY + pad * 2)
 
-  // obsidian: activeWindow, the window the export was asked for in (a popped-out one included).
-  const canvas = activeWindow.createEl('canvas')
-  canvas.width = Math.round(w * scale)
-  canvas.height = Math.round(h * scale)
   const c = canvas.getContext('2d')!
-  c.scale(scale, scale)
-  c.translate(pad - minX, pad - minY)
-
+  // The background is laid down in the canvas's own pixels, before the scale: a canvas is a whole number of
+  // pixels and the map's bounds are not, so a fill in the map's coordinates leaves the last column of the
+  // picture part-transparent — a faint seam down the edge of every export.
   c.fillStyle = theme.vars['--stage']
-  c.fillRect(minX - pad, minY - pad, w, h)
+  c.fillRect(0, 0, canvas.width, canvas.height)
+  c.scale(used, used)
+  c.translate(pad - minX, pad - minY)
 
   const ink = theme.vars['--ink']
   const surface = theme.vars['--surface']
+  /** The colour this node's text is drawn in. A node with no text shows the same muted placeholder the
+   *  screen shows for it (.node-empty), not full ink. */
+  let textInk = ink
 
   // Connectors first, so pills sit on top.
   if (shape !== 'outline') {
@@ -227,10 +277,10 @@ export async function toPNG(
         roundRect(c, x - 2, y - lineH / 2 + 3, sgm.w + 4, lineH - 6, 3)
         c.fill()
       }
-      c.fillStyle = sgm.r.href ? accent : ink
+      c.fillStyle = sgm.r.href ? accent : textInk
       c.fillText(sgm.t, x, y)
       if (sgm.r.u || sgm.r.href || sgm.r.s) {
-        c.strokeStyle = sgm.r.href ? accent : ink
+        c.strokeStyle = sgm.r.href ? accent : textInk
         c.lineWidth = 1
         c.beginPath()
         const ly = sgm.r.s ? y : y + size * 0.42
@@ -252,6 +302,7 @@ export async function toPNG(
     // The very lines the screen shows: same measurer, same widths, same wrapping.
     const m = metricsFor(doc, id, shape, box.depth)
     const rich = parseInline(n.text || 'Untitled')
+    textInk = n.text ? ink : theme.vars['--ink-3']
     const cursor = { at: 0 }
     // text lines then media, centred as one block — the same stack the node lays out
     const contentTop = box.y - (m.lines.length * m.lineH + m.mediaH) / 2
@@ -362,7 +413,7 @@ export async function toPNG(
   }
 
   return new Promise((resolve, reject) => {
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('PNG export failed'))), 'image/png')
+    canvas.toBlob((b) => (b ? resolve({ blob: b, scale: used }) : reject(new Error('That image could not be made. Fold the branches you do not need, or export the map as Markdown or .canvas.'))), 'image/png')
   })
 }
 
@@ -388,6 +439,32 @@ export async function download(filename: string, data: string | Blob, _mime = 't
   }
 }
 
+/** A file name will hold this many bytes of the map's title. Every file system in use stops a name at 255
+ *  bytes, and `exportPath` still has to fit `-2` and an extension inside that. */
+const NAME_BYTES = 120
+
+/** `s`, cut to at most `max` bytes of UTF-8 — never through a character, and never left ending in a dash.
+ *  Counted in bytes because that is what a file system counts: 120 Japanese characters are 360 of them. */
+function cut(s: string, max: number): string {
+  let bytes = 0
+  let out = ''
+  for (const ch of s) {
+    const code = ch.codePointAt(0)!
+    bytes += code < 0x80 ? 1 : code < 0x800 ? 2 : code < 0x10000 ? 3 : 4
+    if (bytes > max) break
+    out += ch
+  }
+  return out.replace(/-+$/, '')
+}
+
+/** The name an export lands under, from the map's title. Letters and digits of every script are kept — a map
+ *  called 旅行計画 or Café must not export as `untitled` — and everything else, punctuation and emoji and the
+ *  characters a path reserves (`/`, `:`, `\`) alike, becomes a dash. */
 export function slug(name: string): string {
-  return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'untitled'
+  const out = name
+    .normalize('NFC')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/^-+|-+$/g, '')
+  return cut(out, NAME_BYTES) || 'untitled'
 }
