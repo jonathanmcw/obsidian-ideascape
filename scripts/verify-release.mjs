@@ -23,14 +23,44 @@ assert.equal(
   "versions.json must map the release to manifest.minAppVersion",
 );
 
-// A version that already carries a tag has already been published under that number: Obsidian only updates a
-// vault when the number goes up, so releasing it again reaches nobody. The tag pointing at the commit being
-// released is the one case that is fine — that is what the release workflow checks out.
-const tagged = git(["tag", "--list", manifest.version]).trim();
-if (tagged) {
-  const head = git(["rev-parse", "HEAD^{commit}"]).trim();
-  const atTag = git(["rev-parse", `${manifest.version}^{commit}`]).trim();
-  assert.equal(atTag, head, `${manifest.version} is already tagged at ${atTag.slice(0, 7)}: bump the version before releasing`);
+/** Held hard when releasing (the workflow passes --strict), said out loud otherwise: these are states that are
+ *  perfectly normal between releases and wrong at the moment of making one. */
+const note = message => {
+  if (process.argv.includes("--strict")) assert.fail(message);
+  console.warn(`  note: ${message}`);
+};
+
+// Obsidian reads manifest.json from the *default branch* to decide that an update exists, and then downloads the
+// assets from the release tagged with that number. Two ways for this file to mislead a person, pulling opposite
+// ways:
+//
+//   a version with no tag at all   — every user is offered an update whose download 404s, silently, with nothing
+//                                    in the repo looking out of place
+//   a version tagged earlier       — ordinary between releases, and wrong at the moment of releasing: Obsidian
+//                                    only updates a vault when the number goes up, so re-releasing reaches nobody
+//
+// So the manifest names the released version while work goes on, and a release bumps it in the very commit that is
+// tagged — which is the commit the release workflow checks out. A build meant for testing goes in
+// manifest-beta.json, which Obsidian never reads and BRAT does.
+if (git(["rev-parse", "--git-dir"]).trim()) {
+  const tagged = git(["tag", "--list", manifest.version]).trim();
+  if (!tagged) {
+    note(`manifest.json names ${manifest.version}, which has no tag: on the default branch Obsidian offers that version to every user and the download fails. Tag it, or leave this at the released version and put the test build in manifest-beta.json.`);
+  } else {
+    const head = git(["rev-parse", "HEAD^{commit}"]).trim();
+    const atTag = git(["rev-parse", `${manifest.version}^{commit}`]).trim();
+    if (atTag !== head) note(`${manifest.version} is the released version, tagged at ${atTag.slice(0, 7)}: bump it in the commit you tag, not before.`);
+  }
+}
+
+// A beta manifest is for BRAT, never for Obsidian: the same plugin, at a version that is not the released one.
+let betaManifest = null;
+try {
+  betaManifest = json("manifest-beta.json");
+} catch { /* there need not be one */ }
+if (betaManifest) {
+  assert.equal(betaManifest.id, manifest.id, "manifest-beta.json must describe the same plugin as manifest.json");
+  assert.notEqual(betaManifest.version, manifest.version, "manifest-beta.json must name a version that is not the released one");
 }
 
 const readme = read("README.md");
