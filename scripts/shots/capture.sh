@@ -61,7 +61,12 @@ repaint() { ev "const w=require('electron').remote.getCurrentWindow(); w.setBoun
 
 # A run ends with the welcome window open (its last picture), so the next run starts by closing whatever is open (Escape,
 # the way any Obsidian modal closes) and marking the welcome as seen, or the modal would sit in every frame.
+# Close a system menu with a click on bare canvas (window points 640,180 → screen 700,260), then clear it from the frame.
+unmenu() { front; cliclick c:700,260 >/dev/null; sleep 0.8; repaint; unfront; }
 reset() { for _ in 1 2 3; do ev "const wc=require('electron').remote.getCurrentWebContents(); wc.sendInputEvent({type:'keyDown',keyCode:'Escape'}); wc.sendInputEvent({type:'keyUp',keyCode:'Escape'}); 'esc'" >/dev/null; sleep 0.6; done
+  # A file menu is the system's own: it hears neither a key sent to the page nor one cliclick presses, only a click
+  # somewhere else. A run that stopped with one open left it in every picture of the next, and on the screen.
+  unmenu
   ev "(p=>{if(p){p.settings.welcomed=true; void p.saveSettings();}})(app.plugins.plugins.ideascape); 'seen'" >/dev/null; sleep 1
   [ "$(ev "document.querySelectorAll('.modal-container').length")" = 0 ] || { echo 'a modal is still open; close it and rerun' >&2; exit 1; }; }
 
@@ -171,6 +176,9 @@ split)  # the Markdown-beside-map picture alone: bash scripts/shots/capture.sh s
   finish; open -a Claude 2>/dev/null || true
   ;;
 slides)
+  # `screenshots` ends with the welcome window open, and this was the one mode that did not close it first: the 0.9.4
+  # and 0.9.5 slides each showed the welcome window inside the welcome window, and the third had no menu to point at.
+  reset; theme obsidian
   for shape in map outline; do
     solo "Maps/Weekend in Kyoto.md" $shape; panel off
     [ "$shape" = map ] && fit
@@ -189,8 +197,7 @@ slides)
         wc.sendInputEvent({type:'mouseDown',x,y,button:'right',clickCount:1});
         wc.sendInputEvent({type:'mouseUp',x,y,button:'right',clickCount:1}); 'sent'" >/dev/null
     sleep 1.6; screencapture -x -l "$(win_id)" "$OUT/raw-w-convert-${pair%%:*}.png"; unfront
-    ev "const wc=require('electron').remote.getCurrentWebContents(); wc.sendInputEvent({type:'keyDown',keyCode:'Escape'}); wc.sendInputEvent({type:'keyUp',keyCode:'Escape'}); 'esc'" >/dev/null
-    repaint; unfront
+    unmenu
   done
   theme obsidian
   read -r W H CSS < <(geom | tr -d '[]' | tr ',' ' ')
@@ -198,7 +205,7 @@ slides)
     n=$(basename "$f" .png); n=${n#raw-w-}
     python3 scripts/shots/slide.py "$W" "$H" "$CSS" 30 "$f" "src/welcome/$n.webp"
   done
-  # Point at "Open as a map"; the box is read off the finished slide.
+  # Point at "Open as a map"; the box is read off the finished slide, and highlight.py refuses a box with no words in it.
   for n in dark light; do
     python3 scripts/shots/highlight.py "src/welcome/convert-$n.webp" "src/welcome/convert-$n.webp" 144 664 342 704
   done

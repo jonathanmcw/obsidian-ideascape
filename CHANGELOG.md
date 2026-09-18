@@ -17,6 +17,7 @@ What changed in each release of Ideascape, newest first. The layout follows [Kee
 
 ### Fixed
 
+- The welcome window's three pictures show what they describe again. Since 0.9.4 each showed the welcome window inside itself, and the third pointed at a menu that was not there.
 - Fenced code under a node is kept whole. A `^word` inside it could be taken as the node's block id, a list line inside it could become a node, and a tab inside it was written back as spaces.
 - Attaching an image to a node that quotes embed syntax as code (`` `![[photo.png]]` ``) removed the quoted text.
 - A note's frontmatter is kept line for line. Blank lines before the closing `---` were trimmed, and an `ideascape:` marker whose value ran over several lines was left as broken YAML.
