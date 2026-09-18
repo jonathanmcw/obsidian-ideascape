@@ -784,9 +784,14 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
   const ensureVisibleRef = useRef(ensureVisible)
   ensureVisibleRef.current = ensureVisible
   const editBox = edit?.id ? frame.boxes[edit.id] : undefined
+  // A visual viewport that reports no occlusion does not mean no keyboard: where the host resizes its own container
+  // above the keyboard instead of letting it cover the page — as Obsidian does on iOS — the occlusion is zero and
+  // this would never run, leaving a person to scroll after every few characters. A touch screen is reason enough.
   useEffect(() => {
-    if (keyboardInset > 0 && edit?.id) ensureVisibleRef.current(edit.id)
-  }, [edit?.id, keyboardInset, stageViewport.top, stageViewport.bottom, editBox?.h, editBox?.w])
+    if ((keyboardInset > 0 || coarsePointer) && edit?.id) ensureVisibleRef.current(edit.id)
+    // dockInset among them: the dock is measured a frame after it appears, and until that lands the room below the
+    // row is overstated by the dock's own height — the row is nudged to where the dock is about to stand.
+  }, [edit?.id, coarsePointer, dockInset, keyboardInset, stageViewport.top, stageViewport.bottom, editBox?.h, editBox?.w])
 
   /* -------------------- the Shift -------------------- */
 
