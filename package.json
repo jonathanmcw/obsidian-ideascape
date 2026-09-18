@@ -18,7 +18,8 @@
     "install:vault": "node scripts/install.mjs",
     "welcome:again": "node scripts/welcome-again.mjs",
     "fresh:start": "node scripts/fresh-start.mjs",
-    "ui": "node scripts/ui-check.mjs"
+    "ui": "node scripts/ui-check.mjs",
+    "review": "node scripts/shots/review.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
