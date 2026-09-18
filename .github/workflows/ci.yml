@@ -21,7 +21,9 @@ jobs:
 
       - run: npm ci
 
-      # The chrome is checked rendered (npm run ui), which needs a browser to render it in.
-      - run: npx playwright install --with-deps chromium
+      # The chrome is checked rendered (npm run ui), which needs a browser to render it in — both of them: Obsidian is
+      # Electron on a desktop and a WKWebView on iPhone and iPad, and a name too long for its band is laid out
+      # differently by each. Without WebKit here the run still passes, having checked only half the app.
+      - run: npx playwright install --with-deps chromium webkit
 
       - run: npm run check
