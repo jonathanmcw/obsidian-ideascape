@@ -68,7 +68,7 @@ const EMPTY_PALETTE: string[] = []
 import { Toolbar } from './ui/Toolbar'
 import { ExportSheet } from './ui/ExportSheet'
 import { ShortcutsSheet } from './ui/ShortcutsSheet'
-import { outlineScrollStop, stageResizeOffset, stageViewportBand, visibilityNudge, viewportOcclusion } from './ui/mobile'
+import { centreNudge, outlineScrollStop, stageResizeOffset, stageViewportBand, visibilityNudge, viewportOcclusion } from './ui/mobile'
 import { Inspector } from './ui/Inspector'
 import { useCoarsePointer } from './ui/useCoarsePointer'
 import { GRID, Stage, type Camera, type StageApi } from './ui/Stage'
@@ -249,7 +249,12 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
   // obsidian: a pill being resized shows its live width, so the text re-wraps and siblings move as you drag.
   const [widthPreview, setWidthPreview] = useState<{ id: NodeId; width: number; shift: number } | null>(null)
   // obsidian: media under the node being edited lives outside the contenteditable; the draft is text + these.
-  const editEmbeds = useRef<Embed[]>([])
+  /** The media of the node being typed into, kept aside while the label holds only its words, and put back whenever
+   *  the draft changes. It carries the node it belongs to: a new node starts editing by another path than beginEdit
+   *  — Return makes a sibling, Tab a child — and a bare list would still be the previous node's, so the first
+   *  character typed into an empty new node fetched the picture from the one before it. */
+  const editEmbeds = useRef<{ id: NodeId | null; list: Embed[] }>({ id: null, list: [] })
+  const embedsForEdit = (id: NodeId | undefined) => (id && editEmbeds.current.id === id ? editEmbeds.current.list : [])
   const [mediaTick, setMediaTick] = useState(0)
   const [focusId, setFocusId] = useState<NodeId | null>(null)
   const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, z: 1 })
@@ -399,7 +404,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
    *  follows it; with `relabel`, the label is drawn again from it (a dropped [[link]]), caret at the end. */
   const showDraft = useCallback(
     (relabel: boolean, space = true) => {
-      editEmbeds.current = embedsOf(s.draft ?? '')
+      editEmbeds.current = { id: s.edit?.id ?? null, list: embedsOf(s.draft ?? '') }
       setDraftText(s.draft)
       const el = relabel ? rootRef.current?.querySelector<HTMLElement>('.node-label[contenteditable="true"]') : null
       if (!el) return
@@ -729,7 +734,12 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
         setCamera((current) => {
           const nodeTop = (b.y - b.h / 2) * current.z + current.y
           const nodeBottom = (b.y + b.h / 2) * current.z + current.y
-          const dy = visibilityNudge(nodeTop, nodeBottom, visibleTop, visibleBottom, topPad, bottomPad)
+          // The row being typed into on a touch screen goes to the middle of what is visible rather than just far
+          // enough in: a phone shows a few rows at a time, and "just far enough" leaves the end of a long row
+          // against the dock. Everything else — a search hit, a row reached by keyboard — is still only nudged.
+          const dy = coarsePointer && edit?.id === id
+            ? centreNudge(nodeTop, nodeBottom, visibleTop, visibleBottom, bottomPad)
+            : visibilityNudge(nodeTop, nodeBottom, visibleTop, visibleBottom, topPad, bottomPad)
           const y = clampOutlineY(current.y + dy)
           return y === current.y ? current : { ...current, y }
         })
@@ -757,7 +767,7 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       }
       animateCamera({ ...camera, x: camera.x + dx, y: camera.y + dy }, 260)
     },
-    [clampOutlineY, animateCamera, camera, chromeInset, focusId, frame, keyboardInset, prefs.shape, stageViewport],
+    [clampOutlineY, animateCamera, camera, chromeInset, coarsePointer, edit?.id, focusId, frame, keyboardInset, prefs.shape, stageViewport],
   )
 
   // The dock arrives a frame after an edit begins and goes when it ends, and it grows when More opens. Measured on
@@ -906,11 +916,12 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
       if (!beginDraft(s, id, seed)) return
       selectOne(id)
       setEdit({ id, seed, selectAll })
-      editEmbeds.current = embedsOf(s.doc.nodes[id].text)
+      editEmbeds.current = { id, list: embedsOf(s.doc.nodes[id].text) }
       setDraftText(s.draft)
     },
-    draft: (text) => setDraftText(withEmbeds(text, editEmbeds.current)),
+    draft: (text) => setDraftText(withEmbeds(text, embedsForEdit(s.edit?.id))),
     commitEdit: leaveEdit,
+    deleteNode: (id) => deleteNode(id),
     indent: (id) => moveLevel(id, false),
     outdent: (id) => moveLevel(id, true),
     reorder: (id, delta) => {
@@ -994,8 +1005,8 @@ export default function MapApp({ doc, onDoc, prefs, onPrefs, rootRef, epoch, onA
     mediaChanged: () => setMediaTick((t) => t + 1),
     removeEmbed: (id, index) => {
       if (edit?.id === id) {
-        editEmbeds.current = editEmbeds.current.filter((_, i) => i !== index)
-        setDraftText(withEmbeds(stripEmbeds(s.draft ?? ''), editEmbeds.current))
+        editEmbeds.current = { id, list: embedsForEdit(id).filter((_, i) => i !== index) }
+        setDraftText(withEmbeds(stripEmbeds(s.draft ?? ''), editEmbeds.current.list))
         return
       }
       const cur = doc.nodes[id]?.text ?? ''

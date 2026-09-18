@@ -168,11 +168,12 @@ for (const shell of SHELLS) {
         const group = sel => [...document.querySelectorAll(`${sel} > button`)].map(b => Math.round(b.getBoundingClientRect().width));
         const check = document.querySelector(".node-check");
         const inset = check ? Number.parseFloat(getComputedStyle(check, "::after").top) : NaN;
-        return { format: group(".nt-phone-format"), align: group(".nt-phone-align"), arrange: group(".nt-phone-arrange"), slop: 15 - inset * 2 };
+        return { format: group(".nt-phone-format"), align: group(".nt-phone-align"), arrange: group(".nt-phone-arrange"), danger: group(".nt-phone-danger"), slop: 15 - inset * 2 };
       });
       check(dock.format.length === 6 && dock.format.every(w => w === 44), `phone: the dock's formatting keys are ${dock.format}, not six 44px targets`);
       check(dock.align.length === 3 && dock.align.every(w => w === 44), `phone: the dock's alignments are ${dock.align}, not three 44px targets`);
       check(dock.arrange.length === 2 && dock.arrange.every(w => w === 44), `phone: the dock's arrange keys are ${dock.arrange}, not the two 44px targets left under More`);
+      check(dock.danger.length === 1 && dock.danger[0] === 44, `phone: Delete is ${dock.danger}, not a single 44px target`);
       check(Math.round(dock.slop) === 44, `phone: the checkbox reaches ${Math.round(dock.slop)}px, not the 44px a finger needs`);
 
       // The dock's glyphs are one step below Obsidian's navbar (26px), which is drawn right under them.

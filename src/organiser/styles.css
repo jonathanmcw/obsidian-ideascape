@@ -2040,7 +2040,12 @@ body.is-mobile .io-root .app.is-editing .corner .help {
     left: max(8px, env(safe-area-inset-left));
     right: max(8px, env(safe-area-inset-right));
     top: auto;
-    bottom: calc(8px + max(var(--io-keyboard-inset, 0px), var(--io-bottom-inset, 0px), env(safe-area-inset-bottom)));
+    /* This bar exists only while a phone is being typed into, so the soft keyboard is up: it covers the home
+       indicator and Obsidian's navigation bar both, and leaving room for either put a finger's width of empty screen
+       between the bar and the keys it belongs to. Where the host lets the keyboard cover the page instead of
+       resizing for it, --io-keyboard-inset is that overlap; where it resizes, the inset is 0 and the bar already
+       sits on the new bottom edge. */
+    bottom: calc(8px + var(--io-keyboard-inset, 0px));
     width: auto;
     transform: none;
     flex-direction: column;
@@ -2111,7 +2116,10 @@ body.is-mobile .io-root .app.is-editing .corner .help {
   }
   .io-root .node-toolbar.is-docked .nt-phone-format { grid-template-columns: repeat(6, 44px); }
   .io-root .node-toolbar.is-docked .nt-phone-align { grid-template-columns: repeat(3, 44px); }
-  .io-root .node-toolbar.is-docked .nt-phone-arrange { grid-template-columns: repeat(4, 44px); }
+  /* Two arrange keys now that moving in and out a level stand in the row itself, and Delete on its own. */
+  .io-root .node-toolbar.is-docked .nt-phone-arrange { grid-template-columns: repeat(2, 44px); }
+  .io-root .node-toolbar.is-docked .nt-phone-danger { grid-template-columns: 44px; }
+  .io-root .node-toolbar.is-docked .nt-delete { color: var(--danger); }
   .io-root .node-toolbar.is-docked .nt-phone-group button {
     width: 44px;
     height: 44px;

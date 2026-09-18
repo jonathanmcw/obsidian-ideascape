@@ -5,6 +5,7 @@ import { knobOnRight } from "../src/organiser/layout/index.ts";
 import {
   claimMapTouch,
   isPhoneTouch,
+  centreNudge,
   outlineScrollStop,
   outlineSwipeAction,
   stageResizeOffset,
@@ -161,4 +162,23 @@ test("knob: rearranging a map does not move the knob across the node", () => {
   const auto = { x: 100, y: 0, w: 10, h: 10, depth: 1, dir: -1 } as const;
   const free = { x: 100, y: 0, w: 10, h: 10, depth: 1, dir: 0 } as const;
   assert.equal(knobOnRight(auto, "map"), knobOnRight(free, "canvas", 300));
+});
+
+// A phone shows a few rows at a time: the row being typed into goes to the middle of what can be seen, so the end of
+// it is not left against the dock.
+test("typing: a short row settles in the middle of the visible band", () => {
+  // A 40px row in a 0..600 band with 130px reserved below: the usable band is 0..470, so it centres at 215.
+  const dy = centreNudge(500, 540, 0, 600, 130);
+  assert.equal(500 + dy, 215);
+});
+
+test("typing: asking again does not move it — the camera cannot creep on every keystroke", () => {
+  const first = centreNudge(500, 540, 0, 600, 130);
+  assert.equal(centreNudge(500 + first, 540 + first, 0, 600, 130), 0);
+});
+
+test("typing: a row taller than the band keeps its bottom edge, where the next line appears", () => {
+  // 600px of text in a 470px band: the start scrolls away, the caret's end stays just above the dock.
+  const dy = centreNudge(0, 600, 0, 600, 130);
+  assert.equal(600 + dy, 470, "the row's bottom sits on the reserve, not inside it");
 });

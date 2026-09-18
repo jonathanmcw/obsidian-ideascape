@@ -54,6 +54,8 @@ export interface StageApi {
   resolveEmbed: (file: string) => { url: string; kind: 'image' | 'audio' } | null
   mediaChanged(): void
   removeEmbed(id: NodeId, index: number): void
+  /** Delete a node and its branch. A phone has no Backspace to do it with. */
+  deleteNode(id: NodeId): void
   pasteFiles(id: NodeId, files: File[]): void
   // obsidian: notes dragged in from the file explorer, and hover previews on [[links]]
   /** Secondary click on a node (id) or on empty canvas (null); the host shows its menu. */
@@ -126,6 +128,10 @@ type Drag =
       wasSelected: boolean
       /** Touch outlines reserve a horizontal swipe for indent/outdent. */
       touch: boolean
+      /** Touch outlines only: the finger has rested long enough for this to be a reorder rather than a scroll. */
+      held: boolean
+      /** When the press began, so a release can tell a tap from a long press. */
+      at: number
       /** Part of a multi-selection: the whole selection travels. */
       multi: boolean
       target: DropTarget | null
@@ -141,6 +147,11 @@ type Drag =
 
 const STAGGER_MS = 14
 const STAGGER_CAP = 210
+/** How long a finger rests on an outline row before it picks the row up instead of scrolling the list. Below this,
+ *  a vertical drag is what it looks like — a scroll. Apple's own lists ask for about a third of a second. */
+const HOLD_TO_REORDER_MS = 350
+/** How far a finger may wander while resting without it counting as a scroll. */
+const HOLD_SLOP = 8
 /** How long the map has to sit still before the + and − knobs fade. */
 const QUIET_AFTER_MS = 5000
 /** The dot grid's spacing, in world units — what Snap to grid rounds to (see MapApp). */
@@ -309,6 +320,15 @@ export function Stage({
 
   // Every pointer currently down, by id. Two of them is a pinch.
   const pointers = useRef<Map<number, { x: number; y: number }>>(new Map())
+  /** Counting down to a row being picked up rather than scrolled past. Cleared by anything that ends the gesture. */
+  const holdTimer = useRef(0)
+  /** The last moments of a scroll — where the finger was and when — so a flick can be carried on after it lifts. */
+  const flick = useRef<{ y: number; t: number; vy: number }>({ y: 0, t: 0, vy: 0 })
+  const glide = useRef(0)
+  /** The window the map is actually in — a popout has its own, and its timers are not this one's. */
+  const winOf = () => hostRef.current?.ownerDocument.defaultView ?? window
+  const stopGlide = () => { if (glide.current) { winOf().cancelAnimationFrame(glide.current); glide.current = 0 } }
+  const clearHold = () => { if (holdTimer.current) { window.clearTimeout(holdTimer.current); holdTimer.current = 0 } }
 
   const pinchFrom = (a: { x: number; y: number }, b: { x: number; y: number }) => ({
     d: Math.hypot(a.x - b.x, a.y - b.y),
@@ -353,6 +373,12 @@ export function Stage({
 
   const onPointerDownStage = (e: React.PointerEvent) => {
     if (e.button === 2) return
+    stopGlide()
+    // isPrimary means this is the first contact of a new gesture: by definition nothing else is down. Anything still
+    // remembered is a finger whose lift was never delivered — a long press taken over by the system, a sheet that
+    // covered the page — and keeping it would make the next one-finger drag count two and read as a pinch, which is
+    // how a list came to scroll the opposite way from the thumb pushing it.
+    if (e.isPrimary) pointers.current.clear()
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
     if (pointers.current.size >= 2) {
       beginPinch(e.currentTarget as HTMLElement, e.pointerId)
@@ -376,6 +402,12 @@ export function Stage({
   const onPointerDownNode = useCallback((e: React.PointerEvent, id: NodeId) => {
     const { frame, rootId, editId, manual } = pressRef.current
     if (e.button === 2) return
+    stopGlide()
+    // isPrimary means this is the first contact of a new gesture: by definition nothing else is down. Anything still
+    // remembered is a finger whose lift was never delivered — a long press taken over by the system, a sheet that
+    // covered the page — and keeping it would make the next one-finger drag count two and read as a pinch, which is
+    // how a list came to scroll the opposite way from the thumb pushing it.
+    if (e.isPrimary) pointers.current.clear()
     e.stopPropagation()
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
     if (pointers.current.size >= 2) {
@@ -410,7 +442,20 @@ export function Stage({
     const wasSelected = selectionRef.current === id
     const multi = selectedRef.current.size > 1 && selectedRef.current.has(id)
     if (!multi) api.select(id)
-    setDrag({ kind: 'node', id, sx: e.clientX, sy: e.clientY, moved: false, dx: 0, dy: 0, wx: w.x, wy: w.y, alone: e.altKey, wasSelected, touch: e.pointerType === 'touch', multi, target: null })
+    const touch = e.pointerType === 'touch'
+    // A finger on an outline row means one of two things, and they look identical at the start: scrolling the list,
+    // or picking the row up. Waiting tells them apart — the list scrolls until the finger has rested, which is how
+    // a touch list has always said "I mean this one". Anywhere else a drag is a drag, as it was.
+    const waits = touch && pressRef.current.frame.shape === 'outline' && !multi
+    setDrag({ kind: 'node', id, sx: e.clientX, sy: e.clientY, moved: false, dx: 0, dy: 0, wx: w.x, wy: w.y, alone: e.altKey, wasSelected, touch, held: !waits, at: performance.now(), multi, target: null })
+    clearHold()
+    if (waits) {
+      holdTimer.current = window.setTimeout(() => {
+        holdTimer.current = 0
+        const d = dragRef.current
+        if (d?.kind === 'node' && d.id === id) setDrag({ ...d, held: true })
+      }, HOLD_TO_REORDER_MS)
+    }
     // Deliberately not every value read here is a dependency.
   }, [api, toWorld])
 
@@ -441,6 +486,11 @@ export function Stage({
       const dx = e.clientX - d.sx
       const dy = e.clientY - d.sy
       if (!d.moved && Math.hypot(dx, dy) < 3) return
+      const now = performance.now()
+      const gap = now - flick.current.t
+      // Speed from the last moment only, weighted against the one before it: a flick is what the finger was doing as
+      // it left, not the average of the whole drag.
+      if (gap > 0) flick.current = { y: e.clientY, t: now, vy: gap < 120 ? ((e.clientY - flick.current.y) / gap) * 0.7 + flick.current.vy * 0.3 : 0 }
       setDrag({ ...d, moved: true })
       api.setCamera({ ...camera, x: d.cx + dx, y: d.cy + dy })
       return
@@ -479,6 +529,23 @@ export function Stage({
       setDrag({ ...d, moved: d.moved || Math.hypot(e.clientX - d.sx, e.clientY - d.sy) > 4, wx: w.x, wy: w.y, over })
       return
     }
+    if (d.kind === 'node' && !d.held) {
+      const ax = e.clientX - d.sx
+      const ay = e.clientY - d.sy
+      const far = Math.hypot(ax, ay)
+      // A mostly-downward travel is a scroll: the list takes over from here, and the row is not picked up.
+      if (Math.abs(ay) > Math.abs(ax) && far > HOLD_SLOP) {
+        clearHold()
+        setDrag({ kind: 'pan', sx: d.sx, sy: d.sy, cx: camera.x, cy: camera.y, moved: true })
+        api.setCamera({ ...camera, x: camera.x + ax, y: camera.y + ay })
+        return
+      }
+      // A mostly-sideways one is the indent/outdent swipe, which is measured on release: the gesture is remembered
+      // so that release can read it, but the row neither follows the finger nor shows a place to land.
+      if (far > HOLD_SLOP) clearHold()
+      if (far > 4) setDrag({ ...d, moved: true, dx: 0, dy: 0, wx: w.x, wy: w.y, target: null })
+      return
+    }
     const dx = (e.clientX - d.sx) / camera.z
     const dy = (e.clientY - d.sy) / camera.z
     const moved = d.moved || Math.hypot(e.clientX - d.sx, e.clientY - d.sy) > 4
@@ -487,9 +554,34 @@ export function Stage({
     setDrag({ ...d, moved: true, dx, dy, wx: w.x, wy: w.y, alone: e.altKey, target })
   }
 
+  /** A list that has been flicked goes on moving, and slows the way a thrown thing does, until it is too slow to
+   *  see or the outline reaches its end — setCamera clamps it there, so a glide that stops moving has arrived. */
+  const startGlide = () => {
+    stopGlide()
+    let vy = flick.current.vy
+    flick.current = { y: 0, t: 0, vy: 0 }
+    if (Math.abs(vy) < 0.35) return // a slow finger meant to stop where it stopped
+    vy = Math.max(-4, Math.min(4, vy)) // however hard it was thrown, no faster than the eye can follow
+    let last = performance.now()
+    const step = () => {
+      const now = performance.now()
+      const dt = Math.min(48, now - last)
+      last = now
+      const before = cameraRef.current.y
+      api.setCamera({ ...cameraRef.current, y: before + vy * dt })
+      // 0.0025 per millisecond leaves a flick gliding for about a second: long enough to be worth the flick, short
+      // enough that a second one is never waiting on the first.
+      vy *= Math.exp(-0.0025 * dt)
+      if (Math.abs(vy) < 0.02 || Math.abs(cameraRef.current.y - before) < 0.1) { glide.current = 0; return }
+      glide.current = winOf().requestAnimationFrame(step)
+    }
+    glide.current = winOf().requestAnimationFrame(step)
+  }
+
   /** The system took the pointer back (a palm, an edge swipe) or it was lost: drop the gesture
    *  where it is and commit nothing — no fold, no new child, no move, no width. */
   const cancelGesture = (pointerId: number) => {
+    clearHold()
     pointers.current.delete(pointerId)
     const d = dragRef.current
     if (!d || (d.kind === 'pinch' && pointers.current.size)) return
@@ -530,6 +622,8 @@ export function Stage({
     const doc = hostRef.current?.ownerDocument ?? document
     const win = doc.defaultView ?? window
     const forgetAll = () => {
+      clearHold()
+      stopGlide()
       if (!pointers.current.size && !dragRef.current) return
       pointers.current.clear()
       const d = dragRef.current
@@ -566,6 +660,8 @@ export function Stage({
   }, [hostRef])
 
   const onPointerUp = (e: React.PointerEvent) => {
+    clearHold()
+    if (dragRef.current?.kind === 'pan' && kind === 'outline' && e.pointerType === 'touch') startGlide()
     pointers.current.delete(e.pointerId)
     const d = dragRef.current
     if (d?.kind === 'pinch') {
@@ -619,7 +715,10 @@ export function Stage({
     if (!d.moved) {
       // A tap on the node that was already selected starts editing — on a
       // phone this is the only thing that summons the keyboard.
-      if (d.wasSelected && editId !== d.id) api.beginEdit(d.id, null, false)
+      // A long press is not a tap. Android raises its own context menu from one, and beginning to edit as well put
+      // the keyboard and the menu on screen together, each over the other.
+      const pressed = d.kind === 'node' && d.touch && performance.now() - d.at > HOLD_TO_REORDER_MS
+      if (!pressed && d.wasSelected && editId !== d.id) api.beginEdit(d.id, null, false)
       return
     }
     const ids = d.multi ? [d.id, ...[...selectedRef.current].filter((x) => x !== d.id)] : [d.id]
@@ -894,6 +993,8 @@ export function Stage({
             onMoveUp={() => api.reorder(barId, -1)}
             onMoveDown={() => api.reorder(barId, 1)}
             onNewLine={() => void insertLineBreak(stageRef.current?.ownerDocument)}
+            canDelete={barId !== doc.rootId}
+            onDelete={() => api.deleteNode(barId)}
             onDone={() => api.commitEdit()}
           />
         )

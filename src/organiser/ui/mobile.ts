@@ -77,3 +77,15 @@ export function outlineScrollStop(y: number, visibleHeight: number, margin: numb
   const bottom = visibleHeight - margin - dockInset - maxY
   return !visibleHeight || bottom >= top ? top : Math.min(top, Math.max(bottom, y))
 }
+
+/** Where a row being typed into settles on a touch screen: as near the middle of what can be seen as its own height
+ *  allows. A row is nudged only as far as it must be on a desktop, where the whole list is in view anyway — but on a
+ *  phone the visible band is a few rows tall and a minimal nudge leaves the row hard against the dock, with the end
+ *  of a long block out of sight. A row taller than the band keeps its bottom edge, which is where the next line
+ *  appears; the start scrolls away, and typing stays visible. Stable by construction: asking again returns 0. */
+export function centreNudge(nodeTop: number, nodeBottom: number, visibleTop: number, visibleBottom: number, bottomPadding: number): number {
+  const bottom = visibleBottom - bottomPadding
+  if (nodeBottom - nodeTop > bottom - visibleTop) return bottom - nodeBottom
+  const wanted = visibleTop + (bottom - visibleTop - (nodeBottom - nodeTop)) / 2
+  return Math.round(wanted - nodeTop)
+}

@@ -1,7 +1,7 @@
 {
 	"id": "ideascape",
 	"name": "Ideascape",
-	"version": "0.9.5-beta.2",
+	"version": "0.9.5-beta.3",
 	"minAppVersion": "1.7.2",
 	"description": "Create keyboard-first mind maps and outlines that stay as ordinary Markdown notes.",
 	"author": "Jonathan Wong",

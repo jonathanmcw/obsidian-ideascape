@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { Align, NodeType, NodeTypeState } from '../model/types'
 import { FORMAT_LABEL, type Format } from './format'
 import { chord } from './keys'
-import { IconAlign, IconCheck, IconCheckbox, IconChevron, IconIndent, IconMore, IconNewLine, IconNumbered, IconOutdent, IconPlus } from './Icons'
+import { IconAlign, IconCheck, IconCheckbox, IconChevron, IconIndent, IconMore, IconNewLine, IconNumbered, IconOutdent, IconPlus, IconTrash } from './Icons'
 import { ColourPicker } from './ColourPicker'
 import { hueOf as hueOfHex, sortByHue, toneOf, withHue } from '../colour'
 import { CUSTOM_SLOTS } from '../theme'
@@ -44,6 +44,8 @@ interface Props {
   onRemoveColour: (slot: number) => void
   /** Outline rows can move a level in or out from the bar — for touch, where Tab does not exist. */
   outline: boolean
+  canDelete: boolean
+  onDelete: () => void
   canIndent: boolean
   canOutdent: boolean
   canMoveUp: boolean
@@ -165,7 +167,7 @@ const TypeMark = ({ type, fallback }: { type: NodeTypeState; fallback: string })
  *  Only while editing: the map stays clean while you move around, and there is never a
  *  question of what a style change means for several selected nodes. Pointer-down is
  *  swallowed so the node keeps its focus and text selection; the click then applies. */
-export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, palette, onFormat, onAlign, onType, onBranch, onPalette, onNewColour, onRemoveColour, outline, canIndent, canOutdent, canMoveUp, canMoveDown, onIndent, onOutdent, onMoveUp, onMoveDown, onNewLine, onDone }: Props) {
+export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, palette, onFormat, onAlign, onType, onBranch, onPalette, onNewColour, onRemoveColour, outline, canDelete, onDelete, canIndent, canOutdent, canMoveUp, canMoveDown, onIndent, onOutdent, onMoveUp, onMoveDown, onNewLine, onDone }: Props) {
   const ref = useRef<HTMLDivElement>(null)
   const coarse = useCoarsePointer()
   const phoneDevice = typeof document !== 'undefined' && document.body.classList.contains('is-phone')
@@ -341,6 +343,13 @@ export function NodeBar({ nodeId, x, top, bottom, stageWidth, node, branches, pa
                 <Name>{label}</Name>
               </button>
             ))}
+          </div>
+          {/* A phone has no Backspace to delete a node with, and no menu bar to find one in. */}
+          <div className="nt-phone-group nt-phone-danger" role="group" aria-label="Delete node">
+            <button type="button" tabIndex={-1} role="menuitem" className="nt-delete" disabled={!canDelete} onClick={() => { onDelete(); setMenu(null) }}>
+              <IconTrash />
+              <Name>Delete this node and everything under it</Name>
+            </button>
           </div>
           {outline && (
             <div className="nt-phone-group nt-phone-arrange" role="group" aria-label="Arrange node">
