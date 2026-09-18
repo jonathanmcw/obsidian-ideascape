@@ -397,12 +397,12 @@ for (const shell of SHELLS) {
 }
 
 /* -------------------- the label's own editing -------------------- */
-// Blink only, and not because WebKit is awkward: WebKit fails the link case here, and that failure looks real.
-// `execCommand('undo')` after a link is inserted at the caret gives back "" in WebKit where Blink gives back the
-// label's text — undo eats the whole label instead of the link it just made. Obsidian on iPhone and iPad is a
-// WKWebView, so if that is what a device does, ⌘Z inside a node is dangerous there and this is a bug to chase
-// rather than a check to widen. It is left failing-if-run rather than quietly made to pass: run this pass under
-// WebKit deliberately (ENGINE=webkit) when chasing it. The chrome above IS checked under both engines.
+// Blink only, and this one is the headless browser's own fault rather than the engine's. Playwright's WebKit gives
+// back an empty label from `execCommand('undo')` after a link is inserted at the caret, where Blink gives back the
+// text — which reads exactly like ⌘Z eating a node on an iPhone. It does not: run on a real iPhone over the cable
+// (see scripts/shots/phone.mjs), this module's own toggleInline and undo restore the label byte for byte, for a
+// link at the caret, a highlight and a code span alike. Headless WebKit is not the WKWebView an iPhone runs, and
+// on this one thing it lies. The chrome above IS checked under both engines, where the difference is real.
 if (engineName === "blink")
 // The tests beside this one build a DOM of their own: it has no selection, no ranges and no editing commands, so
 // the one thing they cannot see is whether a format can be taken back — and taking one back is exactly what was
