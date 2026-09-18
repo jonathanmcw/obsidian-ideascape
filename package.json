@@ -12,7 +12,7 @@
     "dev": "node scripts/build-css.mjs && node esbuild.config.mjs",
     "css": "node scripts/build-css.mjs",
     "test": "node --test test/*.test.ts",
-    "lint": "eslint src manifest.json package.json --max-warnings 11",
+    "lint": "eslint src manifest.json package.json --max-warnings 9",
     "verify:release": "node scripts/verify-release.mjs",
     "showcase": "bash scripts/shots/showcase.sh",
     "install:vault": "node scripts/install.mjs",

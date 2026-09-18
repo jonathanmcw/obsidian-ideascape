@@ -191,3 +191,24 @@ test("wysiwyg: pasted Markdown arrives as what it means", () => {
   }
 });
 
+
+// ⌘A and F2 select the label's own contents through a Range, not the document's `selectAll` command. The stub is
+// only what selectAllIn touches: the focused label, and the selection its document hands out.
+test("wysiwyg: selecting all in a label takes the label's contents, and nothing when the caret left it", async () => {
+  const { selectAllIn } = await import("../src/organiser/ui/format.ts");
+  const made: { selected: unknown[]; cleared: number; added: unknown[] } = { selected: [], cleared: 0, added: [] };
+  const range = { selectNodeContents: (n: unknown) => made.selected.push(n) };
+  const selection = { removeAllRanges: () => made.cleared++, addRange: (r: unknown) => made.added.push(r) };
+  const owner = { createRange: () => range, defaultView: { getSelection: () => selection } };
+  const labelEl = { nodeType: 1, classList: { contains: (n: string) => n === "node-label" }, isContentEditable: true, ownerDocument: owner };
+
+  assert.equal(selectAllIn({ activeElement: labelEl } as unknown as Document), true);
+  assert.deepEqual(made.selected, [labelEl], "the range covers the label itself, never the document");
+  assert.equal(made.cleared, 1);
+  assert.deepEqual(made.added, [range]);
+
+  // Focus on a toolbar button rather than the label: nothing is selected, where `selectAll` would have taken the view.
+  const button = { nodeType: 1, classList: { contains: () => false }, isContentEditable: false, ownerDocument: owner };
+  assert.equal(selectAllIn({ activeElement: button } as unknown as Document), false);
+  assert.equal(made.cleared, 1, "a selection outside a label is left alone");
+});

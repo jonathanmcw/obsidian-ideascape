@@ -392,7 +392,9 @@ export function pasteText(label: HTMLElement, text: string, literal: boolean): v
   const doc = label.ownerDocument
   const rich = parseInline(text)
   const asIs = literal || rich.embeds.length > 0 || (rich.plain === text && !rich.runs.some((r) => r.b || r.i || r.u || r.s || r.mark || r.code || r.href || r.raw))
-  // The browser's own insert keeps the label's undo history; only formatted text needs nodes.
+  // The browser's own insert keeps the label's undo history; only formatted text needs nodes. execCommand is
+  // deprecated and kept on purpose — nothing else writes into that history, and ⌘Z inside a label is the
+  // browser's (see map-view.ts). The nodes path below cannot be taken back the same way.
   if (asIs) {
     doc.execCommand('insertText', false, text)
     return
@@ -435,6 +437,7 @@ export function dropText(label: HTMLElement, x: number, y: number, text: string)
   }
   sel.removeAllRanges()
   sel.addRange(at)
+  // Deprecated, and kept for the same reason as the paste above: it is what a dropped word's ⌘Z takes back.
   doc.execCommand('insertText', false, text)
 }
 
