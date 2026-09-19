@@ -12,4 +12,6 @@ demo-vault/
 # The directory's pictures are made, not kept (scripts/shots/listing.py); the words and crops they are made from are kept.
 docs/listing/*
 !docs/listing/headlines.json
+# ...and the frames it names: the words and the crops are no use without the pictures they crop.
+!docs/listing/frames/
 docs/icon-v2/alternatives/
