@@ -13,11 +13,11 @@ A thought arrives faster than you can draw it, so Ideascape lets you type it. Ta
   </tr>
   <tr>
     <td valign="top"><img src="docs/screenshots/02-outline-dark.png" alt="A podcast plan as an outline"><br><b>Outline</b><br/> The same note as a list, one key away. Fold, focus and find work here too.</td>
-    <td valign="top"><img src="docs/screenshots/04-themes-light.png" alt="A trip plan in the Paper theme with the document panel open"><br><b>Themes.</b><br/> Follow your vault in light or dark, or pin Paper, Slate, Graphite or Midnight to one map from the document panel.</td>
+    <td valign="top"><img src="docs/screenshots/04-themes-light.png" alt="A trip plan in the Paper theme with the document panel open"><br><b>Themes</b><br/> Follow your vault in light or dark, or pin Paper, Slate, Graphite or Midnight to one map from the document panel.</td>
   </tr>
   <tr>
     <td valign="top"><img src="docs/screenshots/06-markdown-and-map.png" alt="A map beside its Markdown source"><br><b>Plain Markdown underneath</b><br/> A heading, a nested list, a block id per node. The note reads anywhere.</td>
-    <td valign="top"><img src="docs/screenshots/05-shortcuts-dark.png" alt="The shortcuts sheet with a filter field"><br><b>Every shortcut.</b><br/> Press <code>?</code> in a map for the sheet, with a filter and the six keys to learn first.</td>
+    <td valign="top"><img src="docs/screenshots/05-shortcuts-dark.png" alt="The shortcuts sheet with a filter field"><br><b>Shortcuts</b><br/> Press <code>?</code> in a map for the sheet, with a filter and the six keys to learn first.</td>
   </tr>
 </table>
 
