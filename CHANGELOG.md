@@ -4,6 +4,8 @@ What changed in each release of Ideascape, newest first. The layout follows [Kee
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-09-19
+
 ### Added
 
 - The layout block's format version is now a promise. A map written by a newer Ideascape opens in this one, and any fields this one does not know are kept and written back rather than dropped, with the newer version number left as it was.
@@ -143,7 +145,8 @@ First public beta.
 - No network requests. Everything happens on your machine.
 - Narrow panes and small windows: the switcher stays at the top left, the layout tools fold into the ⋯ menu, and zoom, undo and help sit in one column at the bottom right.
 
-[Unreleased]: https://github.com/jonathanmcw/obsidian-ideascape/compare/0.9.5...HEAD
+[Unreleased]: https://github.com/jonathanmcw/obsidian-ideascape/compare/1.0.0...HEAD
+[1.0.0]: https://github.com/jonathanmcw/obsidian-ideascape/compare/0.9.5...1.0.0
 [0.9.5]: https://github.com/jonathanmcw/obsidian-ideascape/compare/0.9.4...0.9.5
 [0.9.4]: https://github.com/jonathanmcw/obsidian-ideascape/compare/0.9.3...0.9.4
 [0.9.3]: https://github.com/jonathanmcw/obsidian-ideascape/compare/0.9.2...0.9.3

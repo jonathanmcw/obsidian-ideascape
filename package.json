@@ -1,6 +1,6 @@
 {
   "name": "obsidian-ideascape",
-  "version": "0.9.5",
+  "version": "1.0.0",
   "description": "Mind maps you type, not draw. Tab adds a child, Enter a sibling, and your hands stay on the keyboard. One shortcut turns the map into an outline. Plain Markdown underneath, yours to keep.",
   "main": "main.js",
   "type": "module",
