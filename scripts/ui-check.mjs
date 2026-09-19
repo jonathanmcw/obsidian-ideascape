@@ -259,6 +259,9 @@ for (const shell of SHELLS) {
         aligns: count(".nt-align-drop, .nt-phone-align > button"),
         arrange: count(".nt-phone-arrange > button"),
         moreDelete: count(".nt-phone-danger > button"),
+        // The dock, the More panel and the 44px targets are all behind `@media (pointer: coarse)`. Whether a browser
+        // can be put into that mode is the browser's business, not the plugin's: ask it rather than assume it.
+        coarse: window.matchMedia("(pointer: coarse)").matches,
         tight: !!el.querySelector(".nt-tail.is-tight"),
         deleteInRow: !!del && drawn(del),
         doneLast: keys.at(-1) === done,
@@ -291,12 +294,20 @@ for (const shell of SHELLS) {
       const want = FITS[fit];
       check(bar.keys.length === want.keys, `${state} (${fit}): the row has ${bar.keys.length} keys, not ${want.keys}`);
       check(bar.rowFormats === want.rowFormats, `${state} (${fit}): ${bar.rowFormats} formatting keys stand in the row, not ${want.rowFormats}`);
+      // A phone shell whose browser never reported a coarse pointer is not a phone: the dock, More and the touch
+      // targets below are all behind that media query, so the assertions would be measuring a desktop bar. Playwright's
+      // WebKit on Linux is the case in hand — it takes hasTouch and still reports a fine pointer, where the same
+      // WebKit on a Mac does not. Said out loud each time, so this can never quietly become "the phone is fine".
+      if (!bar.coarse) {
+        console.warn(`  note: ${state} — this browser would not report a coarse pointer, so the dock was not checked here`);
+      } else {
       check(bar.moreFormats === want.moreFormats, `${state} (${fit}): More holds ${bar.moreFormats} formatting keys, not ${want.moreFormats}`);
       // A duplicate of this was shipped: the row grew its alignment dropdown while More kept the three keys it
       // replaced, and both were on screen at once.
       check(bar.aligns === want.aligns, `${state} (${fit}): ${bar.aligns} alignment controls are on screen, not ${want.aligns}`);
       check(bar.moreDelete === want.moreDelete, `${state} (${fit}): More holds ${bar.moreDelete} Delete keys, not ${want.moreDelete} — a roomy row carries it itself`);
       check(bar.arrange === 2, `${state} (${fit}): More holds ${bar.arrange} arrange keys, not the two an outline row needs`);
+      }
       check(bar.tight === want.tight, `${state} (${fit}): the tail is ${bar.tight ? "tight" : "roomy"}`);
 
       // Every key a 44px-tall target, and none narrower than the floor the row falls to when it is full.
