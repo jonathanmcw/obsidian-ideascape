@@ -303,7 +303,7 @@ for (const shell of SHELLS) {
       // names itself on every shell it happens on, so it can never quietly become "the phone is fine".
       if (!bar.coarse || !bar.moreOpen) {
         const why = !bar.coarse ? "would not report a coarse pointer" : "would not open the More panel";
-        check(engineName === "blink", `${state}: the browser ${why}, so the dock could not be checked`);
+        check(engineName !== "blink", `${state}: the browser ${why}, so the dock could not be checked`);
         console.warn(`  note: ${state} — ${engineName} ${why}, so the dock was not checked here`);
       } else {
       check(bar.moreFormats === want.moreFormats, `${state} (${fit}): More holds ${bar.moreFormats} formatting keys, not ${want.moreFormats}`);
