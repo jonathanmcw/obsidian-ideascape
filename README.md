@@ -1,4 +1,5 @@
-# Ideascape
+# Ideascape – Mindmap & Outliner
+Think in a map. Write in an outline. Keep one Markdown note.
 
 ![A Lisbon weekend built from the keyboard: Tab and Enter add nodes, ⌘B and ⌘I style them, ⌘↵ adds checkboxes, ⇧⌘7 numbers a list, ⌘. folds a branch, ⌥⌘F focuses on it, and ⌘2 and ⌘1 switch between outline and map. Each key shows in the corner as it is pressed.](https://raw.githubusercontent.com/jonathanmcw/obsidian-ideascape/main/docs/showcase-clean.gif)
 
