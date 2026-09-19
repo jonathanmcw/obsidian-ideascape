@@ -1,8 +1,8 @@
 # Ideascape – Mindmap & Outliner
-Think in a map. Write in an outline. Keep one Markdown note.
 
 ![A Lisbon weekend built from the keyboard: Tab and Enter add nodes, ⌘B and ⌘I style them, ⌘↵ adds checkboxes, ⇧⌘7 numbers a list, ⌘. folds a branch, ⌥⌘F focuses on it, and ⌘2 and ⌘1 switch between outline and map. Each key shows in the corner as it is pressed.](https://raw.githubusercontent.com/jonathanmcw/obsidian-ideascape/main/docs/showcase-clean.gif)
 
+**Think in a map. Write in an outline. Keep one Markdown note.**
 A thought arrives faster than you can draw it, so Ideascape lets you type it. Tab adds a child, Enter adds a sibling, the arrows move, and typing edits the selected node; the map keeps up and your hands stay on the keyboard. One shortcut turns the same note into an outline, and another turns it back. Underneath it is a plain Markdown list: readable anywhere, and still yours without the plugin.
 
 ## What it does
