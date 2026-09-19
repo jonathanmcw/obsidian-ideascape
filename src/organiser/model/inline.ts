@@ -60,10 +60,19 @@ export function embedKind(file: string): EmbedKind {
  *  that carried it go; every other character stays: blank lines, a trailing newline mid-edit, and a `![[note]]`
  *  transclusion, which the label shows as a link. */
 export function stripEmbeds(src: string): string {
-  const media = (embed: string) => embedKind(embed.slice(3, -2).split('|')[0].trim()) !== 'other'
-  return src
-    .replace(/(^|\n)(!\[\[[^\]]+\]\])[ \t]*(?=\n|$)/g, (m, _lead: string, embed: string) => (media(embed) ? '' : m))
-    .replace(/!\[\[[^\]]+\]\]/g, (m) => (media(m) ? '' : m))
+  // The reader says where they are, so the two can never disagree: `![[x.png]]` inside a code span, inside math
+  // or behind a backslash is text to both. Cut from the last one back, so the earlier places still hold.
+  const media: [number, number][] = []
+  parse(src, null, media)
+  let out = src
+  for (const [from, to] of media.reverse()) {
+    // An embed with a line to itself takes the line break ahead of it and the blanks after it.
+    const blanks = /^[ \t]*(?=\n|$)/.exec(src.slice(to))
+    const alone = !!blanks && (from === 0 || src[from - 1] === '\n')
+    const end = alone ? to + blanks[0].length : to
+    out = out.slice(0, alone && from > 0 ? from - 1 : from) + out.slice(end)
+  }
+  return out
 }
 export function embedsOf(src: string): Embed[] {
   return parseInline(src).embeds
@@ -172,7 +181,8 @@ export function traceInline(src: string): { rich: Rich; shown: Uint8Array } {
   return { rich: parse(src, shown), shown }
 }
 
-function parse(src: string, shown: Uint8Array | null): Rich {
+/** `media`, when given, collects where each media embed sits in the source, `![[` to `]]`. */
+function parse(src: string, shown: Uint8Array | null, media?: [number, number][]): Rich {
   let plain = ''
   const runs: Run[] = []
   const embeds: Embed[] = []
@@ -258,6 +268,7 @@ function parse(src: string, shown: Uint8Array | null): Rich {
           cur = null
         } else {
           embeds.push({ file, alias: alias || undefined, kind })
+          media?.push([i, j + 2])
           // the embed sat on its own line: drop that one line break (the one before it, else the one after)
           if (plain.endsWith('\n')) {
             plain = plain.slice(0, -1)

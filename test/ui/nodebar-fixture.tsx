@@ -107,10 +107,17 @@ for (const stage of document.querySelectorAll<HTMLElement>('[data-live-bar]')) {
 // More is a menu, so it opens the way a person opens it — after React has committed the row, which takes a second
 // pass: the bar is only drawn once the stage has been measured. On a screen with no coarse pointer there is no More
 // key and nothing to open, and the poll simply runs out; the bar there already shows everything it has.
-let tries = 20
+// It waits for the menu to be OPEN, not merely for its key to exist: the first version stopped as soon as it found a
+// key and clicked it, so a click that landed before the row was ready was never tried again. That passed on a Mac and
+// failed every phone shell under WebKit on CI, where the frames come slower. A timer as well as a frame, because a
+// headless browser throttles requestAnimationFrame and can starve a poll that only counts frames.
+const MORE_KEY = '[data-live-bar="more"] .nt-main button[aria-haspopup="menu"]:not(.nt-drop)'
+let tries = 150
 const openMore = () => {
-  const closed = document.querySelectorAll<HTMLButtonElement>('[data-live-bar="more"] .nt-main button[aria-haspopup="menu"][aria-expanded="false"]:not(.nt-drop)')
-  for (const btn of closed) btn.click()
-  if (!closed.length && tries-- > 0) requestAnimationFrame(openMore)
+  const open = document.querySelector(`${MORE_KEY}[aria-expanded="true"]`)
+  if (open || tries-- <= 0) return
+  for (const btn of document.querySelectorAll<HTMLButtonElement>(`${MORE_KEY}[aria-expanded="false"]`)) btn.click()
+  requestAnimationFrame(openMore)
+  setTimeout(openMore, 20)
 }
 requestAnimationFrame(openMore)

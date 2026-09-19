@@ -61,7 +61,12 @@ repaint() { ev "const w=require('electron').remote.getCurrentWindow(); w.setBoun
 
 # A run ends with the welcome window open (its last picture), so the next run starts by closing whatever is open (Escape,
 # the way any Obsidian modal closes) and marking the welcome as seen, or the modal would sit in every frame.
+# Close a system menu with a click on bare canvas (window points 640,180 → screen 700,260), then clear it from the frame.
+unmenu() { front; cliclick c:700,260 >/dev/null; sleep 0.8; repaint; unfront; }
 reset() { for _ in 1 2 3; do ev "const wc=require('electron').remote.getCurrentWebContents(); wc.sendInputEvent({type:'keyDown',keyCode:'Escape'}); wc.sendInputEvent({type:'keyUp',keyCode:'Escape'}); 'esc'" >/dev/null; sleep 0.6; done
+  # A file menu is the system's own: it hears neither a key sent to the page nor one cliclick presses, only a click
+  # somewhere else. A run that stopped with one open left it in every picture of the next, and on the screen.
+  unmenu
   ev "(p=>{if(p){p.settings.welcomed=true; void p.saveSettings();}})(app.plugins.plugins.ideascape); 'seen'" >/dev/null; sleep 1
   [ "$(ev "document.querySelectorAll('.modal-container').length")" = 0 ] || { echo 'a modal is still open; close it and rerun' >&2; exit 1; }; }
 
@@ -157,6 +162,32 @@ screenshots)
   repaint; shot 07-welcome-dark; unfront
   finish
   ;;
+listing) # the five frames the directory's pictures are cut from (scripts/shots/listing.py), raw in $OUT, nothing written
+  # to the repo. One map all the way through, so the five pictures read as one thought being followed. Zoomed past fit:
+  # the pictures are close crops, and a crop of a map drawn small is a picture of small type.
+  K="Maps/Weekend in Kyoto.md"
+  press() { ev "(()=>{const n=[...document.querySelectorAll('.io-root .node')].find(e=>e.textContent.trim()==='$1'); if(!n) return 'no node $1'; const b=n.getBoundingClientRect(); const at={clientX:b.left+b.width/2, clientY:b.top+b.height/2, bubbles:true, pointerId:1, isPrimary:true, button:0}; n.dispatchEvent(new PointerEvent('pointerdown',at)); n.dispatchEvent(new PointerEvent('pointerup',at)); return 'pressed'})()"; sleep 0.8; }
+  esc() { ev "for(let i=0;i<3;i++) document.querySelector('.io-root')?.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})); 'esc'" >/dev/null; sleep 0.8; }
+  reset; theme obsidian
+  # The whole shape for the second picture, and a closer stand for the first, where one node is the subject.
+  solo "$K" map; panel off; fit; zoomfill 0.94; shot L2-shape
+  fit; zoom 1.4
+  press "Tea ceremony"; ev "app.commands.executeCommandById('ideascape:map-edit'); 'edit'" >/dev/null; sleep 1.2
+  [ "$(ev "!!document.querySelector('.io-root .node-toolbar')")" = true ] || { echo 'no node is being edited, so the hero would show no bar' >&2; exit 1; }
+  shot L1-editing; esc
+  solo "$K" outline; shot L3-outline
+  # The note as it is on disk on the left — source mode, so the list markers and the block ids show — and its map on the right.
+  solo "$K" map
+  ev "app.commands.executeCommandById('ideascape:open-as-markdown'); 'md'" >/dev/null; sleep 2
+  ev "(async()=>{const l=app.workspace.getMostRecentLeaf(); const st=l.getViewState(); st.state={...st.state, mode:'source', source:true}; await l.setViewState(st); const m=app.workspace.getLeaf('split'); await m.setViewState({type:'ideascape', state:{file:'$K'}}); app.workspace.setActiveLeaf(m,{focus:true});})(); 'split'" >/dev/null; sleep 3
+  fit; zoomfill 0.92; shot L4-note-and-map
+  solo "$K" map; panel off; theme moonstone; fit; zoom 1.2
+  ev "app.commands.executeCommandById('ideascape:map-export'); 'export'" >/dev/null; sleep 1.5
+  [ "$(ev "!!document.querySelector('.io-root .sheet')")" = true ] || { echo 'the export sheet did not open' >&2; exit 1; }
+  shot L5-export-light; esc
+  theme obsidian; solo "$K" map; fit
+  [ -z "$(git status --porcelain demo-vault 2>/dev/null)" ] || true
+  ;;
 hero)   # the first picture alone, for a quick retake: bash scripts/shots/capture.sh hero
   reset; theme obsidian
   solo "Maps/Launch a podcast.md" map;      panel off; fit; zoomfill 0.86; shot 01-map-dark
@@ -171,6 +202,9 @@ split)  # the Markdown-beside-map picture alone: bash scripts/shots/capture.sh s
   finish; open -a Claude 2>/dev/null || true
   ;;
 slides)
+  # `screenshots` ends with the welcome window open, and this was the one mode that did not close it first: the 0.9.4
+  # and 0.9.5 slides each showed the welcome window inside the welcome window, and the third had no menu to point at.
+  reset; theme obsidian
   for shape in map outline; do
     solo "Maps/Weekend in Kyoto.md" $shape; panel off
     [ "$shape" = map ] && fit
@@ -189,8 +223,7 @@ slides)
         wc.sendInputEvent({type:'mouseDown',x,y,button:'right',clickCount:1});
         wc.sendInputEvent({type:'mouseUp',x,y,button:'right',clickCount:1}); 'sent'" >/dev/null
     sleep 1.6; screencapture -x -l "$(win_id)" "$OUT/raw-w-convert-${pair%%:*}.png"; unfront
-    ev "const wc=require('electron').remote.getCurrentWebContents(); wc.sendInputEvent({type:'keyDown',keyCode:'Escape'}); wc.sendInputEvent({type:'keyUp',keyCode:'Escape'}); 'esc'" >/dev/null
-    repaint; unfront
+    unmenu
   done
   theme obsidian
   read -r W H CSS < <(geom | tr -d '[]' | tr ',' ' ')
@@ -198,7 +231,7 @@ slides)
     n=$(basename "$f" .png); n=${n#raw-w-}
     python3 scripts/shots/slide.py "$W" "$H" "$CSS" 30 "$f" "src/welcome/$n.webp"
   done
-  # Point at "Open as a map"; the box is read off the finished slide.
+  # Point at "Open as a map"; the box is read off the finished slide, and highlight.py refuses a box with no words in it.
   for n in dark light; do
     python3 scripts/shots/highlight.py "src/welcome/convert-$n.webp" "src/welcome/convert-$n.webp" 144 664 342 704
   done

@@ -65,6 +65,24 @@ test("inline: blank lines and a trailing newline (mid-edit) survive the embed he
   assert.equal(parseInline("![[x.png]]\nafter").plain, "after");
 });
 
+test("inline: an embed written as code, as math or behind a backslash is text, and the embed helpers leave it alone", () => {
+  for (const src of ["Write `![[photo.png]]` here", "Write ``![[photo.png]] ` `` here", "Write \\![[photo.png]] here", "Cost $![[photo.png]]$ here", "`![[a.png]]`\n![[b.png]]"]) {
+    const kept = src.replace("\n![[b.png]]", "");
+    assert.equal(stripEmbedsFn(src), kept, src);
+    assert.equal(embedsOfFn(src).length, src === kept ? 0 : 1, src);
+    assert.equal(withEmbedsFn(stripEmbedsFn(src), embedsOfFn(src)), src, "what the editor takes apart goes back together");
+  }
+  // Every embed the reader shows as a picture is one the text loses, wherever it sits on its line.
+  for (const [src, text] of [["a ![[x.png]] b", "a  b"], ["![[x.png]]\nafter", "\nafter"], ["a\n![[x.png]]  \n![[y.m4a|v]]\nb", "a\nb"], ["**![[x.png]]**", "****"], ["a\n![[Other note]]", "a\n![[Other note]]"]] as const) {
+    assert.equal(stripEmbedsFn(src), text, src);
+  }
+  // Attaching a picture to a node that quotes the syntax keeps the quote and adds the picture.
+  const quoted = "Write `![[photo.png]]` here";
+  const attached = withEmbedsFn(stripEmbedsFn(quoted), [...embedsOfFn(quoted), { file: "new.png", kind: "image" }]);
+  assert.equal(attached, "Write `![[photo.png]]` here\n![[new.png]]");
+  assert.deepEqual(embedsOfFn(attached).map((e) => e.file), ["new.png"]);
+});
+
 test("inline: #tags are runs of their own — after whitespace, not all digits, not inside a word", () => {
   const r = parseInline("plan #trip/2026 and #2026 or C# and #x_y-z. #end");
   assert.equal(r.plain, "plan #trip/2026 and #2026 or C# and #x_y-z. #end");

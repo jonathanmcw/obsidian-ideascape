@@ -104,6 +104,14 @@ const AWKWARD: [string, string][] = [
   ["a byte-order mark", "\ufeff# B\n\n- a\n"],
   ["no trailing newline", "# N\n\n- a"],
   ["frontmatter with no closing fence", "---\ntitle: x\n\n# H\n\n- a\n"],
+  // What the map used to rewrite in a note it had only been asked to open.
+  ["a block id and a list inside an item's code", "---\nideascape: root\n---\n# R\n\n- snippet ^s\n  ~~~md\n  value ^literal\n  - code-list\n  ~~~\n"],
+  ["the same in backticks, in a note that is not yet a map", "# R\n\n- snippet\n  ````md\n  value ^literal\n  - [ ] task\n  ```\n  ````\n- next\n"],
+  ["a block id under a fence nothing closes", "# R\n\n- snippet ^s\n  ~~~md\n  value ^literal\n  more\n- next\n"],
+  ["a block id and a list inside the note's own code", "# R\n\n- a\n\n~~~\nvalue ^literal\n- not an item\n~~~\n\n- b\n"],
+  ["a tab inside an item's code", "---\nideascape: root\n---\n# R\n\n- build ^a\n  ~~~make\n  all:\n  \techo hi\n  ~~~\n"],
+  ["blank lines that end a block of text in the frontmatter", "---\nideascape: r\npoem: |+\n  line\n\n\n---\n# R\n\n- a ^a\n"],
+  ["a marker that is a mapping", "---\nideascape:\n  custom: value\ntags: [keep]\n---\n# R\n\n- a ^a\n"],
 ];
 
 for (const [name, src] of AWKWARD) test(`open as a map: ${name} keeps the note, and the second save changes nothing`, () => holds(src));
@@ -136,8 +144,11 @@ const BLOCKS: string[][] = [
   ["> [!note] Call", "> - in", "> more"], [">> nested quote"], ["<div>", "<p>x</p>", "</div>"],
   ["Setext", "======"], ["Setext2", "------"], ["[^1]: fn"], ["# H1"], ["## H2"], ["###### H6"],
   ["    indented code", "    more code"], ["\ttab code"], ["Plain prose line."], [""], ["   "], ["Prose ^para"],
+  // Code under an item and code of the note's own, each holding what would read as an id, an item or a tab's worth of spaces.
+  ["  ~~~md", "  value ^literal", "  - code-list", "  ~~~"], ["  ```make", "  all:", "  \techo hi", "  ```"], ["~~~", "value ^literal", "- code-list", "~~~"],
 ];
-const FRONT = ["", "---\ntitle: t\n---\n", "---\ntags:\n  - a\n  - b\n---\n", "---\nideascape: 1\n---\n", "---\nideascape: r00t01\n---\n", "---\nidea-map: 1\n---\n", "---\n---\n"];
+const FRONT = ["", "---\ntitle: t\n---\n", "---\ntags:\n  - a\n  - b\n---\n", "---\nideascape: 1\n---\n", "---\nideascape: r00t01\n---\n", "---\nidea-map: 1\n---\n", "---\n---\n",
+  "---\nideascape: r\npoem: |+\n  line\n\n\n---\n", "---\nideascape:\n  custom: value\ntags: [keep]\n---\n"];
 
 /** A small deterministic generator, so a failure here is a failure anyone can reproduce. */
 function noteFor(seed: number): string {
@@ -170,6 +181,29 @@ test("open as a map: a converted note is a fixed point — a third save changes 
 });
 
 /* ---------------------------------------------------------------- what used to go wrong */
+
+/** A note as it stands once it is a map: the file the view wrote, which the next save must leave alone. */
+const BYTE_FOR_BYTE: [string, string][] = [
+  ["a block id and a list inside an item's code", "- snippet ^s\n  ~~~md\n  value ^literal\n  - code-list\n  ~~~\n"],
+  ["a tab inside an item's code", "- build ^a\n  ~~~make\n  all:\n  \techo hi\n  ~~~\n"],
+  ["a block id and a list inside the note's own code", "- a ^a\n\n~~~\nvalue ^literal\n- not an item\n~~~\n"],
+];
+for (const [name, body] of BYTE_FOR_BYTE) test(`a saved map: ${name} comes back byte for byte`, () => {
+  const src = `---\nideascape: root\npoem: |+\n  line\n\n\n---\n# R\n\n${body}`;
+  const out = cycle(src, "R");
+  assert.equal(out.slice(0, out.lastIndexOf("\n%%ideascape\n")), src);
+  assert.equal(conversionChange(src, out), null);
+});
+
+test("a marker rewritten along with the lines under it is a change the person is asked about", () => {
+  const src = "---\nideascape:\n  custom: value\n  other: 2\ntags: [keep]\n---\n# R\n\n- a ^a\n";
+  const out = cycle(src, "R");
+  assert.match(out, /^---\nideascape: \w+\ntags: \[keep\]\n---\n/);
+  assert.deepEqual(conversionChange(src, out), { lines: 2, first: "custom: value" });
+  // Blank lines kept at the end of the frontmatter are no change at all.
+  const poem = "---\npoem: |+\n  line\n\n\n---\n# R\n\n- a ^a\n";
+  assert.equal(conversionChange(poem, cycle(poem, "R")), null);
+});
 
 test("a list the note indents more widely than the map does still reads back as it was written", () => {
   // The note's own text sat between the list's indentation and the map's, so the first save left it

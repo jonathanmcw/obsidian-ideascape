@@ -175,6 +175,15 @@ export function commitStep(s: Session, next: IODoc, coalesce?: string): boolean 
   return true
 }
 
+/** For a command that has to wait — the clipboard being read, or written — before it changes the map. Called before
+ *  the wait; what it returns says, after it, whether the document is still the one the command was made against.
+ *  A reload from disk, another map landing in the view and a commit from a later render all move it on, and a change
+ *  built on the document from before would then write that one over the live one. */
+export function unmoved(s: Session): () => boolean {
+  const doc = s.doc
+  return () => s.doc === doc
+}
+
 /** Whether the node being typed into has been typed into: ⌘Z then belongs to its own text. */
 export function typed(s: Session): boolean {
   return !!s.edit && s.draft !== s.initial

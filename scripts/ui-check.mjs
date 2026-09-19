@@ -11,7 +11,7 @@ import assert from "node:assert/strict";
 import esbuild from "esbuild";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { chromium } from "playwright";
+import { chromium, webkit } from "playwright";
 
 // The node bar is the one piece of chrome whose shape is chosen at runtime — dockFit reads the stage's width and
 // decides how much of the bar a screen can hold — so the fixture mounts the component rather than copying it. Built
@@ -54,7 +54,16 @@ const px = value => Number.parseFloat(value) || 0;
 const problems = [];
 const check = (ok, message) => { if (!ok) problems.push(message); };
 
-const browser = await chromium.launch();
+// Obsidian is Electron on a desktop (Blink) and a WKWebView on iPhone and iPad (WebKit), so a check that knows only
+// one engine is blind to half the app. It was: a note name too long for its band is laid out differently by each, and
+// the phone showed it first. WebKit is skipped rather than failed when its browser is not downloaded, so a checkout
+// that has only run `playwright install chromium` still gets the rest.
+const engines = [["blink", chromium]];
+try { await (await webkit.launch()).close(); engines.push(["webkit", webkit]); }
+catch { console.warn("  note: WebKit is not installed, so only Blink was checked (npx playwright install webkit)"); }
+
+for (const [engineName, engine] of engines) {
+const browser = await engine.launch();
 const shots = [];
 
 for (const shell of SHELLS) {
@@ -68,7 +77,7 @@ for (const shell of SHELLS) {
   });
   const page = await context.newPage();
   for (const theme of THEMES) {
-    const state = `${shell.name}-${theme}`;
+    const state = `${engineName}/${shell.name}-${theme}`;
     await page.goto(`${harness}?theme=${theme}&shell=${shell.shell}${shell.editing ? "&editing=1" : ""}`);
     await page.waitForTimeout(120);
 
@@ -166,6 +175,31 @@ for (const shell of SHELLS) {
     check(px(tokens.fast) === 140, `${state}: fast motion should be --anim-duration-fast (140ms), got ${tokens.fast}`);
     // 16-grid icons at two thirds of Obsidian's 24-grid stroke: the same weight on screen as the app's own icons.
     check(Math.abs(px(tokens.iconStroke) - 1.75 * 2 / 3) < 0.02, `${state}: toolbar icons are ${tokens.iconStroke} thick, not two thirds of --icon-m-stroke-width`);
+    // The note's name is a <button>, and a button centres its text by default. A name too long for the band then
+    // overflows at BOTH ends and is clipped at both, so the first letter goes missing and no ellipsis says so —
+    // which is what a phone showed of "Weekend in Kyoto". Measured, not read off the CSS: give the band a name it
+    // cannot fit and ask where the first letter landed.
+    const title = await page.evaluate(() => {
+      const btn = document.querySelector(".doc-name-btn");
+      if (!btn) return null;
+      const was = btn.textContent;
+      btn.textContent = "Weekend in Kyoto and everywhere after that";
+      const cs = getComputedStyle(btn);
+      const box = btn.getBoundingClientRect();
+      const inner = box.left + parseFloat(cs.borderLeftWidth) + parseFloat(cs.paddingLeft);
+      const node = btn.firstChild;
+      const r = document.createRange();
+      r.setStart(node, 0); r.setEnd(node, 1);
+      const first = r.getBoundingClientRect().left;
+      const overflows = btn.scrollWidth > btn.clientWidth + 1;
+      btn.textContent = was;
+      return { align: cs.textAlign, overflows, cut: Math.round(inner - first) };
+    });
+    if (title) {
+          check(!title.overflows || title.cut <= 1,
+        `${state}: a note name too long for the band is cut ${title.cut}px into its first letter (text-align: ${title.align}) — a name must be trimmed at its end, never at its start`);
+    }
+
     // Node text is measured against a fixed stack in layout/measure.ts; the interface font must not reach it.
     check(/-apple-system/.test(tokens.nodeFamily ?? ""), `${state}: node labels are set in ${tokens.nodeFamily}, not the stack measure.ts measures`);
     check(/Inter/.test(tokens.chromeFamily ?? ""), `${state}: chrome is set in ${tokens.chromeFamily}, not --font-interface`);
@@ -225,6 +259,11 @@ for (const shell of SHELLS) {
         aligns: count(".nt-align-drop, .nt-phone-align > button"),
         arrange: count(".nt-phone-arrange > button"),
         moreDelete: count(".nt-phone-danger > button"),
+        // The dock, the More panel and the 44px targets are all behind `@media (pointer: coarse)`, and the panel's
+        // contents can only be counted once it is open. Both are preconditions of the checks below, so they are
+        // reported rather than assumed.
+        coarse: window.matchMedia("(pointer: coarse)").matches,
+        moreOpen: !!document.querySelector('.node-toolbar button[aria-haspopup="menu"][aria-expanded="true"]'),
         tight: !!el.querySelector(".nt-tail.is-tight"),
         deleteInRow: !!del && drawn(del),
         doneLast: keys.at(-1) === done,
@@ -257,12 +296,23 @@ for (const shell of SHELLS) {
       const want = FITS[fit];
       check(bar.keys.length === want.keys, `${state} (${fit}): the row has ${bar.keys.length} keys, not ${want.keys}`);
       check(bar.rowFormats === want.rowFormats, `${state} (${fit}): ${bar.rowFormats} formatting keys stand in the row, not ${want.rowFormats}`);
+      // What follows counts what the More panel holds, so the panel has to be open. Blink must always manage it — a
+      // panel that stops opening there is a real regression and fails here. A second engine is allowed to fail at
+      // driving the menu without failing the build: Playwright's WebKit on Linux does, where the same WebKit on a Mac
+      // and a real iPhone both do not, so the fault is the headless browser's rather than the plugin's. The skip
+      // names itself on every shell it happens on, so it can never quietly become "the phone is fine".
+      if (!bar.coarse || !bar.moreOpen) {
+        const why = !bar.coarse ? "would not report a coarse pointer" : "would not open the More panel";
+        check(engineName !== "blink", `${state}: the browser ${why}, so the dock could not be checked`);
+        console.warn(`  note: ${state} — ${engineName} ${why}, so the dock was not checked here`);
+      } else {
       check(bar.moreFormats === want.moreFormats, `${state} (${fit}): More holds ${bar.moreFormats} formatting keys, not ${want.moreFormats}`);
       // A duplicate of this was shipped: the row grew its alignment dropdown while More kept the three keys it
       // replaced, and both were on screen at once.
       check(bar.aligns === want.aligns, `${state} (${fit}): ${bar.aligns} alignment controls are on screen, not ${want.aligns}`);
       check(bar.moreDelete === want.moreDelete, `${state} (${fit}): More holds ${bar.moreDelete} Delete keys, not ${want.moreDelete} — a roomy row carries it itself`);
       check(bar.arrange === 2, `${state} (${fit}): More holds ${bar.arrange} arrange keys, not the two an outline row needs`);
+      }
       check(bar.tight === want.tight, `${state} (${fit}): the tail is ${bar.tight ? "tight" : "roomy"}`);
 
       // Every key a 44px-tall target, and none narrower than the floor the row falls to when it is full.
@@ -363,6 +413,13 @@ for (const shell of SHELLS) {
 }
 
 /* -------------------- the label's own editing -------------------- */
+// Blink only, and this one is the headless browser's own fault rather than the engine's. Playwright's WebKit gives
+// back an empty label from `execCommand('undo')` after a link is inserted at the caret, where Blink gives back the
+// text — which reads exactly like ⌘Z eating a node on an iPhone. It does not: run on a real iPhone over the cable
+// (see scripts/shots/phone.mjs), this module's own toggleInline and undo restore the label byte for byte, for a
+// link at the caret, a highlight and a code span alike. Headless WebKit is not the WKWebView an iPhone runs, and
+// on this one thing it lies. The chrome above IS checked under both engines, where the difference is real.
+if (engineName === "blink")
 // The tests beside this one build a DOM of their own: it has no selection, no ranges and no editing commands, so
 // the one thing they cannot see is whether a format can be taken back — and taking one back is exactly what was
 // broken. Highlight, code and links used to move nodes about by hand, which leaves the browser's undo history
@@ -492,6 +549,7 @@ for (const shell of SHELLS) {
 }
 
 await browser.close();
+}
 
 if (shotDir) {
   const cards = shots.map(name => `<figure><img src="${name}.png" alt="${name}"><figcaption>${name.replace(/-/g, " ")}</figcaption></figure>`).join("\n");
@@ -504,5 +562,5 @@ figcaption{margin-top:6px;color:#888;font-size:12px}</style>
 }
 
 assert.deepEqual(problems, [], `the rendered chrome is wrong:\n  ${problems.join("\n  ")}`);
-console.log(`Checked the chrome rendered at ${SHELLS.length} widths in ${THEMES.length} themes: every control visible, hittable and on Obsidian's tokens.`);
+console.log(`Checked the chrome rendered at ${SHELLS.length} widths in ${THEMES.length} themes, in ${engines.map(e => e[0]).join(' and ')}: every control visible, hittable and on Obsidian's tokens.`);
 console.log("Checked a label edited in a real contenteditable: every format goes on, comes off, and is taken back by the browser's own undo.");

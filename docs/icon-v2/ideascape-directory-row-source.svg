@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="224" viewBox="0 0 1200 224" fill="none">
+  <title>Ideascape Obsidian community directory row mockup</title>
+  <rect width="1200" height="224" rx="24" fill="#101011"/>
+  <rect x="32" y="32" width="1136" height="160" rx="18" fill="#202021" stroke="#303032" stroke-width="2"/>
+
+  <g transform="translate(64 88) scale(0.09375)">
+    <rect x="16" y="16" width="480" height="480" rx="116" fill="#6E56E8"/>
+    <rect x="20" y="20" width="472" height="472" rx="112" stroke="#B8A9FF" stroke-opacity="0.34" stroke-width="6"/>
+    <g transform="translate(77 69) scale(14.916667)" stroke="#FCFBFF" stroke-width="2.18" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>
+      <path d="M9 18h6"/>
+      <path d="M10 22h4"/>
+    </g>
+  </g>
+
+  <text x="144" y="95" fill="#F0EFEB" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="28" font-weight="650" letter-spacing="-0.4">Ideascape</text>
+  <text x="144" y="130" fill="#AAA9A4" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="20" font-weight="400">Build a mind map from the keyboard. Tab adds a child,</text>
+  <text x="144" y="158" fill="#AAA9A4" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="20" font-weight="400">Enter a sibling, and typing fills it in.</text>
+
+  <rect x="1046" y="84" width="88" height="40" rx="20" fill="#2A2A2C" stroke="#3A3A3C"/>
+  <text x="1090" y="110" text-anchor="middle" fill="#C9C8C4" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="15" font-weight="600">PLUGIN</text>
+</svg>

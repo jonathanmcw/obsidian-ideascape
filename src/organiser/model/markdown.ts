@@ -48,10 +48,13 @@ export function hasMapKey(fm: Record<string, unknown> | undefined): boolean {
 export function isLayoutBlockLine(line: string): boolean {
   return BLOCK_LINE_RE.test(line)
 }
+/** Keys that name an object's machinery, not data: never copied out of a file, never written back into one. */
+const UNSAFE_KEYS: ReadonlySet<string> = new Set(['__proto__', 'constructor', 'prototype'])
 const blockFor = (key: string | undefined): string => MAP_FORMATS.find((f) => f.key === key)?.block ?? MAP_FORMATS[0].block
 
 interface Geometry {
-  v: 1
+  /** 1 is what this version writes; a higher number a later version wrote is written back as it was. */
+  v: number
   look?: DocLook
   pos?: Record<string, [number, number]>
   collapsed?: string[]
@@ -62,6 +65,8 @@ interface Geometry {
   size?: Record<string, number>
   side?: Record<string, -1 | 1>
 }
+/** The top-level fields of the layout block this version reads and writes. Any other is a later version's, and is kept. */
+const GEOMETRY_KEYS: ReadonlySet<string> = new Set<keyof Geometry>(['v', 'look', 'pos', 'collapsed', 'links', 'align', 'branch', 'width', 'size', 'side'])
 
 export interface MdExtras {
   /** obsidian: the file's basename; a root that equals it is not written as an H1, unless the file had one. */
@@ -80,6 +85,11 @@ export interface MdExtras {
   trailer?: string
   /** A geometry block whose JSON would not parse, kept and written back exactly as it was. */
   rawGeometry?: string
+  /** The layout block's version, when a later version of the plugin wrote it: written back, not lowered to 1. */
+  geometryVersion?: number
+  /** Top-level fields of the layout block this version does not know, written back after the ones it does.
+   *  They are never read, only handed to JSON.stringify again. */
+  unknownGeometry?: Record<string, unknown>
   /** Windows line endings, when the file had them; the file is written back with them. */
   eol?: '\r\n'
   /** The map key the file was marked with, and the line its layout block opened with: written back as they were. */
@@ -168,25 +178,35 @@ function readItemHead(t0: string): { text: string; task?: string; size?: 1 | 2 |
 
 /**
  * For each line that opens a code fence, the index of the line that closes it; -1 when nothing closes
- * it before the end or before a line ending in a block id. The writer and the reader pair a node's
+ * it before the end or before one of the map's own items. The writer and the reader pair a node's
  * fences with this one rule, so fenced code always reads back as the code that was written.
+ * Every item the map writes carries its block id on its list line or on a line indented under it, so
+ * that is what stops the search: a stray fence can never take the items after it for code. Any other
+ * line ending in a `^word` is code like the rest — it is not read as an id, and it stops nothing.
  * Linear: once a fence finds nothing, later fences of its kind, no shorter, fail without a second look.
  */
 function pairFences(lines: string[]): number[] {
   const close = lines.map(() => -1)
-  const failed = new Map<string, { len: number; until: number }>()
+  const failed = new Map<string, { len: number; from: number; until: number }>()
   for (let i = 0; i < lines.length; i++) {
     const open = FENCE_RE.exec(lines[i])
     if (!open) continue
     const f = open[1]
     const memo = failed.get(f[0])
-    if (memo && i < memo.until && f.length >= memo.len) continue
+    if (memo && i < memo.until && i < memo.from && f.length >= memo.len) continue
     let j = i + 1
-    while (j < lines.length && !ID_RE.test(lines[j]) && !closesFence(f, lines[j])) j++
+    let item = -1 // the last list line since the fence, and how far it is indented
+    let itemLead = 0
+    for (; j < lines.length && !closesFence(f, lines[j]); j++) {
+      const at = leadOf(lines[j]).length
+      if (ITEM_RE.test(lines[j])) { item = j; itemLead = at }
+      if (item >= 0 && (item === j || at > itemLead) && ID_RE.test(lines[j])) break
+    }
     if (j < lines.length && closesFence(f, lines[j])) {
       close[i] = j
       i = j
-    } else failed.set(f[0], { len: f.length, until: j })
+    // A fence that starts after the list line that stopped this one has to look for itself.
+    } else failed.set(f[0], { len: f.length, from: j < lines.length ? item : j, until: j })
   }
   return close
 }
@@ -207,12 +227,13 @@ const NOTE_BLOCK_CLOSE: Record<string, string> = { '%%': '%%', '<!--': '-->', '$
 /**
  * The note's blocks outside any item, as the reader meets them: `end(i)` is the line that closes the
  * block line `i` opens, or -1 when it opens none. Nothing inside one is an item. The closing line is
- * indented no further than the opening one and is not an item, and a line ending in a block id
- * stops the search, as in `pairFences`: every item the map writes has one, so a stray opener in the
- * note's text or the root can never swallow the map's own items. A block nothing closes is text.
+ * indented no further than the opening one and is not an item, and one of the map's own items — a
+ * list line ending in a block id, or a line under a list line that does — stops the search, as in
+ * `pairFences`: every item the map writes has one, so a stray opener in the note's text or the root
+ * can never swallow the map's own items. A block nothing closes is text.
  */
 function noteBlocks(lines: string[]): (i: number) => number {
-  const failed = new Map<string, { len: number; lead: number; until: number }>()
+  const failed = new Map<string, { len: number; lead: number; from: number; until: number }>()
   return (i) => {
     const m = NOTE_BLOCK_RE.exec(lines[i])
     if (!m) return -1
@@ -224,18 +245,20 @@ function noteBlocks(lines: string[]): (i: number) => number {
     if (!fence && lines[i].includes(close, lead + open.length)) return -1
     const kind = fence ? fence[0] : open
     const memo = failed.get(kind)
-    if (memo && i < memo.until && open.length >= memo.len && lead <= memo.lead) return -1
+    if (memo && i < memo.until && i < memo.from && open.length >= memo.len && lead <= memo.lead) return -1
     let j = i + 1
+    let item = -1
     let itemLead = -1
-    for (; j < lines.length && !ID_RE.test(lines[j]); j++) {
+    for (; j < lines.length; j++) {
       const l = lines[j]
       const at = leadOf(l).length
-      if (ITEM_RE.test(l)) itemLead = at
+      if (ITEM_RE.test(l)) { item = j; itemLead = at }
+      if (item >= 0 && (item === j || at > itemLead) && ID_RE.test(l)) break
       // A line under an item belongs to that item: it can't close a block opened outside it.
       if (at > lead || (itemLead >= 0 && at > itemLead)) continue
       if (fence ? closesFence(fence, l) : l.includes(close) && !ITEM_RE.test(l)) return j
     }
-    failed.set(kind, { len: open.length, lead, until: j })
+    failed.set(kind, { len: open.length, lead, from: j < lines.length ? item : j, until: j })
     return -1
   }
 }
@@ -260,12 +283,26 @@ export function itemLines(doc: IODoc, n: IONode, indent: string, id?: NodeId): s
   return out
 }
 
+/** The frontmatter with the marker line in it: every other line is the note's, and is kept exactly as it was,
+ *  blank lines before the closing fence included. A marker whose value is not a word on its own line but runs
+ *  on under it — a mapping, a list, a block of text — goes with those lines, or what is left would not be YAML.
+ *  Under a marker that is a plain word nothing is touched: the lines there are the note's, whatever they are. */
 function ensureMarker(fm: string | undefined, rootId: string, key: string = MARKER): string {
-  const body = (fm ?? '').replace(/\s+$/, '')
   const line = `${key}: ${rootId}`
-  const re = new RegExp(`^${key}\\s*:.*$`, 'm')
-  if (re.test(body)) return body.replace(re, line)
-  return body ? `${line}\n${body}` : line
+  if (!fm) return line
+  const lines = fm.split('\n')
+  const at = lines.findIndex((l) => l.startsWith(key) && /^\s*:/.test(l.slice(key.length)))
+  if (at < 0) return `${line}\n${fm}`
+  // The value's further lines: indented, or a list under a key with nothing after its colon; a blank line
+  // belongs to them only when another of them follows it.
+  const value = lines[at].slice(key.length).replace(/^\s*:\s*/, '')
+  const bare = value === '' || value.startsWith('#')
+  const runsOn = bare || /^[|>[{&!]/.test(value)
+  const more = (l: string) => runsOn && (/^[ \t]+\S/.test(l) || (bare && /^-(\s|$)/.test(l)))
+  let end = at + 1
+  for (let k = end; k < lines.length && (more(lines[k]) || lines[k].trim() === ''); k++) if (more(lines[k])) end = k + 1
+  lines.splice(at, end - at, line)
+  return lines.join('\n')
 }
 
 /**
@@ -378,7 +415,7 @@ export function toMarkdownMap(doc: IODoc, extras: MdExtras = (doc as IODoc & { m
   // The map's own look, only the keys it pins, so an unpinned map's file is unchanged.
   const look = lookToFile(doc.look)
   const g: Geometry = {
-    v: 1,
+    v: extras.geometryVersion ?? 1,
     pos,
     collapsed: Object.values(doc.nodes).filter((n) => n.collapsed).map((n) => n.id).sort(),
     links: doc.links.map((l) => [l.from, l.to] as [string, string]),
@@ -388,6 +425,11 @@ export function toMarkdownMap(doc: IODoc, extras: MdExtras = (doc as IODoc & { m
     ...(Object.keys(size).length ? { size } : {}),
     ...(Object.keys(side).length ? { side } : {}),
     ...(Object.keys(look).length ? { look } : {}),
+  }
+  // A later version's fields go after this version's own, so a map with none of them is written as it always was.
+  // Defined one by one: an assignment or a spread of a `__proto__` key would set the block's prototype instead.
+  for (const [k, v] of Object.entries(extras.unknownGeometry ?? {})) {
+    if (!GEOMETRY_KEYS.has(k) && !UNSAFE_KEYS.has(k)) Object.defineProperty(g, k, { value: v, enumerable: true })
   }
   out.push('', extras.block ?? blockFor(extras.key), extras.rawGeometry ?? JSON.stringify(g), '%%')
   if (extras.trailer) out.push(extras.trailer)
@@ -409,7 +451,8 @@ export function fromMarkdownMap(src: string, fallbackName = 'Untitled'): IODoc &
     extras.frontmatter = body
     const key = new RegExp(`^(${KEY_ALT})\\s*:`, 'm').exec(body)?.[1]
     if (key) extras.key = key
-    const mv = key ? new RegExp(`^${key}\\s*:\\s*([A-Za-z0-9-]+)\\s*$`, 'm').exec(body) : null
+    // Only a value on the marker's own line: `\s` would run on to the next line and take a word from there.
+    const mv = key ? new RegExp(`^${key}[ \\t]*:[ \\t]*([A-Za-z0-9-]+)[ \\t]*$`, 'm').exec(body) : null
     if (mv && mv[1] !== '1' && mv[1] !== 'true') markerId = mv[1]
     text = text.slice(fm[0].length)
   }
@@ -420,8 +463,16 @@ export function fromMarkdownMap(src: string, fallbackName = 'Untitled'): IODoc &
     let g: unknown = null
     try { g = JSON.parse(block.body) } catch { g = null }
     // Unreadable JSON (a stray comma from a hand edit or a merge) is kept, not replaced by a fresh layout.
-    if (isRecord(g)) geometry = g
-    else extras.rawGeometry = block.body
+    if (isRecord(g)) {
+      geometry = g
+      // A block a later version wrote is still read as far as this one understands it, and what it doesn't
+      // understand goes back into the file on every save. Only whole top-level fields are kept this way: a key
+      // this version doesn't know inside a field it does (a new property of `look`, say) is still dropped.
+      if (typeof g.v === 'number' && Number.isInteger(g.v) && g.v > 1) extras.geometryVersion = g.v
+      const unknown = Object.create(null) as Record<string, unknown>
+      for (const k of Object.keys(g)) if (!GEOMETRY_KEYS.has(k) && !UNSAFE_KEYS.has(k)) unknown[k] = g[k]
+      if (Object.keys(unknown).length) extras.unknownGeometry = unknown
+    } else extras.rawGeometry = block.body
     if (block.after.trim()) extras.trailer = block.after.replace(/\s+$/, '')
     extras.block = block.open
     text = text.slice(0, block.start)
@@ -492,13 +543,18 @@ export function fromMarkdownMap(src: string, fallbackName = 'Untitled'): IODoc &
   let last: IONode | null = null // the item that more-indented lines continue
   let lastIndent = 0
   let ownId = false // whether `last` has the id the file gave it
+  let openFence = false // whether `last` has a fence nothing closes among its lines
   let prev: IONode | null = null // the last item read, whatever came after it
   const between: NonNullable<MdExtras['between']> = []
   const isText = (l: string) => l.trim() !== ''
-  /** A continuation line without the item's indentation; indentation beyond it (code) is kept. */
+  /** A continuation line without the item's indentation; what comes after it (code) is kept as it is, tabs
+   *  included. A tab that reaches past the item's indentation leaves the rest of its width as spaces. */
   const dedent = (l: string) => {
     const lead = leadOf(l)
-    return ' '.repeat(Math.max(0, indentOf(lead) - lastIndent - 2)) + l.slice(lead.length)
+    let k = 0
+    let col = 0
+    while (k < lead.length && col < lastIndent + 2) col += lead[k++] === '\t' ? 4 : 1
+    return ' '.repeat(Math.max(0, col - lastIndent - 2)) + l.slice(k)
   }
   /** Fences in the item's indented lines, paired as the writer pairs them (see `pairFences`), from
    *  the first fence on: `from` is the line they start at. Worked out once per item. */
@@ -534,6 +590,7 @@ export function fromMarkdownMap(src: string, fallbackName = 'Untitled'): IODoc &
       // file indents more widely than the writer does still reads back as it was written.
       lastIndent = Math.min(indent, 2 * (stack.length - 1))
       ownId = n.id === id
+      openFence = false
       fences = null
       continue
     }
@@ -549,7 +606,11 @@ export function fromMarkdownMap(src: string, fallbackName = 'Untitled'): IODoc &
         i = end
         continue
       }
-      const [t, id] = stripId(dedent(line).replace(/\s+$/, ''))
+      // A fence nothing closes is text, and so are the lines under it. A `^word` there that the item has no use
+      // for — it has its own id already — was written as code, so it stays in the text rather than being dropped.
+      if (end < 0 && FENCE_RE.test(dedent(line))) openFence = true
+      const own = dedent(line).replace(/\s+$/, '')
+      const [t, id] = openFence && ownId ? [own, null] : stripId(own)
       last.text += '\n' + unescape(t)
       // The id at the end of a multi-line item's text is its block id — unless the item already has one.
       if (id && !ownId) {

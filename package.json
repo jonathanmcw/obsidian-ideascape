@@ -1,7 +1,7 @@
 {
   "name": "obsidian-ideascape",
   "version": "0.9.5",
-  "description": "Create keyboard-first mind maps and outlines that stay as ordinary Markdown notes.",
+  "description": "Mind maps you type, not draw. Tab adds a child, Enter a sibling, and your hands stay on the keyboard. One shortcut turns the map into an outline. Plain Markdown underneath, yours to keep.",
   "main": "main.js",
   "type": "module",
   "private": true,
@@ -12,7 +12,7 @@
     "dev": "node scripts/build-css.mjs && node esbuild.config.mjs",
     "css": "node scripts/build-css.mjs",
     "test": "node --test test/*.test.ts",
-    "lint": "eslint src manifest.json package.json --max-warnings 10",
+    "lint": "eslint src manifest.json package.json --max-warnings 0",
     "verify:export": "node scripts/export-check.mjs",
     "verify:release": "node scripts/verify-release.mjs",
     "showcase": "bash scripts/shots/showcase.sh",

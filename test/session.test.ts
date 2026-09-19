@@ -5,7 +5,7 @@ import type { IODoc } from "../src/organiser/model/types.ts";
 import { embedsOf, stripEmbeds, withEmbeds } from "../src/organiser/model/inline.ts";
 import { fromMarkdownMap } from "../src/organiser/model/markdown.ts";
 import {
-  addToNode, beginDraft, commitStep, createNode, flushDraft, leave, newSession, openTo, pruneView, redo, reload, restructure, typed, undo, unfold, withDraft, type Session,
+  addToNode, beginDraft, commitStep, createNode, flushDraft, leave, newSession, openTo, pruneView, redo, reload, restructure, typed, undo, unfold, unmoved, withDraft, type Session,
 } from "../src/organiser/session.ts";
 import { asBranch, withLinks } from "../src/organiser/model/ingest.ts";
 
@@ -415,4 +415,29 @@ test("session: a dropped map joins as one branch under the selection; the map it
   assert.equal((next as IODoc & { md?: unknown }).md, (trip as IODoc & { md?: unknown }).md);
   assert.equal(next.nodes[ids[0]].parent, lisbon);
   assert.deepEqual(subtreeIds(next, ids[0]).map((id) => next.nodes[id].text), ["Packing", "Passport", "Charger"]);
+});
+
+test("session: a command that waited for the clipboard is told when the map moved on meanwhile — a reload, another map, a commit", () => {
+  const note = "# Trip\n\n- Where ^a1\n";
+  const s = newSession(fromMarkdownMap(note, "Trip"));
+  reload(s, s.doc, "Trip.md");
+  // Nothing happened while the clipboard was asked: the paste goes ahead.
+  assert.equal(unmoved(s)(), true);
+  // Sync brought a node from the phone. A paste built on the map from before would write over it.
+  const pulled = unmoved(s);
+  reload(s, fromMarkdownMap("# Trip\n\n- Where ^a1\n- from my phone ^b1\n", "Trip"), "Trip.md");
+  assert.equal(pulled(), false);
+  // The tab opened another note. The same paste would write the first map into it.
+  const switched = unmoved(s);
+  reload(s, fromMarkdownMap("# Other\n\n- secret ^z1\n", "Other"), "Other.md");
+  assert.equal(switched(), false);
+  // A node committed from a later render.
+  const committed = unmoved(s);
+  commitStep(s, underRoot(s.doc)[0]);
+  assert.equal(committed(), false);
+  // Typing moves nothing: the draft is not in the document yet, and a paste folds it in itself.
+  const typing = unmoved(s);
+  beginDraft(s, "z1", null);
+  s.draft = "secret plans";
+  assert.equal(typing(), true);
 });

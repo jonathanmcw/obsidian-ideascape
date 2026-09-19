@@ -2,146 +2,381 @@
 #
 # The directory's submission form takes 1200x800 desktop images (3:2) and 900x1600 mobile ones (9:16), PNG/JPEG/WebP,
 # 5 MB each. The detail page shows the first image as a hero in a rounded 3:2 frame on a near-black page, and the
-# grid thumbnails are cropped with CSS `object-fit: cover`, so the subject has to sit centred with slack at the edges
-# and nothing that matters may live near a border. There are no captions: the alt text is generated.
+# grid thumbnails are about 300 px wide and cropped with CSS `object-fit: cover`. There are no captions and the alt
+# text is generated, so any words a picture needs have to be inside the picture, and they have to survive being
+# shown at a quarter of their size.
 #
 # Two variants come out of one run, so the listing can be decided by looking rather than by arguing:
 #
 #   plain    — the window exactly as finish.py crops it, on flat #141416. This is what every plugin in the directory
-#              does today (12 of 12 are bare app captures, 10 of them dark), so it is the safe default.
-#   branded  — the same window, scaled down under a feature label and outcome-led headline, on a faint diagonal tint
-#              with a violet glow behind the window. Still the real app, with no invented product UI.
+#              does today, so it is the safe default. Nothing about it has changed.
+#   branded  — a story strip. Each picture is one sentence and one close crop of the real app, set out the way the
+#              plugin sets out a map: the kicker is a node, a connector leaves it, and the screenshot is its child.
 #
-# Each variant is written at 1200x800 (the form's recommendation, and what to upload) and at 2400x1600 in a sibling
-# "@2x" folder, both resampled down from the 2x raw frame rather than up from a finished 1200x800 picture.
+# How a branded picture is built, and why:
+#
+#   The subject is large. A whole Obsidian window scaled to fit leaves map text at 8 px in the hero and nothing
+#   legible in a thumbnail, so each picture shows a crop of the window instead: the nodes, the Markdown, the keys.
+#   The crop is real pixels from the capture and nothing is drawn over it. It sits in a panel that runs off the right
+#   edge of the canvas, which is what says "this is a piece of a bigger window" without inventing any chrome.
+#
+#   A panel that bleeds needs slack on its right, because a cover-cropped thumbnail can lose 8% of a side. Where the
+#   subject is itself at the right of the crop (the node being edited, the far leaves of the whole map, the export
+#   sheet) the entry says "bleed": false and the panel stops at the 8% line with all four corners rounded.
+#
+#   The words are a column, not a caption. The headline is SF Pro Display Bold at 54 units, which is still 13 px when
+#   the picture is a 300 px thumbnail. It is wrapped into balanced lines and shrinks only if a late headline will not
+#   fit in four. The column starts 8% in from the left, for the same reason. The kicker is one or two words in
+#   letterspaced capitals; at thumbnail size it is a chip of the branch colour and no more, which is its job there.
+#
+#   The colour is the product's own. Ideascape colours a map's branches in a fixed order (theme.ts, the graphite
+#   palette: terracotta, blue, green, ochre, plum, teal, rose, olive). The five desktop pictures and three mobile ones
+#   take those eight colours in that order, so the set reads as one map with eight branches. The tint colours the
+#   kicker, the connector and the panel's hairline, and warms the ground by a few percent. There is no glow and no
+#   gradient: the old violet bloom behind the window was decoration the app does not have.
+#
+#   Mobile pictures hold a real-iPhone capture in a plain rounded bezel with no notch and no logo. The phone runs off
+#   the bottom of the canvas so it can be wide enough to read; what is lost there is Obsidian's own navigation bar.
+#
+# The five desktop frames are one map, "Weekend in Kyoto", so the strip tells one story: a node mid-edit, the whole
+# shape, the outline, the Markdown source, the export sheet. They are captured by `bash scripts/shots/capture.sh
+# listing` (OUT=<dir>) and kept in docs/listing/frames/, so the JSON never points into a temp directory. The phone
+# pictures use the real-iPhone captures in docs/screenshots/ (10, 13, 12). The 828 px frames in review/ are larger
+# but are a different map in a different state, with no soft keyboard, so they cannot stand for "the dock".
+#
+# The words and the crops are data, not code: docs/listing/headlines.json lists, for each picture, its name, source
+# frame (a repo path, or a bare file name looked for in the raw-frame directory), crop box, kicker, headline and
+# tint, and optionally "bleed" and "layout". There is one other layout, "wide", for the one picture whose subject
+# is a whole map: the words run across the top and the panel takes the full safe width underneath (render_wide). The crop is given in fractions of the window (0,0 is the window's top
+# left, 1,1 its bottom right), so it holds for any capture size. If the file is missing, the defaults below are
+# written to it. An entry may carry a "standin" note when the frame it wants has not been captured yet; the note is
+# printed on every run so it cannot be forgotten, and is never drawn.
+#
+# Each variant is written at 1200x800 (the form's recommendation) and at 2400x1600 in a sibling "@2x" folder, both
+# resampled from the 2x raw frame rather than up from a finished 1200x800 picture.
 #
 # Usage
-#   python3 scripts/shots/listing.py <raw-frame-dir> [NAME ...]
-#       <raw-frame-dir> holds the raw-*.png frames from scripts/shots/capture.sh. NAME limits the run to some of the
-#       five outputs (1-map, 2-note-and-map, 3-outline, 4-shortcuts, 5-themes); the contact sheet is always rebuilt
-#       from whatever is on disk afterwards.
-#           docs/listing/desktop/{plain,plain@2x,branded,branded@2x}/<name>.png
-#           docs/listing/preview-desktop.png    — all ten tiles side by side for a human to compare
-#
-#   python3 scripts/shots/listing.py --mobile NAME=<content.png> ...
-#       Mobile takes a different kind of input: a TIGHT CONTENT CROP of the app running in Obsidian's mobile
-#       emulation — no macOS title bar, no window shadow, roughly 9:16 (e.g. 810x1440 physical pixels). Each crop is
-#       scaled to fit, given its own rounded corners (44 px at 900 width) and a soft drop shadow, and centred on a
-#       900x1600 canvas with a ~70 px margin, in both variants; branded mobile copy sits top-centre rather than
-#       top-left, because a 9:16 thumbnail is cropped from the sides. NAME picks the output name and, through the
-#       table below, the label; any name not in the table simply gets no label.
-#           docs/listing/mobile/{plain,plain@2x,branded,branded@2x}/<name>.png
-#       Nothing about this mode has been through a real capture yet — no mobile frames exist.
+#   python3 scripts/shots/listing.py [raw-frame-dir] [NAME ...]
+#       <raw-frame-dir> holds the raw-*.png frames from scripts/shots/capture.sh and defaults to docs/listing/frames.
+#       NAME limits the run to some of the desktop pictures. A full run also rebuilds the mobile pictures and removes
+#       any picture whose entry has gone from the JSON, so a renamed picture cannot be uploaded twice.
+#           docs/listing/{desktop,mobile}/{plain,plain@2x,branded,branded@2x}/<name>.png
+#           docs/listing/preview-desktop.png, preview-mobile.png
+#               — the set at hero size and at thumbnail size on the directory's page colour, to judge legibility
+#           docs/listing/upload/   — the same files, laid out in the order the form wants them
 #
 #   python3 scripts/shots/listing.py --rebrand
-#       Rebuild only the branded explanation layer from the checked-in 2x plain exports. Use this when refining
-#       feature labels or headlines without changing the underlying product captures.
+#       Rebuild only the branded layer from the 2x plain exports already on disk. Use this when the headlines change
+#       and the raw frames are gone; the plain export holds the whole window, so the same crops apply.
 #
-# Needs Pillow and numpy. Reads the raw frames; writes only under docs/listing.
+# Needs Pillow. Reads the raw frames; writes only under docs/listing.
+import itertools
+import json
 import os
+import shutil
 import sys
 
-import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUT_ROOT = os.path.join(REPO, "docs", "listing")
-
-# name, raw frame, feature label, headline. The order is the upload order: the first one is the hero on the detail page.
-DESKTOP = [
-    ("1-map", "raw-01-map-dark.png", "KEYBOARD FIRST", "Build a mind map without the mouse"),
-    ("2-note-and-map", "raw-06-markdown-and-map.png", "PLAIN MARKDOWN", "Your map is still an ordinary note"),
-    ("3-outline", "raw-02-outline-dark.png", "TWO VIEWS", "Switch between map and outline"),
-    ("4-shortcuts", "raw-05-shortcuts-dark.png", "SHORTCUTS", "Keep every command one key away"),
-    ("5-themes", "raw-04-themes-light.png", "THEMES", "Match your vault, light or dark"),
-]
-LABELS = {name: (feature, headline) for name, _, feature, headline in DESKTOP}
-# Phone frames from `capture.sh mobile`, in upload order.
-# The hero's label must not repeat the short description, which sits beside it at the top of the listing page.
-MOBILE_LABELS = {
-    "1-map": ("MOBILE", "Keep mapping on your phone"),
-    "2-outline": ("TWO VIEWS", "Switch to an outline on mobile"),
-    "3-light": ("LIGHT + DARK", "Match your vault on every screen"),
-}
+HEADLINES = os.path.join(OUT_ROOT, "headlines.json")
+FRAMES = os.path.join(OUT_ROOT, "frames")
 
 WINDOW = (2294, 1530)  # the captured window in physical pixels, the size finish.py is handed
 DESKTOP_SIZE = (1200, 800)
 MOBILE_SIZE = (900, 1600)
+# Where the window sits in a 1200x800 plain export. --rebrand uses it to find the window again.
+PLAIN_WINDOW = (44, 29, 1156, 771)
 
 PLAIN_BG = (20, 20, 22)  # #141416
-TINT_TL = (28, 26, 43)  # #1c1a2b
-TINT_BR = (19, 19, 22)  # #131316
-GLOW = (124, 101, 235)  # #7c65eb
-GLOW_ALPHA = 0.10
+PAGE_BG = (13, 13, 15)  # the directory's page, for the contact sheets
+GROUND = (19, 18, 22)  # a touch under the graphite theme's --bg, so the app's own surface still reads as lit
+INK = (240, 238, 244)
 
-# Geometry in 1200-wide design units; every number is multiplied by the output's scale.
-BRANDED_SCALE = 0.84  # leaves room for a feature label and headline without crowding the app window
-FEATURE_SIZE = 13
-FEATURE_Y = 23
-LABEL_SIZE = 34
-LABEL_MIN_X = 90  # the central 85% of the width starts here, and an object-cover thumbnail keeps that much
-LABEL_Y = 47
+# theme.ts, graphite palette, in branch order. The order is the point: picture n wears branch n's colour.
+TINTS = {
+    "terracotta": (240, 153, 106),
+    "blue": (121, 168, 240),
+    "green": (104, 199, 154),
+    "ochre": (220, 174, 99),
+    "plum": (193, 148, 214),
+    "teal": (95, 201, 196),
+    "rose": (239, 139, 160),
+    "olive": (179, 196, 106),
+}
+GROUND_TINT = 0.075  # how far the ground leans towards the tint; more than this starts to look like a coloured card
 
-MOBILE_MARGIN = 70  # in 900-wide design units
-MOBILE_RADIUS = 44
-MOBILE_FEATURE_SIZE = 15
-MOBILE_FEATURE_Y = 35
-MOBILE_LABEL_SIZE = 38
-MOBILE_LABEL_Y = 66
+DEFAULT_HEADLINES = {
+    "desktop": [
+        {
+            "name": "1-keys",
+            "source": "docs/listing/frames/raw-L1-editing.png",
+            "crop": [0.505, 0.283, 1.0, 0.8],
+            "bleed": False,
+            "kicker": "KEYBOARD",
+            "headline": "Hands on the keys. The map keeps up.",
+            "tint": "terracotta",
+        },
+        {
+            "name": "2-shape",
+            "source": "docs/listing/frames/raw-L2-shape.png",
+            "crop": [0.06, 0.283, 0.995, 0.947],
+            "layout": "wide",
+            "kicker": "THE SHAPE",
+            "headline": "Tab, Enter, type. The shape appears.",
+            "tint": "blue",
+        },
+        {
+            "name": "3-outline",
+            "source": "docs/listing/frames/raw-L3-outline.png",
+            "crop": [0.268, 0.315, 0.7, 0.905],
+            "kicker": "THE OUTLINE",
+            "headline": "One shortcut, and it is an outline.",
+            "tint": "green",
+        },
+        {
+            "name": "4-file",
+            "source": "docs/listing/frames/raw-L4-note-and-map.png",
+            "crop": [0.055, 0.195, 0.455, 0.722],
+            "kicker": "THE FILE",
+            "headline": "It was only ever a Markdown note.",
+            "tint": "ochre",
+        },
+        {
+            "name": "5-export",
+            "source": "docs/listing/frames/raw-L5-export-light.png",
+            "crop": [0.235, 0.262, 0.81, 0.858],
+            "bleed": False,
+            "kicker": "THE WAY OUT",
+            "headline": "Export the map. Keep the note.",
+            "tint": "plum",
+        },
+    ],
+    "mobile": [
+        {
+            "name": "1-phone",
+            "source": "docs/screenshots/10-phone-map.png",
+            "kicker": "THE PHONE",
+            "headline": "The same map, on your phone.",
+            "tint": "teal",
+        },
+        {
+            "name": "2-dock",
+            "source": "docs/screenshots/13-phone-editing.png",
+            "kicker": "THE DOCK",
+            "headline": "A soft keyboard has no Tab. The dock does.",
+            "tint": "rose",
+        },
+        {
+            "name": "3-note",
+            "source": "docs/screenshots/12-phone-outline.png",
+            "kicker": "THE NOTE",
+            "headline": "Still a list. Still yours.",
+            "tint": "olive",
+        },
+    ],
+}
 
-FONTS = [
-    "/Library/Fonts/SF-Pro-Display-Medium.otf",
-    "/Library/Fonts/SF-Pro-Text-Medium.otf",
-    "/System/Library/Fonts/SFNS.ttf",
-    "/Library/Fonts/SF-Pro.ttf",
-    "/System/Library/Fonts/Supplemental/Arial.ttf",
-    "/System/Library/Fonts/Helvetica.ttc",
-]
+# Desktop geometry in 1200-wide design units; every number is multiplied by the output's scale.
+COL_X = 96  # 8% in: what an object-fit: cover thumbnail can take off a side
+COL_W = 368
+PANEL_X = 500
+PANEL_MAX_H = 660
+PANEL_RADIUS = 16
+HEAD_SIZE = 54
+HEAD_LEADING = 1.13
+HEAD_MAX_LINES = 4
+KICKER_SIZE = 20
+KICKER_TRACK = 0.09  # of the font size, for kickers set in capitals
+KICKER_PAD = (16, 9)
+KICKER_GAP = 30  # from the pill's foot to the headline's first cap
+WIDE_HEAD_W = 620  # the "wide" layout: narrow enough that the headline takes two lines and leaves the edge room
+WIDE_GAP = 40  # from the headline's last baseline to the panel
+
+# Mobile geometry in 900-wide design units.
+M_TOP = 136  # 8.5% down
+M_TEXT_W = 740
+M_HEAD_SIZE = 72
+M_KICKER_SIZE = 22
+M_KICKER_PAD = (20, 11)
+M_KICKER_GAP = 34
+M_PHONE_W = 676  # the screen, without the bezel
+M_PHONE_GAP = 72  # from the headline's last baseline to the top of the bezel
+M_BEZEL = 13
+M_SCREEN_RADIUS = 62
+
+SANS = {
+    "Bold": ["/Library/Fonts/SF-Pro-Display-Bold.otf", "/System/Library/Fonts/SFNS.ttf", "/Library/Fonts/SF-Pro.ttf"],
+    "Medium": ["/Library/Fonts/SF-Pro-Text-Medium.otf", "/System/Library/Fonts/SFNS.ttf", "/Library/Fonts/SF-Pro.ttf"],
+    "Regular": ["/Library/Fonts/SF-Pro-Text-Regular.otf", "/System/Library/Fonts/SFNS.ttf", "/Library/Fonts/SF-Pro.ttf"],
+}
+LAST_RESORT = ["/System/Library/Fonts/Supplemental/Arial.ttf", "/System/Library/Fonts/Helvetica.ttc"]
 
 
-def load_font(size):
-    for path in FONTS:
+def load_font(size, weight="Medium"):
+    for path in SANS[weight] + LAST_RESORT:
         if not os.path.exists(path):
             continue
         font = ImageFont.truetype(path, size)
-        try:  # SFNS.ttf and SF-Pro.ttf are variable fonts and default to a weight that is too light for a label.
-            font.set_variation_by_name("Medium")
+        try:  # SFNS.ttf and SF-Pro.ttf are variable fonts that open at Regular; the static .otf files ignore this.
+            font.set_variation_by_name(weight)
         except Exception:
             pass
         return font
     raise SystemExit("no usable system font found")
 
 
-def flat_background(size, colour):
-    return Image.new("RGBA", size, colour + (255,))
+def load_headlines():
+    if not os.path.exists(HEADLINES):
+        os.makedirs(OUT_ROOT, exist_ok=True)
+        with open(HEADLINES, "w") as f:
+            json.dump(DEFAULT_HEADLINES, f, indent=2, ensure_ascii=False)
+            f.write("\n")
+        print(f"  wrote the default {os.path.relpath(HEADLINES, REPO)}")
+    with open(HEADLINES) as f:
+        return json.load(f)
 
 
-def branded_background(size, centre):
-    """The diagonal tint plus a blurred violet glow behind the window, dithered so a 9-step ramp cannot band."""
-    w, h = size
-    x = np.linspace(0.0, 1.0, w, dtype=np.float32)[None, :]
-    y = np.linspace(0.0, 1.0, h, dtype=np.float32)[:, None]
-    t = (x + y) / 2.0
-    tint = np.array(TINT_TL, np.float32) + (np.array(TINT_BR, np.float32) - np.array(TINT_TL, np.float32)) * t[..., None]
-
-    cx, cy = centre
-    rx, ry = 0.78 * w, 0.78 * h
-    r2 = ((np.arange(w, dtype=np.float32)[None, :] - cx) / rx) ** 2 + (
-        (np.arange(h, dtype=np.float32)[:, None] - cy) / ry
-    ) ** 2
-    glow = (GLOW_ALPHA * np.exp(-2.2 * r2))[..., None]
-    rgb = tint * (1.0 - glow) + np.array(GLOW, np.float32) * glow
-
-    rng = np.random.default_rng(7)  # one LSB of noise: the whole picture moves over ~21 steps of blue across 1200 px
-    rgb = np.clip(rgb + rng.uniform(-0.5, 0.5, rgb.shape).astype(np.float32), 0, 255)
-    out = Image.fromarray(rgb.astype(np.uint8), "RGB").convert("RGBA")
-    return out
+def mix(a, b, t):
+    return tuple(round(x + (y - x) * t) for x, y in zip(a, b))
 
 
-def draw_label(canvas, text, font, xy, anchor, fill=(255, 255, 255, 235)):
+def ground(size, tint):
+    return Image.new("RGBA", size, mix(GROUND, tint, GROUND_TINT) + (255,))
+
+
+def wrap_balanced(text, font, max_w, max_lines):
+    """Break into the fewest lines that fit, then pick the breaks that leave the lines most alike in length.
+
+    A greedy wrap leaves one orphan word under a full line, which is the first thing the eye finds in a headline.
+    """
+    words = text.split()
+    width = lambda ws: font.getlength(" ".join(ws))
+    for n in range(1, max_lines + 1):
+        best = None
+        for cuts in itertools.combinations(range(1, len(words)), n - 1):
+            edges = (0,) + cuts + (len(words),)
+            lines = [words[a:b] for a, b in zip(edges, edges[1:])]
+            widths = [width(l) for l in lines]
+            if max(widths) > max_w:
+                continue
+            score = max(widths) - min(widths)
+            if best is None or score < best[0]:
+                best = (score, [" ".join(l) for l in lines])
+        if best:
+            return best[1]
+    return None
+
+
+def fit_headline(text, size, max_w, max_lines, scale):
+    """The headline at its designed size, or a step smaller for as long as it takes to fit."""
+    while size > 20:
+        font = load_font(round(size * scale), "Bold")
+        lines = wrap_balanced(text, font, max_w * scale, max_lines)
+        if lines:
+            return font, lines
+        size -= 2
+    raise SystemExit(f"headline will not fit: {text!r}")
+
+
+def rounded_mask(size, radius, corners=(True, True, True, True)):
+    """Drawn at 4x and reduced, because Pillow's rounded_rectangle is not antialiased."""
+    k = 4
+    big = Image.new("L", (size[0] * k, size[1] * k), 0)
+    ImageDraw.Draw(big).rounded_rectangle((0, 0, big.width - 1, big.height - 1), radius=radius * k, fill=255, corners=corners)
+    return big.resize(size, Image.LANCZOS)
+
+
+def shadow(canvas, box, radius, scale, strength=150):
+    blur = 30 * scale
+    pad = round(blur * 3)
+    x, y, w, h = box
+    shade = Image.new("RGBA", (w + 2 * pad, h + 2 * pad), (0, 0, 0, 0))
+    ImageDraw.Draw(shade).rounded_rectangle((pad, pad, pad + w, pad + h), radius=radius, fill=(0, 0, 0, strength))
+    shade = shade.filter(ImageFilter.GaussianBlur(blur))
     layer = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
-    ImageDraw.Draw(layer).text(xy, text, font=font, fill=fill, anchor=anchor)
+    layer.alpha_composite(shade, (x - pad, y - pad + round(18 * scale)))
     return Image.alpha_composite(canvas, layer)
+
+
+def tracked(font, text, track):
+    return sum(font.getlength(ch) for ch in text) + track * (len(text) - 1)
+
+
+def draw_kicker(canvas, text, xy, anchor, tint, size, pad, scale):
+    """The kicker as an outlined pill — the shape the plugin gives a node. Returns the pill's box.
+
+    The final kickers are capitals, which close up at this size, so they are letterspaced: Pillow has no tracking,
+    and the letters are placed one by one.
+    """
+    font = load_font(round(size * scale), "Medium")
+    track = KICKER_TRACK * font.size if text.isupper() else 0
+    ascent = -font.getbbox("H", anchor="ls")[1]
+    px, py = pad[0] * scale, pad[1] * scale
+    w, h = tracked(font, text, track) + 2 * px, ascent + 2 * py
+    x0 = xy[0] - w / 2 if anchor == "m" else xy[0]
+    y0 = xy[1]
+    k = 4
+    layer = Image.new("RGBA", (round(w * k) + 4 * k, round(h * k) + 4 * k), (0, 0, 0, 0))
+    ImageDraw.Draw(layer).rounded_rectangle(
+        (2 * k, 2 * k, 2 * k + w * k, 2 * k + h * k),
+        radius=h * k / 2,
+        fill=mix(GROUND, tint, 0.13) + (255,),
+        outline=tint + (235,),
+        width=round(1.6 * scale * k),
+    )
+    layer = layer.resize((layer.width // k, layer.height // k), Image.LANCZOS)
+    canvas.alpha_composite(layer, (round(x0) - 2, round(y0) - 2))
+    draw = ImageDraw.Draw(canvas)
+    x = x0 + px
+    for ch in text:
+        draw.text((x, y0 + py + ascent), ch, font=font, fill=tint + (255,), anchor="ls")
+        x += font.getlength(ch) + track
+    return x0, y0, x0 + w, y0 + h
+
+
+def edge_points(start, end):
+    """A map edge: horizontal out, horizontal in, the curve the plugin draws between a parent and a child."""
+    (x0, y0), (x1, y1) = start, end
+    mid = (x0 + x1) / 2
+    pts = []
+    for i in range(121):
+        t = i / 120
+        a, b, c, d = (1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t**2, t**3
+        pts.append((a * x0 + b * mid + c * mid + d * x1, a * y0 + b * y0 + c * y1 + d * y1))
+    return pts
+
+
+def turn_points(start, end):
+    """The same edge turned a quarter: level out of the parent, straight down into a child that sits below it."""
+    (x0, y0), (x1, y1) = start, end
+    pts = []
+    for i in range(121):
+        t = i / 120
+        a, b, c, d = (1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t**2, t**3
+        pts.append((a * x0 + b * (x0 + (x1 - x0) * 0.7) + c * x1 + d * x1, a * y0 + b * y0 + c * (y0 + (y1 - y0) * 0.3) + d * y1))
+    return pts
+
+
+def draw_connector(canvas, pts, tint, scale):
+    k = 4
+    layer = Image.new("RGBA", (canvas.width * k, canvas.height * k), (0, 0, 0, 0))
+    pts = [(x * k, y * k) for x, y in pts]
+    ImageDraw.Draw(layer).line(pts, fill=tint + (200,), width=round(2 * scale * k), joint="curve")
+    canvas.alpha_composite(layer.resize(canvas.size, Image.LANCZOS))
+
+
+def draw_lines(canvas, lines, font, xy, anchor, leading):
+    """Headline lines from the first baseline down. Returns the last baseline."""
+    draw = ImageDraw.Draw(canvas)
+    step = font.size * leading
+    y = xy[1]
+    for line in lines:
+        x = xy[0] - (font.getbbox(line)[0] if anchor == "l" else 0)  # the side bearing, so the ink sits on the grid
+        draw.text((x, y), line, font=font, fill=INK + (255,), anchor=anchor + "s")
+        y += step
+    return y - step
 
 
 def window_box(src, window):
@@ -167,142 +402,189 @@ def plain_crop(src, window, out_size):
 def render_plain(src, window, out_size):
     box = plain_crop(src, window, out_size)
     window_on_dark = src.crop(box).resize(out_size, Image.LANCZOS)
-    return Image.alpha_composite(flat_background(out_size, PLAIN_BG), window_on_dark)
+    return Image.alpha_composite(Image.new("RGBA", out_size, PLAIN_BG + (255,)), window_on_dark)
 
 
-def render_branded(src, window, out_size, feature, headline):
+def window_of(src, window):
+    """The window alone, flattened, so a crop that reaches a rounded corner shows dark rather than nothing."""
+    win = src.crop(window_box(src, window))
+    return Image.alpha_composite(Image.new("RGBA", win.size, PLAIN_BG + (255,)), win)
+
+
+def render_branded(win, out_size, spec):
+    """One desktop picture: the words in a column on the left, the crop in a panel that runs off the right edge."""
     out_w, out_h = out_size
-    scale = out_w / DESKTOP_SIZE[0]
-    win_w, win_h = window
-    x0, y0, _, _ = window_box(src, window)
+    s = out_w / DESKTOP_SIZE[0]
+    tint = TINTS[spec["tint"]]
+    canvas = ground(out_size, tint)
 
-    box = plain_crop(src, window, out_size)
-    plain_window_w = win_w * out_w / (box[2] - box[0])  # the width the plain variant gives the window
-    k = plain_window_w * BRANDED_SCALE / win_w
-    shot = src.resize((round(src.width * k), round(src.height * k)), Image.LANCZOS)
-    win_left = (out_w - win_w * k) / 2
-    paste_x = round(win_left - x0 * k)
+    fx0, fy0, fx1, fy1 = spec["crop"]
+    crop = win.crop((round(fx0 * win.width), round(fy0 * win.height), round(fx1 * win.width), round(fy1 * win.height)))
+    # The panel is as wide as the canvas allows and as tall as the crop makes it. A crop too tall for that starts
+    # further right instead, so it still ends where it should and nothing in it is trimmed.
+    #
+    # By default the panel runs off the right edge. That only works when the crop's right side is slack, because a
+    # cover-cropped thumbnail can lose 8% there. When the subject itself is at the crop's right ("bleed": false in
+    # the entry: the node being edited, the far leaves of the whole map) the panel stops at the safe line instead.
+    bleed = spec.get("bleed", True)
+    right = out_w if bleed else out_w - round(COL_X * s)
+    panel_w = right - round(PANEL_X * s)
+    panel_h = round(panel_w * crop.height / crop.width)
+    if panel_h > PANEL_MAX_H * s:
+        panel_h = round(PANEL_MAX_H * s)
+        panel_w = round(panel_h * crop.width / crop.height)
+    crop = crop.resize((panel_w, panel_h), Image.LANCZOS)
+    px, py = right - panel_w, (out_h - panel_h) // 2
+    radius = round(PANEL_RADIUS * s)
 
-    feature_font = load_font(round(FEATURE_SIZE * scale))
-    font = load_font(round(LABEL_SIZE * scale))
-    ascent, descent = font.getmetrics()
-    band_bottom = LABEL_Y * scale + ascent + descent
-    win_top = band_bottom + (out_h - band_bottom - win_h * k) / 2
-    paste_y = round(win_top - y0 * k)
-
-    # The label's first letter stands on the window's own left edge, so the two read as one block. The side bearing
-    # comes off the drawing origin, or the ink would sit a couple of pixels to the right of the window.
-    label_x = max(win_left, LABEL_MIN_X * scale) - font.getbbox(headline)[0]
-
-    centre = (out_w / 2, win_top + win_h * k / 2)
-    canvas = branded_background(out_size, centre)
-    canvas = draw_label(
-        canvas,
-        feature,
-        feature_font,
-        (round(label_x), round(FEATURE_Y * scale)),
-        "la",
-        fill=(181, 163, 255, 242),
+    # A bleeding panel's shadow and hairline are drawn wider than the canvas so neither turns the corner at the edge.
+    over = 4 * radius if bleed else 0
+    canvas = shadow(canvas, (px, py, panel_w + over, panel_h), radius, s)
+    crop.putalpha(rounded_mask(crop.size, radius, (True, not bleed, not bleed, True)))
+    canvas.alpha_composite(crop, (px, py))
+    k = 4
+    edge = Image.new("RGBA", (panel_w * k, panel_h * k), (0, 0, 0, 0))
+    ImageDraw.Draw(edge).rounded_rectangle(
+        (0, 0, edge.width - 1 + over * k, edge.height - 1),
+        radius=radius * k,
+        outline=tint + (120,),
+        width=round(1.5 * s * k),
     )
-    canvas = draw_label(canvas, headline, font, (round(label_x), round(LABEL_Y * scale)), "la")
-    canvas.alpha_composite(shot, (paste_x, paste_y))
+    canvas.alpha_composite(edge.resize((panel_w, panel_h), Image.LANCZOS), (px, py))
+
+    font, lines = fit_headline(spec["headline"], HEAD_SIZE, COL_W, HEAD_MAX_LINES, s)
+    cap = -font.getbbox("H", anchor="ls")[1]
+    kicker_font = load_font(round(KICKER_SIZE * s), "Medium")
+    pill_h = -kicker_font.getbbox("H", anchor="ls")[1] + 2 * KICKER_PAD[1] * s
+    block_h = pill_h + KICKER_GAP * s + cap + (len(lines) - 1) * font.size * HEAD_LEADING
+    top = (out_h - block_h) / 2
+    pill = draw_kicker(canvas, spec["kicker"], (COL_X * s, top), "l", tint, KICKER_SIZE, KICKER_PAD, s)
+    first_base = top + pill_h + KICKER_GAP * s + cap
+    draw_lines(canvas, lines, font, (COL_X * s, first_base), "l", HEAD_LEADING)
+
+    # The edge leaves the pill level and bends down to the panel's middle, the way a parent's edge meets a child.
+    # A long first line would sit in its way, and an edge drawn through a word is a strike-through, so then it
+    # rises to the panel instead. Which way it goes is decided by the geometry, not by the entry.
+    start = (pill[2], (pill[1] + pill[3]) / 2)
+    pts = edge_points(start, (px, out_h / 2))
+    first_right = COL_X * s + font.getlength(lines[0]) + 14 * s
+    first_top = first_base - cap - 14 * s
+    if any(x < first_right and y > first_top for x, y in pts):
+        pts = edge_points(start, (px, max(py + 3 * radius, start[1] - 84 * s)))
+    draw_connector(canvas, pts, tint, s)
     return canvas
 
 
-def rounded(img, radius):
-    mask = Image.new("L", img.size, 0)
-    ImageDraw.Draw(mask).rounded_rectangle((0, 0, img.width - 1, img.height - 1), radius=radius, fill=255)
-    out = img.convert("RGBA")
-    out.putalpha(mask)
-    return out
+def render_desktop(win, out_size, spec):
+    return (render_wide if spec.get("layout") == "wide" else render_branded)(win, out_size, spec)
 
 
-def drop_shadow(canvas, box, radius, scale):
-    """A soft shadow under the mobile content, roughly the weight macOS gives a window."""
-    blur = 26 * scale
-    pad = round(blur * 3)
-    x, y, w, h = box
-    layer = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
-    shade = Image.new("RGBA", (w + 2 * pad, h + 2 * pad), (0, 0, 0, 0))
-    ImageDraw.Draw(shade).rounded_rectangle((pad, pad, pad + w, pad + h), radius=radius, fill=(0, 0, 0, 140))
-    shade = shade.filter(ImageFilter.GaussianBlur(blur))
-    layer.alpha_composite(shade, (x - pad, y - pad + round(14 * scale)))
-    return Image.alpha_composite(canvas, layer)
+def render_wide(win, out_size, spec):
+    """The one picture whose subject is a whole map: the words across the top, the panel the full safe width below.
 
-
-def render_mobile(content, out_size, variant, label):
+    A map is twice as wide as it is tall, and beside a column it can only be a strip at two-thirds size. Here it
+    gets 1008 units and shows at about its real size. The parts are the column layout's own (pill, edge, hairline,
+    tint), so it reads as the same family with a different rhythm, which suits the beat where the shape appears.
+    """
     out_w, out_h = out_size
-    scale = out_w / MOBILE_SIZE[0]
-    margin = MOBILE_MARGIN * scale
-    top = margin
+    s = out_w / DESKTOP_SIZE[0]
+    tint = TINTS[spec["tint"]]
+    canvas = ground(out_size, tint)
 
-    feature_font = None
-    font = None
-    if variant == "branded" and label:
-        feature, headline = label
-        feature_font = load_font(round(MOBILE_FEATURE_SIZE * scale))
-        font = load_font(round(MOBILE_LABEL_SIZE * scale))
-        ascent, descent = font.getmetrics()
-        top = MOBILE_LABEL_Y * scale + ascent + descent
+    fx0, fy0, fx1, fy1 = spec["crop"]
+    crop = win.crop((round(fx0 * win.width), round(fy0 * win.height), round(fx1 * win.width), round(fy1 * win.height)))
+    panel_w = out_w - 2 * round(COL_X * s)
+    panel_h = round(panel_w * crop.height / crop.width)
+    crop = crop.resize((panel_w, panel_h), Image.LANCZOS)
 
-    avail_w, avail_h = out_w - 2 * margin, (out_h - margin) - top
-    k = min(avail_w / content.width, avail_h / content.height)
-    w, h = round(content.width * k), round(content.height * k)
-    x, y = round((out_w - w) / 2), round(top + (avail_h - h) / 2)
+    font, lines = fit_headline(spec["headline"], HEAD_SIZE, WIDE_HEAD_W, 2, s)
+    cap = -font.getbbox("H", anchor="ls")[1]
+    kicker_font = load_font(round(KICKER_SIZE * s), "Medium")
+    pill_h = -kicker_font.getbbox("H", anchor="ls")[1] + 2 * KICKER_PAD[1] * s
+    text_h = pill_h + KICKER_GAP * s + cap + (len(lines) - 1) * font.size * HEAD_LEADING
+    top = (out_h - (text_h + WIDE_GAP * s + panel_h)) / 2
+    px, py = round(COL_X * s), round(top + text_h + WIDE_GAP * s)
+    radius = round(PANEL_RADIUS * s)
 
-    centre = (out_w / 2, y + h / 2)
-    canvas = flat_background(out_size, PLAIN_BG) if variant == "plain" else branded_background(out_size, centre)
-    radius = round(MOBILE_RADIUS * scale)
-    canvas = drop_shadow(canvas, (x, y, w, h), radius, scale)
-    canvas.alpha_composite(rounded(content.resize((w, h), Image.LANCZOS), radius), (x, y))
-    if font:
-        canvas = draw_label(
-            canvas,
-            feature,
-            feature_font,
-            (round(out_w / 2), round(MOBILE_FEATURE_Y * scale)),
-            "ma",
-            fill=(181, 163, 255, 242),
-        )
-        canvas = draw_label(canvas, headline, font, (round(out_w / 2), round(MOBILE_LABEL_Y * scale)), "ma")
+    canvas = shadow(canvas, (px, py, panel_w, panel_h), radius, s)
+    crop.putalpha(rounded_mask(crop.size, radius))
+    canvas.alpha_composite(crop, (px, py))
+    k = 4
+    edge = Image.new("RGBA", (panel_w * k, panel_h * k), (0, 0, 0, 0))
+    ImageDraw.Draw(edge).rounded_rectangle(
+        (0, 0, edge.width - 1, edge.height - 1), radius=radius * k, outline=tint + (120,), width=round(1.5 * s * k)
+    )
+    canvas.alpha_composite(edge.resize((panel_w, panel_h), Image.LANCZOS), (px, py))
+
+    pill = draw_kicker(canvas, spec["kicker"], (COL_X * s, top), "l", tint, KICKER_SIZE, KICKER_PAD, s)
+    first_base = top + pill_h + KICKER_GAP * s + cap
+    draw_lines(canvas, lines, font, (COL_X * s, first_base), "l", HEAD_LEADING)
+
+    # The edge leaves the pill level, passes the end of the headline and turns down into the top of the panel. It
+    # lands as far left as it can without touching a word.
+    head_right = COL_X * s + max(font.getlength(l) for l in lines) + 28 * s
+    head_top = first_base - cap - 16 * s
+    start = (pill[2], (pill[1] + pill[3]) / 2)
+    land = max(head_right + 60 * s, out_w * 0.5)
+    while True:
+        pts = turn_points(start, (land, py))
+        if land > out_w - COL_X * s - 3 * radius or not any(x < head_right and y > head_top for x, y in pts):
+            break
+        land += 20 * s
+    draw_connector(canvas, pts, tint, s)
     return canvas
 
 
-def render_branded_from_plain(plain, out_size, feature, headline):
-    """Rebuild branded artwork from the checked-in 2x plain export when the original raw frame is unavailable."""
+def render_mobile(content, out_size, variant, spec):
     out_w, out_h = out_size
-    scale = out_w / DESKTOP_SIZE[0]
+    s = out_w / MOBILE_SIZE[0]
+    if variant == "plain" or not spec:
+        margin = 70 * s
+        k = min((out_w - 2 * margin) / content.width, (out_h - 2 * margin) / content.height)
+        w, h = round(content.width * k), round(content.height * k)
+        x, y = (out_w - w) // 2, (out_h - h) // 2
+        canvas = Image.new("RGBA", out_size, PLAIN_BG + (255,))
+        canvas = shadow(canvas, (x, y, w, h), round(44 * s), s, 140)
+        shot = content.resize((w, h), Image.LANCZOS)
+        shot.putalpha(rounded_mask(shot.size, round(44 * s)))
+        canvas.alpha_composite(shot, (x, y))
+        return canvas
 
-    # The plain exports all share this window geometry. Crop the window itself, not its flat #141416 surround.
-    x0 = round(plain.width * 44 / DESKTOP_SIZE[0])
-    y0 = round(plain.height * 29 / DESKTOP_SIZE[1])
-    x1 = round(plain.width * 1156 / DESKTOP_SIZE[0])
-    y1 = round(plain.height * 771 / DESKTOP_SIZE[1])
-    window = plain.crop((x0, y0, x1, y1)).convert("RGBA")
+    tint = TINTS[spec["tint"]]
+    canvas = ground(out_size, tint)
+    cx = out_w / 2
+    font, lines = fit_headline(spec["headline"], M_HEAD_SIZE, M_TEXT_W, 2, s)
+    cap = -font.getbbox("H", anchor="ls")[1]
+    pill = draw_kicker(canvas, spec["kicker"], (cx, M_TOP * s), "m", tint, M_KICKER_SIZE, M_KICKER_PAD, s)
+    # Two lines are always reserved, so the three phones stand at one height whatever the headlines do,
+    # and the space is measured at the designed size, so a headline that had to shrink does not move its phone.
+    step = M_HEAD_SIZE * s * HEAD_LEADING
+    first = pill[3] + M_KICKER_GAP * s + cap
+    block = (len(lines) - 1) * font.size * HEAD_LEADING
+    draw_lines(canvas, lines, font, (cx, first + (step - block) / 2), "m", HEAD_LEADING)
+    phone_top = round(first + step + M_PHONE_GAP * s)
 
-    target_w = round((1112 / DESKTOP_SIZE[0]) * out_w * BRANDED_SCALE)
-    target_h = round(window.height * target_w / window.width)
-    window = rounded(window.resize((target_w, target_h), Image.LANCZOS), round(14 * scale))
-
-    feature_font = load_font(round(FEATURE_SIZE * scale))
-    font = load_font(round(LABEL_SIZE * scale))
-    ascent, descent = font.getmetrics()
-    band_bottom = LABEL_Y * scale + ascent + descent
-    win_left = (out_w - target_w) / 2
-    win_top = band_bottom + (out_h - band_bottom - target_h) / 2
-    label_x = max(win_left, LABEL_MIN_X * scale) - font.getbbox(headline)[0]
-
-    canvas = branded_background(out_size, (out_w / 2, win_top + target_h / 2))
-    canvas = draw_label(
-        canvas,
-        feature,
-        feature_font,
-        (round(label_x), round(FEATURE_Y * scale)),
-        "la",
-        fill=(181, 163, 255, 242),
+    # A bezel and nothing else: no notch, no island, no buttons, no logo. It says "a phone" and stops.
+    bezel = round(M_BEZEL * s)
+    sw = round(M_PHONE_W * s)
+    sh = round(sw * content.height / content.width)
+    bw, bh = sw + 2 * bezel, sh + 2 * bezel
+    bx = (out_w - bw) // 2
+    r_screen = round(M_SCREEN_RADIUS * s)
+    r_body = r_screen + bezel
+    canvas = shadow(canvas, (bx, phone_top, bw, bh), r_body, s, 170)
+    body = Image.new("RGBA", (bw, bh), (9, 9, 11, 255))
+    body.putalpha(rounded_mask(body.size, r_body))
+    canvas.alpha_composite(body, (bx, phone_top))
+    k = 4
+    rim = Image.new("RGBA", (bw * k, bh * k), (0, 0, 0, 0))
+    ImageDraw.Draw(rim).rounded_rectangle(
+        (0, 0, rim.width - 1, rim.height - 1), radius=r_body * k, outline=mix((84, 84, 92), tint, 0.25) + (255,), width=round(2 * s * k)
     )
-    canvas = draw_label(canvas, headline, font, (round(label_x), round(LABEL_Y * scale)), "la")
-    canvas.alpha_composite(window, (round(win_left), round(win_top)))
+    canvas.alpha_composite(rim.resize((bw, bh), Image.LANCZOS), (bx, phone_top))
+    screen = content.resize((sw, sh), Image.LANCZOS)
+    screen.putalpha(rounded_mask(screen.size, r_screen))
+    canvas.alpha_composite(screen, (bx + bezel, phone_top + bezel))
     return canvas
 
 
@@ -318,120 +600,173 @@ def save(img, path):
     print(f"  {os.path.relpath(path, REPO)}  {img.width}x{img.height}  {mb:.2f} MB{note}")
 
 
-def contact_sheet():
-    """Ten tiles, branded over plain, so the two variants can be compared at a glance."""
-    w, h = DESKTOP_SIZE
-    sheet = Image.new("RGB", (w, h), (12, 12, 14))
-    draw = ImageDraw.Draw(sheet)
-    head, small = load_font(19), load_font(13)
-    gap, side = 14, 24
-    tile_w = (w - 2 * side - 4 * gap) // 5
-    tile_h = round(tile_w * 2 / 3)
-    draw.text((side, 26), "Ideascape — community directory screenshots", font=head, fill=(236, 236, 240))
-    draw.text((side, 54), "two variants of the same five frames, 1200x800 each", font=small, fill=(140, 140, 150))
+def tile(sheet, path, box, radius):
+    x, y, w, h = box
+    if not os.path.exists(path):
+        ImageDraw.Draw(sheet).rectangle((x, y, x + w, y + h), outline=(60, 60, 68))
+        return
+    img = Image.open(path).convert("RGBA").resize((w, h), Image.LANCZOS)
+    img.putalpha(rounded_mask(img.size, radius))
+    sheet.paste(img, (x, y), img)
 
-    foot = [
-        "plain is what every plugin in the directory does today — a bare window capture, nothing added.",
-        "branded keeps the real window under a feature label and headline, on a diagonal tint with a violet glow.",
-        "The first image is the hero, shown in a rounded 3:2 frame; grid thumbnails are object-cover cropped,",
-        "so the label stays inside the central 85% of the width and the window keeps slack on every side.",
-    ]
-    block = 2 * (30 + tile_h + 20) + 36  # two labelled rows and the gap between them
-    y = 78 + (h - 78 - 22 * len(foot) - 28 - block) // 2
-    for variant in ("branded", "plain"):
-        draw.text((side, y), variant, font=head, fill=(198, 186, 255) if variant == "branded" else (170, 170, 178))
-        y += 30
-        for i, (name, _, _, _) in enumerate(DESKTOP):
-            path = os.path.join(OUT_ROOT, "desktop", variant, f"{name}.png")
-            x = side + i * (tile_w + gap)
-            if os.path.exists(path):
-                sheet.paste(Image.open(path).convert("RGB").resize((tile_w, tile_h), Image.LANCZOS), (x, y))
-            else:
-                draw.rectangle((x, y, x + tile_w, y + tile_h), outline=(60, 60, 68))
-            draw.text((x, y + tile_h + 7), f"{name}.png", font=small, fill=(150, 150, 160))
-        y += tile_h + 56
-    y += 8
-    for line in foot:
-        draw.text((side, y), line, font=small, fill=(126, 126, 136))
-        y += 22
+
+def contact_sheets(spec):
+    """The set as the directory shows it: the hero large, then every picture at thumbnail width, on the page colour.
+
+    The thumbnail row is the one to judge. If a headline cannot be read there, it is not doing its job.
+    """
+    small = load_font(14, "Regular")
+    names = [e["name"] for e in spec["desktop"]]
+    side, gap, tw, th = 40, 20, 300, 200
+    width = 2 * side + 5 * tw + 4 * gap
+    hero_w, hero_h = 1050, 700  # with two half-height pictures beside it, this fills the row of five exactly
+    sub_h = (hero_h - gap) // 2
+    sub_w = sub_h * 3 // 2
+    sheet = Image.new("RGB", (width, side + hero_h + 56 + th + 56 + th + 50), PAGE_BG)
+    draw = ImageDraw.Draw(sheet)
+    folder = lambda variant, name: os.path.join(OUT_ROOT, "desktop", variant, f"{name}.png")
+    tile(sheet, folder("branded", names[0]), (side, side, hero_w, hero_h), 14)
+    for i, name in enumerate(names[1:3]):
+        tile(sheet, folder("branded", name), (side + hero_w + gap, side + i * (sub_h + gap), sub_w, sub_h), 10)
+    y = side + hero_h + 36
+    for variant, label in (("branded", "branded, at the grid's thumbnail width (300 px)"), ("plain", "plain, same width")):
+        draw.text((side, y - 24), label, font=small, fill=(130, 130, 140))
+        for i, name in enumerate(names):
+            tile(sheet, folder(variant, name), (side + i * (tw + gap), y, tw, th), 8)
+        y += th + 56
     path = os.path.join(OUT_ROOT, "preview-desktop.png")
     sheet.save(path, optimize=True)
-    print(f"  {os.path.relpath(path, REPO)}  {sheet.width}x{sheet.height}  {os.path.getsize(path) / 1e6:.2f} MB")
+    print(f"  {os.path.relpath(path, REPO)}  {sheet.width}x{sheet.height}")
+
+    names = [e["name"] for e in spec["mobile"]]
+    big_w, big_h, tw, th = 405, 720, 169, 300
+    width = 2 * side + 3 * big_w + 2 * gap
+    sheet = Image.new("RGB", (width, side + big_h + 56 + th + 50), PAGE_BG)
+    draw = ImageDraw.Draw(sheet)
+    folder = lambda variant, name: os.path.join(OUT_ROOT, "mobile", variant, f"{name}.png")
+    for i, name in enumerate(names):
+        tile(sheet, folder("branded", name), (side + i * (big_w + gap), side, big_w, big_h), 12)
+    y = side + big_h + 36
+    draw.text((side, y - 24), "branded, then plain, at thumbnail width (169 px)", font=small, fill=(130, 130, 140))
+    for j, variant in enumerate(("branded", "plain")):
+        for i, name in enumerate(names):
+            tile(sheet, folder(variant, name), (side + (j * len(names) + i) * (tw + gap) + j * gap, y, tw, th), 6)
+    path = os.path.join(OUT_ROOT, "preview-mobile.png")
+    sheet.save(path, optimize=True)
+    print(f"  {os.path.relpath(path, REPO)}  {sheet.width}x{sheet.height}")
+
+
+def refresh_upload(spec):
+    """Lay the finished files out the way the form wants them. Only the folders this script owns are replaced."""
+    up = os.path.join(OUT_ROOT, "upload")
+    plan = [
+        ("branded@2x", ""),
+        ("plain@2x", "plain-version"),
+        ("branded", "fallback-1200x800"),
+    ]
+    for variant, sub in plan:
+        for kind in ("desktop", "mobile"):
+            dest = os.path.join(up, sub, kind)
+            shutil.rmtree(dest, ignore_errors=True)
+            os.makedirs(dest)
+            for entry in spec[kind]:
+                src = os.path.join(OUT_ROOT, kind, variant, f"{entry['name']}.png")
+                if os.path.exists(src):
+                    shutil.copy2(src, dest)
+    for sheet in ("preview-desktop.png", "preview-mobile.png"):
+        if os.path.exists(os.path.join(OUT_ROOT, sheet)):
+            shutil.copy2(os.path.join(OUT_ROOT, sheet), up)
+    print(f"  {os.path.relpath(up, REPO)}/  refreshed")
+
+
+def sizes(base):
+    return ((base, ""), ((base[0] * 2, base[1] * 2), "@2x"))
+
+
+def note_standin(entry):
+    if entry.get("standin"):
+        print(f"  STAND-IN  {entry['name']}: {entry['standin']}")
+
+
+def run_mobile(spec):
+    for entry in spec["mobile"]:
+        path = os.path.join(REPO, entry["source"])
+        if not os.path.exists(path):
+            print(f"  {entry['source']}: missing, skipped")
+            continue
+        content = Image.open(path).convert("RGBA")
+        print(f"mobile {entry['name']}  <- {entry['source']}  {content.width}x{content.height}")
+        note_standin(entry)
+        for size, suffix in sizes(MOBILE_SIZE):
+            for variant in ("plain", "branded"):
+                save(render_mobile(content, size, variant, entry), os.path.join(OUT_ROOT, "mobile", variant + suffix, f"{entry['name']}.png"))
 
 
 def run_desktop(raw_dir, only):
-    for name, frame, feature, headline in DESKTOP:
-        if only and name not in only:
+    spec = load_headlines()
+    for entry in spec["desktop"]:
+        if only and entry["name"] not in only:
             continue
-        path = os.path.join(raw_dir, frame)
+        path = os.path.join(REPO, entry["source"])
+        if not os.path.exists(path):  # a bare file name is looked for in the raw-frame directory
+            path = os.path.join(raw_dir, os.path.basename(entry["source"]))
         if not os.path.exists(path):
-            print(f"  {frame}: missing, skipped")
+            print(f"  {entry['source']}: missing, skipped")
             continue
         src = Image.open(path).convert("RGBA")
-        print(f"{name}  <- {frame}")
-        for size, suffix in ((DESKTOP_SIZE, ""), ((DESKTOP_SIZE[0] * 2, DESKTOP_SIZE[1] * 2), "@2x")):
-            save(render_plain(src, WINDOW, size), os.path.join(OUT_ROOT, "desktop", "plain" + suffix, f"{name}.png"))
-            save(
-                render_branded(src, WINDOW, size, feature, headline),
-                os.path.join(OUT_ROOT, "desktop", "branded" + suffix, f"{name}.png"),
-            )
-    print("contact sheet")
-    contact_sheet()
+        win = window_of(src, WINDOW)
+        print(f"{entry['name']}  <- {entry['source']}")
+        note_standin(entry)
+        for size, suffix in sizes(DESKTOP_SIZE):
+            save(render_plain(src, WINDOW, size), os.path.join(OUT_ROOT, "desktop", "plain" + suffix, f"{entry['name']}.png"))
+            save(render_desktop(win, size, entry), os.path.join(OUT_ROOT, "desktop", "branded" + suffix, f"{entry['name']}.png"))
+    if not only:
+        run_mobile(spec)
+        prune(spec)
+    print("contact sheets")
+    contact_sheets(spec)
+    refresh_upload(spec)
 
 
-def run_mobile(pairs):
-    for pair in pairs:
-        if "=" not in pair:
-            raise SystemExit(f"--mobile wants NAME=path, got {pair!r}")
-        name, path = pair.split("=", 1)
-        content = Image.open(path).convert("RGBA")
-        label = MOBILE_LABELS.get(name, LABELS.get(name))
-        print(f"{name}  <- {os.path.basename(path)}  {content.width}x{content.height}")
-        for size, suffix in ((MOBILE_SIZE, ""), ((MOBILE_SIZE[0] * 2, MOBILE_SIZE[1] * 2), "@2x")):
-            for variant in ("plain", "branded"):
-                save(
-                    render_mobile(content, size, variant, label),
-                    os.path.join(OUT_ROOT, "mobile", variant + suffix, f"{name}.png"),
-                )
+def prune(spec):
+    """Drop pictures whose entry has gone from headlines.json, so a renamed picture cannot be uploaded twice."""
+    for kind in ("desktop", "mobile"):
+        keep = {e["name"] for e in spec[kind]}
+        for variant in ("plain", "plain@2x", "branded", "branded@2x"):
+            folder = os.path.join(OUT_ROOT, kind, variant)
+            for f in os.listdir(folder) if os.path.isdir(folder) else []:
+                if os.path.splitext(f)[1] in (".png", ".webp") and os.path.splitext(f)[0] not in keep:
+                    os.remove(os.path.join(folder, f))
+                    print(f"  removed stale {kind}/{variant}/{f}")
 
 
-def rebrand_checked_in_plain_exports():
-    """Refresh only the explanation layer, preserving the exact checked-in product captures."""
-    for name, _, feature, headline in DESKTOP:
-        source = os.path.join(OUT_ROOT, "desktop", "plain@2x", f"{name}.png")
-        plain = Image.open(source).convert("RGB")
-        print(f"{name}  <- desktop/plain@2x/{name}.png")
-        for size, suffix in ((DESKTOP_SIZE, ""), ((DESKTOP_SIZE[0] * 2, DESKTOP_SIZE[1] * 2), "@2x")):
-            save(
-                render_branded_from_plain(plain, size, feature, headline),
-                os.path.join(OUT_ROOT, "desktop", "branded" + suffix, f"{name}.png"),
-            )
-
-    for name, label in MOBILE_LABELS.items():
-        source = os.path.join(OUT_ROOT, "mobile", "plain@2x", f"{name}.png")
-        plain = Image.open(source).convert("RGB")
-        # render_mobile's checked-in plain 2x export places the 9:16 capture at x=140, y=249.
-        content = plain.crop((140, 249, 1660, 2951))
-        print(f"{name}  <- mobile/plain@2x/{name}.png")
-        for size, suffix in ((MOBILE_SIZE, ""), ((MOBILE_SIZE[0] * 2, MOBILE_SIZE[1] * 2), "@2x")):
-            save(
-                render_mobile(content, size, "branded", label),
-                os.path.join(OUT_ROOT, "mobile", "branded" + suffix, f"{name}.png"),
-            )
-
-    print("contact sheet")
-    contact_sheet()
+def rebrand():
+    """Refresh only the words and the crops, from the 2x plain exports, when the raw frames are no longer around."""
+    spec = load_headlines()
+    for entry in spec["desktop"]:
+        source = os.path.join(OUT_ROOT, "desktop", "plain@2x", f"{entry['name']}.png")
+        if not os.path.exists(source):
+            print(f"  desktop/plain@2x/{entry['name']}.png: missing, skipped")
+            continue
+        plain = Image.open(source).convert("RGBA")
+        k = plain.width / DESKTOP_SIZE[0]
+        win = plain.crop(tuple(round(v * k) for v in PLAIN_WINDOW))
+        print(f"{entry['name']}  <- desktop/plain@2x/{entry['name']}.png")
+        note_standin(entry)
+        for size, suffix in sizes(DESKTOP_SIZE):
+            save(render_desktop(win, size, entry), os.path.join(OUT_ROOT, "desktop", "branded" + suffix, f"{entry['name']}.png"))
+    run_mobile(spec)
+    print("contact sheets")
+    contact_sheets(spec)
+    refresh_upload(spec)
 
 
 if __name__ == "__main__":
     args = sys.argv[1:]
     if args == ["--rebrand"]:
-        rebrand_checked_in_plain_exports()
-    elif args and args[0] == "--mobile":
-        run_mobile(args[1:])
-    elif args:
-        run_desktop(args[0], set(args[1:]))
+        rebrand()
+    elif not args or not args[0].startswith("-"):
+        raw_dir = args.pop(0) if args and os.path.isdir(args[0]) else FRAMES
+        run_desktop(raw_dir, set(args))
     else:
-        raise SystemExit(
-            __doc__ or "usage: listing.py <raw-frame-dir> [NAME ...] | --mobile NAME=content.png ... | --rebrand"
-        )
+        raise SystemExit("usage: listing.py [raw-frame-dir] [NAME ...] | --rebrand")

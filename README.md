@@ -2,19 +2,19 @@
 
 ![A Lisbon weekend built from the keyboard: Tab and Enter add nodes, ⌘B and ⌘I style them, ⌘↵ adds checkboxes, ⇧⌘7 numbers a list, ⌘. folds a branch, ⌥⌘F focuses on it, and ⌘2 and ⌘1 switch between outline and map. Each key shows in the corner as it is pressed.](https://raw.githubusercontent.com/jonathanmcw/obsidian-ideascape/main/docs/showcase-clean.gif)
 
-Build mind maps at the speed of an outliner, without leaving the keyboard. Tab adds a child, Enter adds a sibling, arrows navigate, and typing edits the selected node. Switch the same note between map and outline views with one shortcut; underneath, it stays a readable Markdown list.
+A thought arrives faster than you can draw it, so Ideascape lets you type it. Tab adds a child, Enter adds a sibling, the arrows move, and typing edits the selected node; the map keeps up and your hands stay on the keyboard. One shortcut turns the same note into an outline, and another turns it back. Underneath it is a plain Markdown list: readable anywhere, and still yours without the plugin.
 
 ## What it does
 
-- **Built for the keyboard.** Tab adds a child, Enter adds a sibling, the arrow keys move around, and typing replaces the selected node's text. Press `?` in a map to see every shortcut.
-- **One note, two views.** Press ⌘1 for the map and ⌘2 for the outline. Both edit the same note.
-- **Plain Markdown underneath.** The title is the note's heading and each node is a list item with a block id, so you can link to any node (`[[Plan#^a1b2c3]]`), search it, and read it on mobile or in git.
+- **Built for the keyboard.** Tab adds a child, Enter adds a sibling, the arrow keys move around, and typing replaces the selected node's text. Nothing between the thought and the node asks for the mouse. Press `?` in a map to see every shortcut.
+- **One note, two views.** Press ⌘1 for the map and ⌘2 for the outline. Both edit the same note, so you can find the shape in one and write in the other.
+- **Plain Markdown underneath.** The title is the note's heading and each node is a list item with a block id, so you can link to any node (`[[Plan#^a1b2c3]]`), search it, and read it on mobile or in git. Uninstall Ideascape and it is still an ordinary note.
 - **Mind map or free layout.** Branches spread either side of the centre, or you place nodes yourself. Tidy puts a free layout back in order.
 - **Formatting while you type.** Bold, italic, underline, strikethrough, highlight, code, links, headings, alignment, checkboxes and numbered items, from the keyboard or the bar above the node.
 - **Themes that fit your vault.** Follow your Obsidian theme in light or dark mode, pick Paper, Slate, Graphite or Midnight, or make your own. Each map can keep its own theme and node style.
 - **Focus on one branch.** Bring it forward and dim the rest while you work on it.
 - **On a phone or tablet.** The same maps, with a bar above the keyboard for styling, nesting and moving rows, and everything sized for a thumb.
-- **Dropped and pasted content (beta).** Markdown lists, `.canvas` files, OPML and notes dragged in from the file explorer are still being refined, so review what arrives. Turning one of your own notes into a map is not beta: it tells you before it rewrites anything, and offers to convert a copy instead.
+- **Dropped and pasted content (beta).** This is the one part of Ideascape still marked beta. Markdown lists, `.canvas` files, OPML and notes dragged in from the file explorer are still being refined, so review what arrives. Turning one of your own notes into a map is not beta: it tells you before it rewrites anything, and offers to convert a copy instead.
 - **Export.** Save a map as `.canvas`, Markdown, OPML, or a picture of the shape on screen in the theme it is in. Exports land beside the note, under a name nothing in the vault has yet.
 
 <table>
@@ -43,7 +43,7 @@ Build mind maps at the speed of an outliner, without leaving the keyboard. Tab a
 
 ## Install
 
-Ideascape 0.9 is a beta. Install it from **Settings → Community plugins → Browse**: search for **Ideascape**, select **Install**, then turn it on.
+Install Ideascape from **Settings → Community plugins → Browse**: search for **Ideascape**, select **Install**, then turn it on.
 
 [View Ideascape in the Obsidian Community directory](https://community.obsidian.md/plugins/ideascape).
 
@@ -109,6 +109,7 @@ ideascape: root
 - Text between list items belongs to the item above it: it moves with that item, and goes to the end of the list if the item is deleted.
 - Positions, folds and the map's own look are kept in the `%%` comment at the end, which Obsidian doesn't show in reading view. Delete it and the map lays itself out again, with its folds and its own look back to the defaults.
 - Opening an existing note as a map never rewrites it behind your back. Anything the map would change beyond the `ideascape` property, the block ids and the `%%` comment is counted and shown to you first, and **Convert a copy** writes the map beside the note instead. Once converted the file has settled: saving it again changes nothing.
+- The `%%` comment carries a format version (`"v":1`). A map written by a newer Ideascape opens in an older one, and any fields the older one does not know are kept and written back rather than dropped.
 - Without Ideascape, a map is still an ordinary note: a heading and a nested list, with a short block id at the end of each item and the `%%` comment hidden in reading view.
 
 ## Settings
@@ -126,7 +127,7 @@ The plugin works entirely offline. It makes no network requests, collects no dat
 
 ## Compatibility
 
-Obsidian 1.7.2 or later. Made for desktop and mobile, and tested on macOS, iPhone, and Android phones and tablets. Reports from Windows and Linux are especially welcome.
+Obsidian 1.7.2 or later. Made for desktop and mobile. Tested on macOS, iPhone, and Android phones and tablets, and lightly on Windows, where it worked. Linux is untested; reports from Linux and Windows are welcome.
 
 ## Development
 
@@ -140,6 +141,15 @@ npm run install:vault -- /path/to/vault [--enable]   # or set OBSIDIAN_VAULT
 ```
 
 Releases are built by GitHub Actions when a version tag (for example `0.9.0`) is pushed: the workflow builds, attests `main.js`, `manifest.json` and `styles.css`, and drafts the release.
+
+What changed in each release is in [CHANGELOG.md](CHANGELOG.md). [CONTRIBUTING.md](CONTRIBUTING.md) covers the checks and how to propose a change.
+
+## Planned
+
+Neither of these is in 1.0, and neither has a date.
+
+- **An org chart layout,** with children below their parent, beside the mind map and free layouts.
+- **An insert-picture button,** so a node can take an image without pasting one in. This matters most on a phone.
 
 ## Support
 
