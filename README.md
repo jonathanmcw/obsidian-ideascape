@@ -6,52 +6,51 @@
 
 A thought arrives faster than you can draw it, so Ideascape lets you type it. Tab adds a child, Enter adds a sibling, the arrows move, and typing edits the selected node; the map keeps up and your hands stay on the keyboard. One shortcut turns the same note into an outline, and another turns it back. Underneath it is a plain Markdown list: readable anywhere, and still yours without the plugin.
 
+<table>
+  <tr>
+    <td width="50%" valign="top"><img src="docs/screenshots/07-welcome-dark.png" alt="The welcome window on its first slide, a Kyoto weekend as a mind map"><br><b>First run</b> <br/> Three slides: what a map is, how map and outline views relate, and the keyboard basics. Start opens the tour.</td>
+    <td width="50%" valign="top"><img src="docs/screenshots/08-tour-dark.png" alt="The tour map, each node showing the feature it names"><br><b>MindMap</b><br/> A map where every node is the feature it describes: the bold node is bold, the folded one is folded.</td>
+  </tr>
+  <tr>
+    <td valign="top"><img src="docs/screenshots/02-outline-dark.png" alt="A podcast plan as an outline"><br><b>Outline</b><br/> The same note as a list, one key away. Fold, focus and find work here too.</td>
+    <td valign="top"><img src="docs/screenshots/04-themes-light.png" alt="A trip plan in the Paper theme with the document panel open"><br><b>Themes.</b><br/> Follow your vault in light or dark, or pin Paper, Slate, Graphite or Midnight to one map from the document panel.</td>
+  </tr>
+  <tr>
+    <td valign="top"><img src="docs/screenshots/06-markdown-and-map.png" alt="A map beside its Markdown source"><br><b>Plain Markdown underneath</b><br/> A heading, a nested list, a block id per node. The note reads anywhere.</td>
+    <td valign="top"><img src="docs/screenshots/05-shortcuts-dark.png" alt="The shortcuts sheet with a filter field"><br><b>Every shortcut.</b><br/> Press <code>?</code> in a map for the sheet, with a filter and the six keys to learn first.</td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td width="25%" valign="top"><img src="docs/screenshots/10-phone-map.png" width="100%" alt="The tour map on an iPhone, the whole map in view"><br><b>MindMap On-the-go</b><br/> Pinch to zoom, drag to pan. Type on mobile keyboard to add a node</td>
+    <td width="25%" valign="top"><img src="docs/screenshots/11-phone-focus.png" width="100%" alt="Focus mode on a phone, one branch lit and the rest dimmed"><br><b>Focus Mode</b><br/> One branch forward, the rest dimmed.</td>
+    <td width="25%" valign="top"><img src="docs/screenshots/12-phone-outline.png" width="100%" alt="The same map as an outline on a phone"><br><b>Outline</b><br/> The same note as a list.</td>
+    <td width="25%" valign="top"><img src="docs/screenshots/13-phone-editing.png" width="100%" alt="Typing into a row on a phone, a bar of editing keys above the keyboard"><br><b>Typing</b><br/> Styling and nesting, above the keyboard.</td>
+  </tr>
+</table>
+
 ## What it does
 
-- **Built for the keyboard.** 
-Tab adds a child, Enter adds a sibling, the arrow keys move around, and typing replaces the selected node's text. Nothing between the thought and the node asks for the mouse. Press `?` in a map to see every shortcut.
-- **One note, two views.** 
-Press ⌘1 for the map and ⌘2 for the outline. Both edit the same note, so you can find the shape in one and write in the other.
-- **Plain Markdown underneath.** 
-The title is the note's heading and each node is a list item with a block id, so you can link to any node (`[[Plan#^a1b2c3]]`), search it, and read it on mobile or in git. Uninstall Ideascape and it is still an ordinary note.
-- **Mind map or free layout.** 
-Branches spread either side of the centre, or you place nodes yourself. Tidy puts a free layout back in order.
-- **Formatting while you type.** 
-Bold, italic, underline, strikethrough, highlight, code, links, headings, alignment, checkboxes and numbered items, from the keyboard or the bar above the node.
-- **Themes that fit your vault.** 
-Follow your Obsidian theme in light or dark mode, pick Paper, Slate, Graphite or Midnight, or make your own. Each map can keep its own theme and node style.
-- **Focus on one branch.** 
-Bring it forward and dim the rest while you work on it.
-- **On a phone or tablet.** 
-The same maps, with a bar above the keyboard for styling, nesting and moving rows, and everything sized for a thumb.
-- **Dropped and pasted content (beta).** 
-This is the one part of Ideascape still marked beta. Markdown lists, `.canvas` files, OPML and notes dragged in from the file explorer are still being refined, so review what arrives. Turning one of your own notes into a map is not beta: it tells you before it rewrites anything, and offers to convert a copy instead.
-- **Export.** 
-Save a map as `.canvas`, Markdown, OPML, or a picture of the shape on screen in the theme it is in. Exports land beside the note, under a name nothing in the vault has yet.
+- **Built for the keyboard.** Tab adds a child, Enter adds a sibling, the arrow keys move around, and typing replaces the selected node's text. Nothing between the thought and the node asks for the mouse. Press `?` in a map to see every shortcut.
 
-<table>
-  <tr>
-    <td width="50%" valign="top"><img src="docs/screenshots/07-welcome-dark.png" alt="The welcome window on its first slide, a Kyoto weekend as a mind map"><br><b>First run.</b> Three slides: what a map is, how map and outline views relate, and the keyboard basics. Start opens the tour.</td>
-    <td width="50%" valign="top"><img src="docs/screenshots/08-tour-dark.png" alt="The tour map, each node showing the feature it names"><br><b>The tour.</b> A map where every node is the feature it describes: the bold node is bold, the folded one is folded.</td>
-  </tr>
-  <tr>
-    <td valign="top"><img src="docs/screenshots/02-outline-dark.png" alt="A podcast plan as an outline"><br><b>Outline.</b> The same note as a list, one key away. Fold, focus and find work here too.</td>
-    <td valign="top"><img src="docs/screenshots/04-themes-light.png" alt="A trip plan in the Paper theme with the document panel open"><br><b>Themes.</b> Follow your vault in light or dark, or pin Paper, Slate, Graphite or Midnight to one map from the document panel.</td>
-  </tr>
-  <tr>
-    <td valign="top"><img src="docs/screenshots/06-markdown-and-map.png" alt="A map beside its Markdown source"><br><b>Plain Markdown underneath.</b> A heading, a nested list, a block id per node. The note reads anywhere.</td>
-    <td valign="top"><img src="docs/screenshots/05-shortcuts-dark.png" alt="The shortcuts sheet with a filter field"><br><b>Every shortcut.</b> Press <code>?</code> in a map for the sheet, with a filter and the six keys to learn first.</td>
-  </tr>
-</table>
+- **One note, two views.** Press ⌘1 for the map and ⌘2 for the outline. Both edit the same note, so you can find the shape in one and write in the other.
 
-<table>
-  <tr>
-    <td width="25%" valign="top"><img src="docs/screenshots/10-phone-map.png" width="100%" alt="The tour map on an iPhone, the whole map in view"><br><b>The map.</b> Pinch to zoom, drag to pan.</td>
-    <td width="25%" valign="top"><img src="docs/screenshots/11-phone-focus.png" width="100%" alt="Focus mode on a phone, one branch lit and the rest dimmed"><br><b>Focus.</b> One branch forward, the rest dimmed.</td>
-    <td width="25%" valign="top"><img src="docs/screenshots/12-phone-outline.png" width="100%" alt="The same map as an outline on a phone"><br><b>Outline.</b> The same note as a list.</td>
-    <td width="25%" valign="top"><img src="docs/screenshots/13-phone-editing.png" width="100%" alt="Typing into a row on a phone, a bar of editing keys above the keyboard"><br><b>Typing.</b> Styling and nesting, above the keyboard.</td>
-  </tr>
-</table>
+- **Plain Markdown underneath.** The title is the note's heading and each node is a list item with a block id, so you can link to any node (`[[Plan#^a1b2c3]]`), search it, and read it on mobile or in git. Uninstall Ideascape and it is still an ordinary note.
+
+- **Mind map or free layout.** Branches spread either side of the centre, or you place nodes yourself. Tidy puts a free layout back in order.
+
+- **Formatting while you type.** Bold, italic, underline, strikethrough, highlight, code, links, headings, alignment, checkboxes and numbered items, from the keyboard or the bar above the node.
+
+- **Themes that fit your vault.** Follow your Obsidian theme in light or dark mode, pick Paper, Slate, Graphite or Midnight, or make your own. Each map can keep its own theme and node style.
+
+- **Focus on one branch.** Bring it forward and dim the rest while you work on it.
+
+- **On a phone or tablet.** The same maps, with a bar above the keyboard for styling, nesting and moving rows, and everything sized for a thumb.
+
+- **Dropped and pasted content (beta).** This is the one part of Ideascape still marked beta. Markdown lists, `.canvas` files, OPML and notes dragged in from the file explorer are still being refined, so review what arrives. Turning one of your own notes into a map is not beta: it tells you before it rewrites anything, and offers to convert a copy instead.
+
+- **Export.** Save a map as `.canvas`, Markdown, OPML, or a picture of the shape on screen in the theme it is in. Exports land beside the note, under a name nothing in the vault has yet.
 
 ## Install
 
